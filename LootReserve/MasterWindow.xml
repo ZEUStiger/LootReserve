@@ -1,0 +1,302 @@
+<Ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.blizzard.com/wow/ui/">
+	<Script file="MasterWindow.lua" />
+	<CheckButton name="LootReserveCategoryListButtonTemplate" virtual="true">
+		<Size y="18" />
+		<Layers>
+			<Layer>
+				<FontString parentKey="Text" inherits="GameFontWhite" justifyH="LEFT">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="5" />
+						<Anchor point="BOTTOMRIGHT" x="-5" />
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<HighlightTexture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" />
+		<CheckedTexture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" />
+	</CheckButton>
+	<CheckButton name="LootReserveCategoryListHeaderTemplate" virtual="true">
+		<Size y="28" />
+		<Layers>
+			<Layer>
+				<FontString parentKey="Text" inherits="GameFontNormal">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="5" y="-10" />
+						<Anchor point="BOTTOMRIGHT" x="-5" />
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<HighlightTexture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" />
+		<CheckedTexture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" />
+	</CheckButton>
+	<CheckButton name="LootReserveCategoryListSeparatorTemplate" virtual="true">
+		<Size y="6" />
+		<Layers>
+			<Layer>
+				<Texture alpha="0.25" file="Interface\QUESTFRAME\UI-QuestLogTitleHighlight" alphaMode="ADD">
+					<Size y="2" />
+					<Anchors>
+						<Anchor point="LEFT" x="15" />
+						<Anchor point="RIGHT" x="-15" />
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+	</CheckButton>
+	<Frame name="LootReserveLootListTemplate" virtual="true" enableMouse="true">
+		<Size y="44" />
+		<Backdrop edgeFile="Interface\Tooltips\UI-Tooltip-Border">
+			<EdgeSize val="16" />
+			<BorderColor r="1" g="0.82" b="0" a="0" />
+		</Backdrop>
+		<Frames>
+			<Frame parentKey="ReserveFrame">
+				<Size x="112" y="32" />
+				<Anchors>
+					<Anchor point="RIGHT" x="-6" y="0" />
+				</Anchors>
+				<Frames>
+					<Button parentKey="ReserveButton" inherits="UIPanelButtonTemplate" text="Reserve">
+						<Size x="75" y="23" />
+						<Anchors>
+							<Anchor point="RIGHT" />
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								LootReserve.Client:Reserve(self:GetParent():GetParent().Item);
+							</OnClick>
+						</Scripts>
+					</Button>
+					<Button parentKey="CancelReserveButton" inherits="UIPanelButtonTemplate" hidden="true" text="Cancel">
+						<Anchors>
+							<Anchor point="TOPLEFT" relativeKey="$parent.ReserveButton" />
+							<Anchor point="BOTTOMRIGHT" relativeKey="$parent.ReserveButton" />
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								LootReserve.Client:CancelReserve(self:GetParent():GetParent().Item);
+							</OnClick>
+						</Scripts>
+					</Button>
+					<Button parentKey="ReserveIcon">
+						<Size x="32" y="32" />
+						<Anchors>
+							<Anchor point="RIGHT" relativeKey="$parent.ReserveButton" relativePoint="LEFT" x="-5" />
+						</Anchors>
+						<Layers>
+							<Layer>
+								<Texture parentKey="One" setAllPoints="true" file="Interface\RAIDFRAME\ReadyCheck-Ready" />
+								<Texture parentKey="Many" setAllPoints="true" file="Interface\BUTTONS\UI-GroupLoot-Dice-Up" />
+								<FontString parentKey="Number" inherits="GameFontNormalLarge" setAllPoints="true" />
+								<FontString parentKey="NumberMany" inherits="GameFontNormal" justifyV="BOTTOM" justifyH="RIGHT" setAllPoints="true" />
+							</Layer>
+						</Layers>
+						<Scripts>
+							<OnEnter>
+								local item = self:GetParent():GetParent().Item;
+								local reservers = LootReserve.Client:GetItemReservers(item);
+
+								if LootReserve.Client:IsItemReservedByMe(item) and #reservers == 1 then
+									GameTooltip:SetText("Reserved only by you", GREEN_FONT_COLOR.r, GREEN_FONT_COLOR.g, GREEN_FONT_COLOR.b, 1);
+									GameTooltip:AddLine("Unless someone else reserves it - you will receive it if it drops.", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
+								elseif #reservers > 0 then
+									local text = "It will be rolled among all contenders if it drops:";
+									for _, player in ipairs(reservers) do
+										text = text .. format("|n|c%s%s|r", LootReserve:GetPlayerClassColor(player), player);
+									end
+									GameTooltip:SetText(format("Reserved by %d |4player:players;", #reservers));
+									GameTooltip:AddLine(text, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
+								else
+									return;
+								end
+
+								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								GameTooltip:Show();
+							</OnEnter>
+							<OnLeave>
+								if GameTooltip:IsOwned(self) then
+									GameTooltip:Hide();
+								end
+							</OnLeave>
+						</Scripts>
+					</Button>
+				</Frames>
+			</Frame>
+			<Frame parentKey="ItemFrame">
+				<Size y="32" />
+				<Anchors>
+					<Anchor point="LEFT" x="6" />
+					<Anchor point="RIGHT" relativeKey="$parent.ReserveFrame" relativePoint="LEFT" x="-5" />
+				</Anchors>
+				<Layers>
+					<Layer>
+						<Texture parentKey="Icon" nonBlocking="true">
+							<Size x="32" y="32" />
+							<Anchors>
+								<Anchor point="TOPLEFT" x="0" y="0" />
+							</Anchors>
+						</Texture>
+						<FontString parentKey="Name" inherits="GameFontNormalLarge" text="%ITEMNAME%" justifyH="LEFT">
+							<Size y="20" />
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.Icon" relativePoint="TOPRIGHT" x="5" />
+								<Anchor point="TOPRIGHT" />
+							</Anchors>
+						</FontString>
+						<FontString parentKey="Type" inherits="GameFontNormalGraySmall" text="%ITEMTYPE%" justifyH="LEFT">
+							<Size y="12" />
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.Name" relativePoint="BOTTOMLEFT" />
+								<Anchor point="BOTTOMRIGHT" />
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnEnter>
+						GameTooltip:SetOwner(self, "ANCHOR_NONE");
+						GameTooltip:ClearAllPoints();
+						GameTooltip:SetPoint("TOPLEFT", self, "BOTTOMLEFT");
+						GameTooltip:SetHyperlink("item:" .. self:GetParent().Item);
+						GameTooltip:Show();
+					</OnEnter>
+					<OnLeave>
+						if GameTooltip:IsOwned(self) then
+							GameTooltip:Hide();
+						end
+					</OnLeave>
+				</Scripts>
+			</Frame>
+		</Frames>
+		<Scripts>
+			<OnLoad>
+				local parent = self;
+				local function propagate(frame)
+					for _, child in pairs({ frame:GetChildren() }) do
+						if child:IsMouseEnabled() then
+							child:HookScript("OnEnter", function(self)
+								if parent:IsMouseOver() and parent:GetParent():GetParent():IsMouseOver() then
+									local r, g, b = parent:GetBackdropBorderColor();
+									parent:SetBackdropBorderColor(r, g, b, 1);
+								end
+							end);
+							child:HookScript("OnLeave", function(self)
+								if not parent:IsMouseOver() or not parent:GetParent():GetParent():IsMouseOver() then
+									local r, g, b = parent:GetBackdropBorderColor();
+									parent:SetBackdropBorderColor(r, g, b, 0);
+								end
+							end);
+						end
+						propagate(child);
+					end
+				end
+				propagate(self);
+			</OnLoad>
+			<OnEnter>
+				local r, g, b = self:GetBackdropBorderColor();
+				self:SetBackdropBorderColor(r, g, b, 1);
+			</OnEnter>
+			<OnLeave>
+				if not self:IsMouseOver() or not self:GetParent():GetParent():IsMouseOver() then
+					local r, g, b = self:GetBackdropBorderColor();
+					self:SetBackdropBorderColor(r, g, b, 0);
+				end
+			</OnLeave>
+		</Scripts>
+	</Frame>
+	<Frame parent="UIParent" toplevel="true" movable="true" resizable="true" enableMouse="true">
+		<Size>
+			<AbsDimension x="700" y="500" />
+		</Size>
+		<Anchors>
+			<Anchor point="TOPLEFT">
+				<Offset x="100" y="-143" />
+			</Anchor>
+		</Anchors>
+		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
+			<BackgroundInsets>
+				<AbsInset left="11" right="12" top="12" bottom="11" />
+			</BackgroundInsets>
+			<TileSize>
+				<AbsValue val="32" />
+			</TileSize>
+			<EdgeSize>
+				<AbsValue val="32" />
+			</EdgeSize>
+		</Backdrop>
+		<Layers>
+			<Layer level="OVERLAY">
+				<FontString parentKey="RemainingText" inherits="GameFontNormalHuge" text="" justifyH="LEFT">
+					<Size y="20" />
+					<Anchors>
+						<Anchor point="TOPLEFT" x="16" y="-16" />
+						<Anchor point="TOPRIGHT" x="-16" y="-16" />
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Frame parentKey="Categories">
+				<Size x="189" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.RemainingText" relativePoint="BOTTOMLEFT" y="-5" />
+					<Anchor point="BOTTOMLEFT" x="16" y="16" />
+				</Anchors>
+				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+					<BackgroundInsets left="5" right="5" top="5" bottom="5" />
+					<TileSize val="32" />
+					<EdgeSize val="16" />
+				</Backdrop>
+				<Frames>
+					<ScrollFrame parentKey="Scroll" inherits="UIPanelScrollFrameTemplate">
+						<Anchors>
+							<Anchor point="TOPLEFT" x="5" y="-5" />
+							<Anchor point="BOTTOMRIGHT" x="-27" y="5" />
+						</Anchors>
+						<Frames>
+							<Frame parentKey="Container" />
+						</Frames>
+						<Scripts>
+							<OnLoad>
+								self:SetScrollChild(self.Container);
+							</OnLoad>
+						</Scripts>
+					</ScrollFrame>
+				</Frames>
+			</Frame>
+			<Frame parentKey="Loot">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.Categories" relativePoint="TOPRIGHT" />
+					<Anchor point="BOTTOMRIGHT" x="-16" y="16" />
+				</Anchors>
+				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+					<BackgroundInsets left="5" right="5" top="5" bottom="5" />
+					<TileSize val="32" />
+					<EdgeSize val="16" />
+				</Backdrop>
+				<Frames>
+					<ScrollFrame parentKey="Scroll" inherits="UIPanelScrollFrameTemplate">
+						<Anchors>
+							<Anchor point="TOPLEFT" x="5" y="-5" />
+							<Anchor point="BOTTOMRIGHT" x="-27" y="5" />
+						</Anchors>
+						<Frames>
+							<Frame parentKey="Container" />
+						</Frames>
+						<Scripts>
+							<OnLoad>
+								self:SetScrollChild(self.Container);
+							</OnLoad>
+						</Scripts>
+					</ScrollFrame>
+				</Frames>
+			</Frame>
+		</Frames>
+		<Scripts>
+			<OnLoad>
+				LootReserve.Client:OnWindowLoad(self);
+			</OnLoad>
+		</Scripts>
+	</Frame>
+</Ui>

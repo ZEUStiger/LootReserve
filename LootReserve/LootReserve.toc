@@ -1,0 +1,14 @@
+## Interface: 11302
+## Title: LootReserve
+## Version: 0.1
+## Author: Tagar-NethergardeKeep
+
+embeds.xml
+
+LootReserve.lua
+Constants.lua
+Client.lua
+Server.lua
+Comm.lua
+Data.lua
+MasterWindow.xml
