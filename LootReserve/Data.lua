@@ -5,13 +5,13 @@ LootReserve.Data =
         [-100] = {
             Children =
             {
-                { Name = "My Reserved Loot" },
+                { Name = "My Reserves", Reserves = true },
             },
         },
         [-50] = {
             Children =
             {
-                { Name = "Search Results" },
+                { Name = "Search Results", Search = true },
             },
         },
         [100] = {
@@ -144,6 +144,15 @@ LootReserve.Data =
             Name = "Blackwing Lair",
             Children =
             {
+                {
+                    Name = "Razorgore the Untamed",
+                    Loot =
+                    {
+                        16926, 16918, 16934, 16911, 16904, 16935, 16943, 16951, 16959, 0,
+                        19336, 19337, 0,
+                        19370, 19369, 19335, 19334,
+                    },
+                },
                 {
                     Name = "Vaelastrasz the Corrupt",
                     Loot =
@@ -309,6 +318,15 @@ LootReserve.Data =
                 },
                 { Separator = true },
                 {
+                    Name = "Shared Loot",
+                    Loot =
+                    {
+                        22721, 22722, 0,
+                        22720, 22718, 22711, 22712, 22715, 22714, 22716, 22713,
+                    },
+                },
+                { Separator = true },
+                {
                     Name = "Gri'lek",
                     Loot =
                     {
@@ -340,6 +358,7 @@ LootReserve.Data =
                         19941,
                     },
                 },
+                { Separator = true },
                 {
                     Name = "Gahz'ranka",
                     Loot =
@@ -351,28 +370,10 @@ LootReserve.Data =
                 },
                 { Separator = true },
                 {
-                    Name = "Shared loot",
-                    Loot =
-                    {
-                        22721, 22722, 0,
-                        22720, 22718, 22711, 22712, 22715, 22714, 22716, 22713,
-                    },
-                },
-                { Separator = true },
-                {
                     Name = "Trash",
                     Loot =
                     {
                         20263, 20259, 20261, 19921, 19908, 20258,
-                    },
-                },
-                {
-                    Name = "Razorgore the Untamed",
-                    Loot =
-                    {
-                        16926, 16918, 16934, 16911, 16904, 16935, 16943, 16951, 16959, 0,
-                        19336, 19337, 0,
-                        19370, 19369, 19335, 19334,
                     },
                 },
             },
@@ -566,7 +567,7 @@ LootReserve.Data =
                     },
                 },
                 {
-                    Name = "Ahn'Qiraj scarabs",
+                    Name = "Scarabs",
                     Loot =
                     {
                         20876, 20879, 20875, 20878, 20881, 20877, 20874, 20882, 0,
@@ -579,7 +580,7 @@ LootReserve.Data =
                     },
                 },
                 {
-                    Name = "Ahn'Qiraj enchants",
+                    Name = "Enchants",
                     Loot =
                     {
                         20728, 20731, 20734, 20729, 20736, 20730, 20727,

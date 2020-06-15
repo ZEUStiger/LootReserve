@@ -8,6 +8,7 @@ LootReserve.Constants =
         NotMember = 2,
         AlreadyReserved = 3,
         NoReservesLeft = 4,
+        ItemNotReservable = 5,
     },
     CancelReserveResult =
     {
@@ -15,5 +16,7 @@ LootReserve.Constants =
         NoSession = 1,
         NotMember = 2,
         NotReserved = 3,
+        Forced = 4,
+        ItemNotReservable = 5,
     },
 };

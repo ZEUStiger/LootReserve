@@ -17,6 +17,9 @@
     <Content Include="Comm.lua">
       <SubType>Code</SubType>
     </Content>
+    <Content Include="Common.xml">
+      <SubType>Frame</SubType>
+    </Content>
     <Content Include="Constants.lua">
       <SubType>Code</SubType>
     </Content>
@@ -32,15 +35,22 @@
     <Content Include="embeds.xml">
       <SubType>Code</SubType>
     </Content>
-    <Content Include="MasterWindow.lua">
+    <Content Include="ClientWindow.lua">
       <SubType>Code</SubType>
-      <DependentUpon>MasterWindow.xml</DependentUpon>
+      <DependentUpon>ClientWindow.xml</DependentUpon>
     </Content>
-    <Content Include="MasterWindow.xml">
+    <Content Include="ClientWindow.xml">
       <SubType>Frame</SubType>
     </Content>
     <Content Include="Server.lua">
       <SubType>Code</SubType>
+    </Content>
+    <Content Include="ServerWindow.lua">
+      <SubType>Code</SubType>
+      <DependentUpon>ServerWindow.xml</DependentUpon>
+    </Content>
+    <Content Include="ServerWindow.xml">
+      <SubType>Frame</SubType>
     </Content>
   </ItemGroup>
   <ItemGroup>

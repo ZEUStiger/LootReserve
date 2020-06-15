@@ -1,0 +1,172 @@
+<Ui xmlns="http://www.blizzard.com/wow/ui/" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance">
+	<Button name="LootReserveCommonFrameMovingHeaderTemplate" virtual="true">
+		<Size y="22" />
+		<Anchors>
+			<Anchor point="TOPLEFT" />
+			<Anchor point="TOPRIGHT" />
+		</Anchors>
+		<Scripts>
+			<OnMouseDown>
+				self:GetParent():StartMoving();
+			</OnMouseDown>
+			<OnMouseUp>
+				self:GetParent():StopMovingOrSizing();
+				
+				function round(num, numDecimalPlaces)
+					local mult = 10 ^ (numDecimalPlaces or 0)
+					return math.floor(num * mult + 0.5) / mult
+				end
+
+				local point, relativeFrame, relativePoint, x, y = self:GetParent():GetPoint(1);
+				self:GetParent():ClearAllPoints();
+				self:GetParent():SetPoint(point, relativeFrame, relativePoint, round(x), round(y));
+			</OnMouseUp>
+		</Scripts>
+	</Button>
+	<Button name="LootReserveCommonFrameSizeGrabberTemplate" virtual="true">
+		<Size x="16" y="16"/>
+		<Anchors>
+			<Anchor point="BOTTOMRIGHT" />
+		</Anchors>
+		<Scripts>
+			<OnMouseDown>
+				self:SetButtonState("PUSHED", true);
+				self:GetHighlightTexture():Hide();
+				self:GetParent():StartSizing("BOTTOMRIGHT");
+			</OnMouseDown>
+			<OnMouseUp>
+				self:SetButtonState("NORMAL", false);
+				self:GetHighlightTexture():Show();
+				self:GetParent():StopMovingOrSizing();
+
+				function round(num, numDecimalPlaces)
+					local mult = 10 ^ (numDecimalPlaces or 0)
+					return math.floor(num * mult + 0.5) / mult
+				end
+
+				local w, h = self:GetParent():GetSize();
+				self:GetParent():SetSize(round(w), round(h));
+			</OnMouseUp>
+		</Scripts>
+		<NormalTexture file="Interface\ChatFrame\UI-ChatIM-SizeGrabber-Up"/>
+		<HighlightTexture file="Interface\ChatFrame\UI-ChatIM-SizeGrabber-Highlight"/>
+		<PushedTexture file="Interface\ChatFrame\UI-ChatIM-SizeGrabber-Down"/>
+	</Button>
+	<Font name="LootReserveDurationStatusBarFont" font="Fonts\FRIZQT__.TTF" outline="NORMAL" virtual="true">
+		<FontHeight>
+			<AbsValue val="11" />
+		</FontHeight>
+		<Color r="1" g="1" b="1" />
+	</Font>
+	<StatusBar name="LootReserveDurationStatusBar" virtual="true">
+		<KeyValues>
+			<!--
+			<KeyValue key="server" value="false" type="boolean" />
+			-->
+		</KeyValues>
+		<Size y="8" />
+		<BarTexture parentKey="Texture" file="Interface\TargetingFrame\UI-TargetingFrame-BarFill">
+			<TexCoords left="0" right="1" top="0.15" bottom="0.85" />
+		</BarTexture>
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture file="Interface\DialogFrame\UI-DialogBox-Background-Dark" setAllPoints="true" />
+			</Layer>
+			<Layer level="OVERLAY">
+				<Texture parentKey="Left" file="Interface\Tooltips\UI-StatusBar-Border">
+					<Size x="16" y="16" />
+					<Anchors>
+						<Anchor point="LEFT" x="-3" />
+					</Anchors>
+					<TexCoords left="0" right="0.125" top="0" bottom="1" />
+				</Texture>
+				<Texture parentKey="Right" file="Interface\Tooltips\UI-StatusBar-Border">
+					<Size x="16" y="16" />
+					<Anchors>
+						<Anchor point="RIGHT" x="3" />
+					</Anchors>
+					<TexCoords left="0.875" right="1" top="0" bottom="1" />
+				</Texture>
+				<Texture parentKey="Middle" file="Interface\Tooltips\UI-StatusBar-Border">
+					<Size y="16" />
+					<Anchors>
+						<Anchor point="LEFT" relativeKey="$parent.Left" relativePoint="RIGHT" />
+						<Anchor point="RIGHT" relativeKey="$parent.Right" relativePoint="LEFT" />
+					</Anchors>
+					<TexCoords left="0.125" right="0.875" top="0" bottom="1" />
+				</Texture>
+				<Texture parentKey="Spark" file="Interface\GLUES\LoadingBar\UI-LoadingBar-Spark" alphaMode="ADD">
+					<Size x="16" y="24" />
+				</Texture>
+				<Texture parentKey="Glow" file="Interface\GLUES\LoadingBar\UI-LoadingBar-Spark" alphaMode="ADD">
+					<Size x="64" y="16" />
+					<TexCoords left="0" right="0.5" top="0" bottom="1" />
+					<Color r="0.5" g="1" b="0" />
+				</Texture>
+				<FontString parentKey="Text" inherits="LootReserveDurationStatusBarFont" text="2:34">
+					<Anchors>
+						<Anchor point="CENTER" />
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnUpdate>
+				local hasDuration = false;
+				local active = false;
+				local min, value, max, pct = 0, 1, 1, 1;
+
+				if self.server then
+					local session = LootReserve.Server.CurrentSession;
+					if session and session.Settings.Duration ~= 0 then
+						hasDuration = true;
+						active = session.AcceptingReserves;
+						value = session.Duration;
+						max = session.Settings.Duration;
+					end
+				else
+					local session = LootReserve.Client;
+					if session.SessionServer and session.MaxDuration and session.MaxDuration ~= 0 then
+						hasDuration = true;
+						active = session.AcceptingReserves;
+						value = session.Duration;
+						max = session.MaxDuration;
+					end
+				end
+				pct = (value - min) / (max - min);
+
+				if hasDuration and active then
+					local RED_THRESHOLD, GREEN_THRESHOLD = 0.2, 0.5;
+					local r = pct > GREEN_THRESHOLD and 0    or pct > RED_THRESHOLD and (1 - (pct - RED_THRESHOLD) / (GREEN_THRESHOLD - RED_THRESHOLD)) * 1    or 1;
+					local g = pct > GREEN_THRESHOLD and 0.85 or pct > RED_THRESHOLD and (    (pct - RED_THRESHOLD) / (GREEN_THRESHOLD - RED_THRESHOLD)) * 0.85 or 0;
+					self:SetStatusBarColor(r, g, 0);
+					self.Text:SetText(format("%d:%02d", math.floor(value / 60), value % 60));
+					self.Text:Show();
+					self.Glow:SetWidth(math.min(64, self.Texture:GetWidth()));
+					self.Glow:SetAlpha(1 - math.max(0, math.abs(pct * 2 - 1) - 0.99) / 0.01);
+					self.Glow:SetVertexColor(0.5 + r * 0.5, g, 0);
+					self.Glow:Show();
+					self.Spark:SetAlpha(self.Glow:GetAlpha());
+					self.Spark:Show();
+				elseif hasDuration then
+					self:SetStatusBarColor(0.5, 0.5, 0.5);
+					self.Text:SetText(format("%d:%02d", math.floor(value / 60), value % 60));
+					self.Text:Show();
+					self.Glow:Hide();
+					self.Spark:Hide();
+				else
+					self:SetStatusBarColor(0.5, 0.5, 0.5);
+					self.Text:Hide();
+					self.Glow:Hide();
+					self.Spark:Hide();
+				end
+				self:SetMinMaxValues(0, max);
+				self:SetValue(value);
+				self.Glow:ClearAllPoints();
+				self.Glow:SetPoint("RIGHT", self, "LEFT", self:GetWidth() * pct, 0);
+				self.Spark:ClearAllPoints();
+				self.Spark:SetPoint("CENTER", self, "LEFT", self:GetWidth() * pct, 0);
+			</OnUpdate>
+		</Scripts>
+	</StatusBar>
+</Ui>

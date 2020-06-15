@@ -1,5 +1,5 @@
 <Ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.blizzard.com/wow/ui/">
-	<Script file="MasterWindow.lua" />
+	<Script file="ClientWindow.lua" />
 	<CheckButton name="LootReserveCategoryListButtonTemplate" virtual="true">
 		<Size y="18" />
 		<Layers>
@@ -98,32 +98,29 @@
 								local reservers = LootReserve.Client:GetItemReservers(item);
 
 								if LootReserve.Client:IsItemReservedByMe(item) and #reservers == 1 then
+									GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 									GameTooltip:SetText("Reserved only by you", GREEN_FONT_COLOR.r, GREEN_FONT_COLOR.g, GREEN_FONT_COLOR.b, 1);
 									GameTooltip:AddLine("Unless someone else reserves it - you will receive it if it drops.", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
-								elseif #reservers > 0 then
+								elseif #reservers &gt; 0 then
 									local text = "It will be rolled among all contenders if it drops:";
 									for _, player in ipairs(reservers) do
 										text = text .. format("|n|c%s%s|r", LootReserve:GetPlayerClassColor(player), player);
 									end
+									GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 									GameTooltip:SetText(format("Reserved by %d |4player:players;", #reservers));
 									GameTooltip:AddLine(text, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
 								else
 									return;
 								end
 
-								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 								GameTooltip:Show();
 							</OnEnter>
-							<OnLeave>
-								if GameTooltip:IsOwned(self) then
-									GameTooltip:Hide();
-								end
-							</OnLeave>
+							<OnLeave function="GameTooltip_Hide" />
 						</Scripts>
 					</Button>
 				</Frames>
 			</Frame>
-			<Frame parentKey="ItemFrame">
+			<Button parentKey="ItemFrame">
 				<Size y="32" />
 				<Anchors>
 					<Anchor point="LEFT" x="6" />
@@ -137,14 +134,14 @@
 								<Anchor point="TOPLEFT" x="0" y="0" />
 							</Anchors>
 						</Texture>
-						<FontString parentKey="Name" inherits="GameFontNormalLarge" text="%ITEMNAME%" justifyH="LEFT">
+						<FontString parentKey="Name" inherits="GameFontNormalLarge" justifyH="LEFT">
 							<Size y="20" />
 							<Anchors>
 								<Anchor point="TOPLEFT" relativeKey="$parent.Icon" relativePoint="TOPRIGHT" x="5" />
 								<Anchor point="TOPRIGHT" />
 							</Anchors>
 						</FontString>
-						<FontString parentKey="Type" inherits="GameFontNormalGraySmall" text="%ITEMTYPE%" justifyH="LEFT">
+						<FontString parentKey="Type" inherits="GameFontNormalGraySmall" justifyH="LEFT">
 							<Size y="12" />
 							<Anchors>
 								<Anchor point="TOPLEFT" relativeKey="$parent.Name" relativePoint="BOTTOMLEFT" />
@@ -154,6 +151,11 @@
 					</Layer>
 				</Layers>
 				<Scripts>
+					<OnClick>
+						if button == "LeftButton" then
+							HandleModifiedItemClick(self:GetParent().Link);
+						end
+					</OnClick>
 					<OnEnter>
 						GameTooltip:SetOwner(self, "ANCHOR_NONE");
 						GameTooltip:ClearAllPoints();
@@ -161,86 +163,81 @@
 						GameTooltip:SetHyperlink("item:" .. self:GetParent().Item);
 						GameTooltip:Show();
 					</OnEnter>
-					<OnLeave>
-						if GameTooltip:IsOwned(self) then
-							GameTooltip:Hide();
-						end
-					</OnLeave>
+					<OnLeave function="GameTooltip_Hide" />
 				</Scripts>
-			</Frame>
+			</Button>
 		</Frames>
 		<Scripts>
-			<OnLoad>
-				local parent = self;
-				local function propagate(frame)
-					for _, child in pairs({ frame:GetChildren() }) do
-						if child:IsMouseEnabled() then
-							child:HookScript("OnEnter", function(self)
-								if parent:IsMouseOver() and parent:GetParent():GetParent():IsMouseOver() then
-									local r, g, b = parent:GetBackdropBorderColor();
-									parent:SetBackdropBorderColor(r, g, b, 1);
-								end
-							end);
-							child:HookScript("OnLeave", function(self)
-								if not parent:IsMouseOver() or not parent:GetParent():GetParent():IsMouseOver() then
-									local r, g, b = parent:GetBackdropBorderColor();
-									parent:SetBackdropBorderColor(r, g, b, 0);
-								end
-							end);
-						end
-						propagate(child);
-					end
-				end
-				propagate(self);
-			</OnLoad>
-			<OnEnter>
-				local r, g, b = self:GetBackdropBorderColor();
-				self:SetBackdropBorderColor(r, g, b, 1);
-			</OnEnter>
-			<OnLeave>
-				if not self:IsMouseOver() or not self:GetParent():GetParent():IsMouseOver() then
+			<OnUpdate>
+				local hovered = self:IsMouseOver() and self:GetParent():GetParent():IsMouseOver();
+				if self.hovered ~= hovered then
+					self.hovered = hovered;
 					local r, g, b = self:GetBackdropBorderColor();
-					self:SetBackdropBorderColor(r, g, b, 0);
+					self:SetBackdropBorderColor(r, g, b, hovered and 1 or 0);
 				end
-			</OnLeave>
+			</OnUpdate>
 		</Scripts>
 	</Frame>
-	<Frame parent="UIParent" toplevel="true" movable="true" resizable="true" enableMouse="true">
-		<Size>
-			<AbsDimension x="700" y="500" />
-		</Size>
+	<Frame name="LootReserveClientWindow" parent="UIParent" inherits="BasicFrameTemplateWithInset" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true">
+		<Size x="700" y="500" />
 		<Anchors>
-			<Anchor point="TOPLEFT">
-				<Offset x="100" y="-143" />
-			</Anchor>
+			<Anchor point="CENTER" />
 		</Anchors>
-		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\DialogFrame\UI-DialogBox-Border" tile="true">
-			<BackgroundInsets>
-				<AbsInset left="11" right="12" top="12" bottom="11" />
-			</BackgroundInsets>
-			<TileSize>
-				<AbsValue val="32" />
-			</TileSize>
-			<EdgeSize>
-				<AbsValue val="32" />
-			</EdgeSize>
-		</Backdrop>
 		<Layers>
+			<Layer level="ARTWORK">
+				<Texture parentKey="RemainingTextGlow" alpha="0.25" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="16" y="-27" />
+						<Anchor point="BOTTOMRIGHT" relativePoint="TOPRIGHT" x="-16" y="-60" />
+					</Anchors>
+					<TexCoords left="0" right="1" top="0.5" bottom="1"/>
+					<Color r="1" g="0" b="0" />
+				</Texture>
+			</Layer>
 			<Layer level="OVERLAY">
-				<FontString parentKey="RemainingText" inherits="GameFontNormalHuge" text="" justifyH="LEFT">
+				<FontString parentKey="RemainingText" inherits="GameFontNormalHuge" justifyH="LEFT">
 					<Size y="20" />
 					<Anchors>
-						<Anchor point="TOPLEFT" x="16" y="-16" />
-						<Anchor point="TOPRIGHT" x="-16" y="-16" />
+						<Anchor point="TOP" y="-36" />
 					</Anchors>
 				</FontString>
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame parentKey="Categories">
-				<Size x="189" />
+			<Button inherits="LootReserveCommonFrameMovingHeaderTemplate" />
+			<Button inherits="LootReserveCommonFrameSizeGrabberTemplate" />
+			<StatusBar parentKey="Duration" inherits="LootReserveDurationStatusBar">
+				<KeyValues>
+					<KeyValue key="server" value="false" type="boolean" />
+				</KeyValues>
+				<Size y="8" />
 				<Anchors>
-					<Anchor point="TOPLEFT" relativeKey="$parent.RemainingText" relativePoint="BOTTOMLEFT" y="-5" />
+					<Anchor point="TOPLEFT" x="19" y="-63" />
+					<Anchor point="TOPRIGHT" x="-19" y="-63" />
+				</Anchors>
+			</StatusBar>
+			<EditBox parentKey="Search" inherits="SearchBoxTemplate">
+				<Size x="193" y="20" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.Duration" relativePoint="BOTTOMLEFT" x="3" y="-3" />
+				</Anchors>
+				<Scripts>
+					<OnTextChanged>
+						InputBoxInstructions_OnTextChanged(self);
+						if #self:GetText() > 0 then
+							for _, frame in ipairs(self:GetParent().Categories.Scroll.Container.Frames) do
+								if frame.Category.Search then
+									frame:Click();
+								end
+							end
+						end
+						LootReserve.Client:UpdateLootList();
+					</OnTextChanged>
+				</Scripts>
+			</EditBox>
+			<Frame parentKey="Categories">
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeKey="$parent.Search" relativePoint="BOTTOMRIGHT" x="1" />
 					<Anchor point="BOTTOMLEFT" x="16" y="16" />
 				</Anchors>
 				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
@@ -267,7 +264,7 @@
 			</Frame>
 			<Frame parentKey="Loot">
 				<Anchors>
-					<Anchor point="TOPLEFT" relativeKey="$parent.Categories" relativePoint="TOPRIGHT" />
+					<Anchor point="TOPLEFT" relativeKey="$parent.Search" relativePoint="TOPRIGHT" />
 					<Anchor point="BOTTOMRIGHT" x="-16" y="16" />
 				</Anchors>
 				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
@@ -288,6 +285,12 @@
 							<OnLoad>
 								self:SetScrollChild(self.Container);
 							</OnLoad>
+							<OnShow>
+								self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
+							</OnShow>
+							<OnSizeChanged>
+								self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
+							</OnSizeChanged>
 						</Scripts>
 					</ScrollFrame>
 				</Frames>
