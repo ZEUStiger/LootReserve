@@ -4,7 +4,7 @@ function LootReserve.Client:RollRequested(sender, item, players)
     local frame = LootReserveRollRequestWindow;
 
     if LibCustomGlow then
-        LibCustomGlow.ButtonGlow_Stop(frame.ItemFrame.Icon);
+        LibCustomGlow.ButtonGlow_Stop(frame.ItemFrame.IconGlow);
     end
     frame:Hide();
 
@@ -23,7 +23,7 @@ function LootReserve.Client:RollRequested(sender, item, players)
     frame.LabelSender:SetText(format("|c%s%s|r asks you to roll on the item you reserved:", LootReserve:GetPlayerClassColor(sender), sender));
     frame.ItemFrame.Icon:SetTexture(texture);
     frame.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
-    frame.ItemFrame.Type:SetText(type);
+    frame.ItemFrame.Misc:SetText(type);
     frame.ButtonRoll:Disable();
     frame.ButtonRoll:SetAlpha(0.25);
     frame.ButtonPass:Disable();
@@ -37,7 +37,7 @@ function LootReserve.Client:RollRequested(sender, item, players)
             frame.ButtonPass:Enable();
             frame.ButtonPass:SetAlpha(1);
             if LibCustomGlow then
-                LibCustomGlow.ButtonGlow_Start(frame.ItemFrame.Icon);
+                LibCustomGlow.ButtonGlow_Start(frame.ItemFrame.IconGlow);
             end
         end
     end);
@@ -51,7 +51,7 @@ end
 
 function LootReserve.Client:RespondToRollRequest(response)
     if LibCustomGlow then
-        LibCustomGlow.ButtonGlow_Stop(LootReserveRollRequestWindow.ItemFrame.Icon);
+        LibCustomGlow.ButtonGlow_Stop(LootReserveRollRequestWindow.ItemFrame.IconGlow);
     end
     if response then
         RandomRoll(1, 100);

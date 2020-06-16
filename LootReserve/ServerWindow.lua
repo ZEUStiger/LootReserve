@@ -116,9 +116,9 @@ function LootReserve.Server:UpdateReserveList(lockdown)
             for player, count in pairs(tracking.Players) do
                 players = players .. (#players > 0 and ", " or "") .. format("|c%s%s|r", LootReserve:GetPlayerClassColor(player), player) .. (count > 1 and format(" (%d)", count) or "");
             end
-            frame.ItemFrame.Location:SetText("Looted by " .. players);
+            frame.ItemFrame.Misc:SetText("Looted by " .. players);
         else
-            frame.ItemFrame.Location:SetText("Not looted");
+            frame.ItemFrame.Misc:SetText("Not looted");
         end
 
         local reservesHeight = 5 + 12 + 2;

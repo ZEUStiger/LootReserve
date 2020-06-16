@@ -56,6 +56,77 @@
 		<HighlightTexture file="Interface\ChatFrame\UI-ChatIM-SizeGrabber-Highlight"/>
 		<PushedTexture file="Interface\ChatFrame\UI-ChatIM-SizeGrabber-Down"/>
 	</Button>
+	<Button name="LootReserveItemButtomTemplate" virtual="true">
+		<KeyValues>
+			<!--
+			<KeyValue key="tooltipRight" value="false" type="boolean" />
+			-->
+		</KeyValues>
+		<Size y="32" />
+		<Frames>
+			<Frame parentKey="Icon" enableMouse="true">
+				<Size x="32" y="32" />
+				<Anchors>
+					<Anchor point="TOPLEFT" />
+				</Anchors>
+				<Layers>
+					<Layer>
+						<Texture parentKey="Texture" setAllPoints="true" nonBlocking="true" />
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnEnter>
+						if self:GetParent().tooltipRight then
+							GameTooltip:SetOwner(self, "ANCHOR_NONE");
+							GameTooltip:ClearAllPoints();
+							GameTooltip:SetPoint("TOPLEFT", self, "TOPRIGHT");
+						else
+							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						end
+						GameTooltip:SetHyperlink("item:" .. self:GetParent():GetParent().Item);
+						GameTooltip:Show();
+					</OnEnter>
+					<OnLeave function="GameTooltip_Hide" />
+				</Scripts>
+			</Frame>
+			<Frame parentKey="IconGlow">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.Icon" x="-5" y="5" />
+					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Icon" x="5" y="-5" />
+				</Anchors>
+			</Frame>
+		</Frames>
+		<Layers>
+			<Layer>
+				<FontString parentKey="Name" inherits="GameFontNormalLarge" justifyH="LEFT">
+					<Size y="20" />
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Icon" relativePoint="TOPRIGHT" x="5" />
+						<Anchor point="TOPRIGHT" />
+					</Anchors>
+				</FontString>
+				<FontString parentKey="Misc" inherits="GameFontNormalGraySmall" justifyH="LEFT">
+					<Size y="12" />
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.Name" relativePoint="BOTTOMLEFT" />
+						<Anchor point="BOTTOMRIGHT" />
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self.Icon.SetTexture = function(self, texture)
+					self.Texture:SetTexture(texture);
+				end
+			</OnLoad>
+			<OnClick>
+				if button == "LeftButton" then
+					HandleModifiedItemClick(self:GetParent().Link);
+				end
+			</OnClick>
+		</Scripts>
+	</Button>
 	<Font name="LootReserveDurationStatusBarFont" font="Fonts\FRIZQT__.TTF" outline="NORMAL" virtual="true">
 		<FontHeight>
 			<AbsValue val="11" />

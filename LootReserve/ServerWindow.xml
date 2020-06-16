@@ -211,51 +211,14 @@
 				<HighlightTexture file="Interface\Buttons\UI-GroupLoot-Dice-Highlight" alphaMode="ADD" />
 				<PushedTexture file="Interface\Buttons\UI-GroupLoot-Dice-Down" />
 			</Button>
-			<Button parentKey="ItemFrame">
-				<Size y="32" />
+			<Button parentKey="ItemFrame" inherits="LootReserveItemButtomTemplate">
+				<KeyValues>
+					<KeyValue key="tooltipRight" value="true" type="boolean" />
+				</KeyValues>
 				<Anchors>
 					<Anchor point="TOPLEFT" x="6" y="-6" />
 					<Anchor point="TOPRIGHT" relativeKey="$parent.RequestRollButton" relativePoint="TOPLEFT" x="-5" />
 				</Anchors>
-				<Layers>
-					<Layer>
-						<Texture parentKey="Icon" nonBlocking="true">
-							<Size x="32" y="32" />
-							<Anchors>
-								<Anchor point="TOPLEFT" x="0" y="0" />
-							</Anchors>
-						</Texture>
-						<FontString parentKey="Name" inherits="GameFontNormalLarge" justifyH="LEFT">
-							<Size y="20" />
-							<Anchors>
-								<Anchor point="TOPLEFT" relativeKey="$parent.Icon" relativePoint="TOPRIGHT" x="5" />
-								<Anchor point="TOPRIGHT" />
-							</Anchors>
-						</FontString>
-						<FontString parentKey="Location" inherits="GameFontNormalGraySmall" justifyH="LEFT">
-							<Size y="12" />
-							<Anchors>
-								<Anchor point="TOPLEFT" relativeKey="$parent.Name" relativePoint="BOTTOMLEFT" />
-								<Anchor point="BOTTOMRIGHT" />
-							</Anchors>
-						</FontString>
-					</Layer>
-				</Layers>
-				<Scripts>
-					<OnClick>
-						if button == "LeftButton" then
-							HandleModifiedItemClick(self:GetParent().Link);
-						end
-					</OnClick>
-					<OnEnter>
-						GameTooltip:SetOwner(self, "ANCHOR_NONE");
-						GameTooltip:ClearAllPoints();
-						GameTooltip:SetPoint("TOPLEFT", self, "BOTTOMLEFT");
-						GameTooltip:SetHyperlink("item:" .. self:GetParent().Item);
-						GameTooltip:Show();
-					</OnEnter>
-					<OnLeave function="GameTooltip_Hide" />
-				</Scripts>
 			</Button>
 			<Frame parentKey="ReservesFrame">
 				<Anchors>

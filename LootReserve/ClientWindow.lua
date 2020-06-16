@@ -96,7 +96,7 @@ function LootReserve.Client:UpdateLootList()
 
             frame.ItemFrame.Icon:SetTexture(texture);
             frame.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
-            frame.ItemFrame.Type:SetText(source or type);
+            frame.ItemFrame.Misc:SetText(source or type);
         end
 
         list.ContentHeight = list.ContentHeight + frame:GetHeight();
