@@ -21,6 +21,7 @@ local Opcodes =
     CancelReserve = 10,
     CancelReserveResult = 11,
     RequestRoll = 12,
+    PassRoll = 13,
 };
 
 function LootReserve.Comm:StartListening()
@@ -314,14 +315,33 @@ LootReserve.Comm.Handlers[Opcodes.CancelReserveResult] = function(sender, item, 
 end
 
 -- RequestRoll
-function LootReserve.Comm:SendRequestRoll(target, item)
-    LootReserve.Comm:Whisper(target, Opcodes.RequestRoll,
-        item);
+function LootReserve.Comm:BroadcastRequestRoll(item, players)
+    LootReserve.Comm:Broadcast(Opcodes.RequestRoll,
+        item,
+        strjoin(",", unpack(players)));
 end
-LootReserve.Comm.Handlers[Opcodes.RequestRoll] = function(sender, item)
+LootReserve.Comm.Handlers[Opcodes.RequestRoll] = function(sender, item, players)
     item = tonumber(item);
 
     if LootReserve.Client.SessionServer == sender then
-        print("RequestRoll:", item);
+        if #players > 0 then
+            players = { strsplit(",", players) };
+        else
+            players = { };
+        end
+        LootReserve.Client:RollRequested(sender, item, players);
+    end
+end
+
+-- PassRoll
+function LootReserve.Comm:SendPassRoll(item)
+    LootReserve.Comm:WhisperServer(Opcodes.PassRoll,
+        item);
+end
+LootReserve.Comm.Handlers[Opcodes.PassRoll] = function(sender, item)
+    item = tonumber(item);
+
+    if LootReserve.Server.CurrentSession then
+        LootReserve.Server:PassRoll(sender, item);
     end
 end

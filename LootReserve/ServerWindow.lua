@@ -42,10 +42,11 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
                 if button:IsShown() then
                     if self.RequestedRoll and self.RequestedRoll.Item == frame.Item and self.RequestedRoll.Players[button.Player] then
                         local roll = self.RequestedRoll.Players[button.Player];
-                        local winner = roll ~= 0 and highest ~= 0 and roll == highest;
-                        local color = winner and GREEN_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
+                        local winner = roll > 0 and highest > 0 and roll == highest;
+                        local pass = roll < 0;
+                        local color = winner and GREEN_FONT_COLOR or pass and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
                         button.Roll:Show();
-                        button.Roll:SetText(roll ~= 0 and tostring(roll) or "...");
+                        button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or "...");
                         button.Roll:SetTextColor(color.r, color.g, color.b);
                         button.WinnerHighlight:SetShown(winner);
                     else

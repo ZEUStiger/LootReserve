@@ -1,11 +1,10 @@
 -- TODO: Stop client session when the server or the client leaves the group
 -- TODO: Chat command support and announcements in raid chat
--- TODO: Guild-only checkbox
 -- TODO: Show server reserves in item tooltips
 -- TODO: Client popup on roll request
 -- TODO: Ask to clean up loot list
--- TODO: Vendorstrike easter egg
 -- TODO: Disable server window buttons when not authority
+-- TODO: Move item tooltips to icon only
 
 LootReserve = LibStub("AceAddon-3.0"):NewAddon("LootReserve", "AceConsole-3.0", "AceEvent-3.0");
 
@@ -89,6 +88,15 @@ function LootReserve:GetRaidUnitID(player)
     if self.Comm.SoloDebug and Ambiguate(UnitName("player"), "short") == player then
         return "player";
     end
+end
+
+function LootReserve:Contains(table, item)
+    for _, i in ipairs(table) do
+        if i == item then
+            return true;
+        end
+    end
+    return false;
 end
 
 function LootReserve:Ordered(tbl, sorter)

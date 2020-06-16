@@ -413,8 +413,6 @@
 							</OnLoad>
 						</Scripts>
 					</Frame>
-					<!-- GUILD ONLY -->
-					<!-- RANK LIMIT -->
 					<EditBox name="LootReserveServerDropDownCount" parentKey="EditBoxCount" inherits="InputBoxTemplate" autoFocus="false">
 						<Size x="40" y="20" />
 						<Anchors>

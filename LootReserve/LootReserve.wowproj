@@ -42,6 +42,13 @@
     <Content Include="ClientWindow.xml">
       <SubType>Frame</SubType>
     </Content>
+    <Content Include="RollRequestWindow.lua">
+      <SubType>Code</SubType>
+      <DependentUpon>RollRequestWindow.xml</DependentUpon>
+    </Content>
+    <Content Include="RollRequestWindow.xml">
+      <SubType>Frame</SubType>
+    </Content>
     <Content Include="Server.lua">
       <SubType>Code</SubType>
     </Content>

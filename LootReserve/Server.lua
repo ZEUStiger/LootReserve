@@ -43,14 +43,6 @@ local function deepcopy(orig)
     end
     return copy
 end
-local function contains(table, item)
-    for _, i in ipairs(table) do
-        if i == item then
-            return true;
-        end
-    end
-    return false;
-end
 local function removeFromTable(tbl, item)
     for index, i in ipairs(tbl) do
         if i == item then
@@ -303,7 +295,7 @@ function LootReserve.Server:Reserve(player, item)
         return;
     end
 
-    if contains(member.ReservedItems, item) then
+    if LootReserve:Contains(member.ReservedItems, item) then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.AlreadyReserved, member.ReservesLeft);
         return;
     end
@@ -346,7 +338,7 @@ function LootReserve.Server:CancelReserve(player, item, forced)
         return;
     end
 
-    if not contains(member.ReservedItems, item) then
+    if not LootReserve:Contains(member.ReservedItems, item) then
         LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.NotReserved, member.ReservesLeft);
         return;
     end
@@ -398,8 +390,18 @@ function LootReserve.Server:RequestRoll(item)
 
     for _, player in ipairs(reserve.Players) do
         self.RequestedRoll.Players[player] = 0;
-        LootReserve.Comm:SendRequestRoll(player, item);
     end
+    LootReserve.Comm:BroadcastRequestRoll(item, reserve.Players);
+
+    self:UpdateReserveListRolls();
+end
+
+function LootReserve.Server:PassRoll(player, item)
+    if not self.RequestedRoll or self.RequestedRoll.Item ~= item or not self.RequestedRoll.Players[player] then
+        return;
+    end
+
+    self.RequestedRoll.Players[player] = -1;
 
     self:UpdateReserveListRolls();
 end
