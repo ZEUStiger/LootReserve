@@ -89,6 +89,8 @@
 								<Texture parentKey="One" setAllPoints="true" file="Interface\RAIDFRAME\ReadyCheck-Ready" />
 								<Texture parentKey="Many" setAllPoints="true" file="Interface\BUTTONS\UI-GroupLoot-Dice-Up" />
 								<FontString parentKey="Number" inherits="GameFontNormalLarge" setAllPoints="true" />
+							</Layer>
+							<Layer level="OVERLAY">
 								<FontString parentKey="NumberMany" inherits="GameFontNormal" justifyV="BOTTOM" justifyH="RIGHT" setAllPoints="true" />
 							</Layer>
 						</Layers>
