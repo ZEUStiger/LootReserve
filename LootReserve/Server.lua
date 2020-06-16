@@ -368,6 +368,14 @@ function LootReserve.Server:RequestRoll(item)
         return;
     end
 
+    if self.RequestedRoll then
+        -- Cancel roll
+        self.RequestedRoll = nil;
+        LootReserve.Comm:BroadcastRequestRoll(0, { });
+        self:UpdateReserveListRolls();
+        return;
+    end
+
     if not self.RollMatcherRegistered then
         self.RollMatcherRegistered = true;
         local rollMatcher = formatToRegexp(RANDOM_ROLL_RESULT);

@@ -27,7 +27,10 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
 
     for _, frame in ipairs(list.Frames) do
         if frame:IsShown() then
-            frame.ReservesFrame.HeaderRoll:SetShown(self.RequestedRoll and self.RequestedRoll.Item == frame.Item);
+            local rollingThisItem = self.RequestedRoll and self.RequestedRoll.Item == frame.Item;
+
+            frame.ReservesFrame.HeaderRoll:SetShown(rollingThisItem);
+            frame.RequestRollButton.CancelIcon:SetShown(rollingThisItem);
 
             local highest = 0;
             if self.RequestedRoll then
@@ -40,7 +43,7 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
 
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    if self.RequestedRoll and self.RequestedRoll.Item == frame.Item and self.RequestedRoll.Players[button.Player] then
+                    if rollingThisItem and self.RequestedRoll.Players[button.Player] then
                         local roll = self.RequestedRoll.Players[button.Player];
                         local winner = roll > 0 and highest > 0 and roll == highest;
                         local pass = roll < 0;

@@ -195,15 +195,34 @@
 				<Anchors>
 					<Anchor point="TOPRIGHT" x="-6" y="-6" />
 				</Anchors>
+				<Layers>
+					<Layer level="OVERLAY">
+						<Texture parentKey="CancelIcon" file="Interface\Buttons\UI-GroupLoot-Pass-Up">
+							<Size x="16" y="16" />
+							<Anchors>
+								<Anchor point="BOTTOMRIGHT" />
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
 				<Scripts>
+					<OnLoad>
+						self.UpdateTooltip = function(self)
+							local rollingThisItem = LootReserve.Server.RequestedRoll and LootReserve.Server.RequestedRoll.Item == self:GetParent().Item;
+							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+							GameTooltip:SetText(rollingThisItem and "End Roll" or "Request Roll");
+							GameTooltip:AddLine(rollingThisItem and "Stop accepting rolls for this item." or "Ask all players who reserved this item to /roll on it.", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
+							GameTooltip:Show();
+						end
+					</OnLoad>
 					<OnClick>
 						LootReserve.Server:RequestRoll(self:GetParent().Item);
+						if GameTooltip:IsOwned(self) then
+							self:UpdateTooltip();
+						end
 					</OnClick>
 					<OnEnter>
-						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-						GameTooltip:SetText("Request Roll");
-						GameTooltip:AddLine("Ask all players who reserved this item to /roll on it.", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
-						GameTooltip:Show();
+						self:UpdateTooltip();
 					</OnEnter>
 					<OnLeave function="GameTooltip_Hide" />
 				</Scripts>
