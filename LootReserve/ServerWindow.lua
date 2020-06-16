@@ -1,7 +1,7 @@
-function LootReserve.Server:UpdateReserveListUnits()
-    if InCombatLockdown() then return; end
+function LootReserve.Server:UpdateReserveListUnits(lockdown)
+    lockdown = lockdown or InCombatLockdown();
 
-    local list = self.Window.PanelReserves.Scroll.Container;
+    local list = (lockdown and self.Window.PanelReservesLockdown or self.Window.PanelReserves).Scroll.Container;
     list.Frames = list.Frames or { };
 
     for _, frame in ipairs(list.Frames) do
@@ -10,17 +10,19 @@ function LootReserve.Server:UpdateReserveListUnits()
                 if button:IsShown() then
                     local unit = LootReserve:GetRaidUnitID(button.Player);
                     button.Unit = unit;
-                    button:SetAttribute("unit", unit);
+                    if not lockdown then
+                        button:SetAttribute("unit", unit);
+                    end
                 end
             end
         end
     end
 end
 
-function LootReserve.Server:UpdateReserveListRolls()
-    if InCombatLockdown() then return; end
+function LootReserve.Server:UpdateReserveListRolls(lockdown)
+    lockdown = lockdown or InCombatLockdown();
 
-    local list = self.Window.PanelReserves.Scroll.Container;
+    local list = (lockdown and self.Window.PanelReservesLockdown or self.Window.PanelReserves).Scroll.Container;
     list.Frames = list.Frames or { };
 
     for _, frame in ipairs(list.Frames) do
@@ -56,15 +58,15 @@ function LootReserve.Server:UpdateReserveListRolls()
     end
 end
 
-function LootReserve.Server:UpdateReserveList()
-    if InCombatLockdown() then return; end
+function LootReserve.Server:UpdateReserveList(lockdown)
+    lockdown = lockdown or InCombatLockdown();
 
     local filter = self.Window.Search:GetText():gsub("^%s*(.-)%s*$", "%1"):upper();
     if #filter == 0 then
         filter = nil;
     end
 
-    local list = self.Window.PanelReserves.Scroll.Container;
+    local list = (lockdown and self.Window.PanelReservesLockdown or self.Window.PanelReserves).Scroll.Container;
     list.Frames = list.Frames or { };
     list.LastIndex = 0;
     list.ContentHeight = 0;
@@ -120,11 +122,17 @@ function LootReserve.Server:UpdateReserveList()
 
         local reservesHeight = 5 + 12 + 2;
         local last = 0;
+        frame.ReservesFrame.Players = frame.ReservesFrame.Players or { };
         for i, player in ipairs(reserve.Players) do
             if i > #frame.ReservesFrame.Players then
-                local button = CreateFrame("Button", nil, frame.ReservesFrame, "LootReserveReserveListPlayerTemplate");
-                button:SetPoint("TOPLEFT", frame.ReservesFrame.Players[i - 1], "BOTTOMLEFT");
-                button:SetPoint("TOPRIGHT", frame.ReservesFrame.Players[i - 1], "BOTTOMRIGHT");
+                local button = CreateFrame("Button", nil, frame.ReservesFrame, lockdown and "LootReserveReserveListPlayerTemplate" or "LootReserveReserveListPlayerSecureTemplate");
+                if #frame.ReservesFrame.Players == 0 then
+                    button:SetPoint("TOPLEFT", frame.ReservesFrame, "TOPLEFT", 0, -14);
+                    button:SetPoint("TOPRIGHT", frame.ReservesFrame, "TOPRIGHT", 0, 0);
+                else
+                    button:SetPoint("TOPLEFT", frame.ReservesFrame.Players[i - 1], "BOTTOMLEFT");
+                    button:SetPoint("TOPRIGHT", frame.ReservesFrame.Players[i - 1], "BOTTOMRIGHT");
+                end
                 table.insert(frame.ReservesFrame.Players, button);
             end
             local unit = LootReserve:GetRaidUnitID(player);
@@ -132,7 +140,9 @@ function LootReserve.Server:UpdateReserveList()
             button:Show();
             button.Player = player;
             button.Unit = unit;
-            button:SetAttribute("unit", unit);
+            if not lockdown then
+                button:SetAttribute("unit", unit);
+            end
             button.Name:SetText(format("|c%s%s|r", LootReserve:GetPlayerClassColor(player), player));
             button.Roll:SetText("");
             button.WinnerHighlight:Hide();
@@ -180,7 +190,7 @@ function LootReserve.Server:UpdateReserveList()
 
     list:SetSize(list:GetParent():GetWidth(), math.max(list.ContentHeight or 0, list:GetParent():GetHeight() - 1));
 
-    self:UpdateReserveListRolls();
+    self:UpdateReserveListRolls(lockdown);
 end
 
 function LootReserve.Server:OnWindowTabClick(tab)
@@ -201,10 +211,9 @@ function LootReserve.Server:SetWindowTab(tab)
 
     for i, panel in ipairs(self.Window.Panels) do
         if panel == self.Window.PanelReserves and InCombatLockdown() then
-            self.Window.PanelReservesLockout:SetShown(i == tab);
-        else
-            panel:SetShown(i == tab);
+            panel = self.Window.PanelReservesLockdown;
         end
+        panel:SetShown(i == tab);
     end
 end
 
@@ -223,18 +232,26 @@ function LootReserve.Server:OnWindowLoad(window)
         end
     end);
     LootReserve:RegisterEvent("PLAYER_REGEN_DISABLED", function()
+        -- Swap out the real (tained) reserves panel for a slightly less functional one, but one that doesn't have taint
         if self.Window.PanelReserves:IsShown() then
             self.Window.PanelReserves:Hide();
-            self.Window.PanelReservesLockout:Show();
+            self.Window.PanelReservesLockdown:Show();
         end
+        -- Sync changes between real and lockdown panels
+        self:UpdateReserveList(true);
+        self.Window.PanelReservesLockdown.Scroll:UpdateScrollChildRect();
+        self.Window.PanelReservesLockdown.Scroll:SetVerticalScroll(self.Window.PanelReserves.Scroll:GetVerticalScroll());
     end);
     LootReserve:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-        if self.Window.PanelReservesLockout:IsShown() then
+        -- Restore original reserves panel
+        if self.Window.PanelReservesLockdown:IsShown() then
+            self.Window.PanelReservesLockdown:Hide();
             self.Window.PanelReserves:Show();
-            self.Window.PanelReservesLockout:Hide();
-            self:UpdateReserveList();
-            self:UpdateReserveListRolls();
         end
+        -- Sync changes between real and lockdown panels
+        self:UpdateReserveList();
+        self.Window.PanelReserves.Scroll:UpdateScrollChildRect();
+        self.Window.PanelReserves.Scroll:SetVerticalScroll(self.Window.PanelReservesLockdown.Scroll:GetVerticalScroll());
     end);
 end
 

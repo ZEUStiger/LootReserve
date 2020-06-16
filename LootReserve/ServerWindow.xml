@@ -84,18 +84,9 @@
 		<HighlightFont style="GameFontHighlightSmall" />
 		<DisabledFont style="GameFontHighlightSmall" />
 	</Button>
-	<Button name="LootReserveReserveListPlayerTemplate" inherits="SecureUnitButtonTemplate" virtual="true">
+	<Button name="LootReserveReserveListPlayerTemplate" virtual="true">
 		<Size y="16" />
 		<Layers>
-			<Layer level="HIGHLIGHT">
-				<Texture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" alpha="0.25">
-					<Anchors>
-						<Anchor point="TOPLEFT" x="16" />
-						<Anchor point="BOTTOMRIGHT" />
-					</Anchors>
-					<Color r="1" g="1" b="1" />
-				</Texture>
-			</Layer>
 			<Layer>
 				<Texture parentKey="WinnerHighlight" file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" alpha="0.5">
 					<Anchors>
@@ -128,7 +119,6 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						if InCombatLockdown() then return; end
 						local player = self:GetParent().Player;
 						local frame = self:GetParent():GetParent():GetParent();
 						local data = { Player = player, Item = frame.Item };
@@ -141,6 +131,24 @@
 			</Button>
 			<Frame parentKey="DropDown" inherits="UIDropDownMenuTemplate" hidden="true" />
 		</Frames>
+		<Scripts>
+			<OnUpdate>
+				self.ButtonDelete:SetShown(self:IsMouseOver());
+			</OnUpdate>
+		</Scripts>
+	</Button>
+	<Button name="LootReserveReserveListPlayerSecureTemplate" inherits="LootReserveReserveListPlayerTemplate, SecureUnitButtonTemplate" virtual="true">
+		<Layers>
+			<Layer level="HIGHLIGHT">
+				<Texture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" alpha="0.25">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="16" />
+						<Anchor point="BOTTOMRIGHT" />
+					</Anchors>
+					<Color r="1" g="1" b="1" />
+				</Texture>
+			</Layer>
+		</Layers>
 		<Scripts>
 			<OnLoad>
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
@@ -281,14 +289,6 @@
 						</Texture>
 					</Layer>
 				</Layers>
-				<Frames>
-					<Button parentArray="Players" inherits="LootReserveReserveListPlayerTemplate">
-						<Anchors>
-							<Anchor point="TOPLEFT" y="-14" />
-							<Anchor point="TOPRIGHT" />
-						</Anchors>
-					</Button>
-				</Frames>
 			</Frame>
 		</Frames>
 	</Frame>
@@ -539,18 +539,33 @@
 					</ScrollFrame>
 				</Frames>
 			</Frame>
-			<Frame parentKey="PanelReservesLockout" hidden="true">
+			<Frame parentKey="PanelReservesLockdown" hidden="true">
 				<Anchors>
 					<Anchor point="TOPLEFT" x="7" y="-48" />
 					<Anchor point="BOTTOMRIGHT" x="-9" y="6" />
 				</Anchors>
-				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background">
-				</Backdrop>
-				<Layers>
-					<Layer>
-						<FontString inherits="GameFontNormal" text="Disabled in Combat" />
-					</Layer>
-				</Layers>
+				<Frames>
+					<ScrollFrame parentKey="Scroll" inherits="UIPanelScrollFrameTemplate">
+						<Anchors>
+							<Anchor point="TOPLEFT" x="1" y="-1" />
+							<Anchor point="BOTTOMRIGHT" x="-23" y="1" />
+						</Anchors>
+						<Frames>
+							<Frame parentKey="Container" />
+						</Frames>
+						<Scripts>
+							<OnLoad>
+								self:SetScrollChild(self.Container);
+							</OnLoad>
+							<OnShow>
+								self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
+							</OnShow>
+							<OnSizeChanged>
+								self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
+							</OnSizeChanged>
+						</Scripts>
+					</ScrollFrame>
+				</Frames>
 			</Frame>
 		</Frames>
 		<Scripts>
