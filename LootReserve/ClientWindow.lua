@@ -291,6 +291,7 @@ function LootReserve.Client:OnCategoryClick(button)
     end
 
     self.SelectedCategory = button.Category;
+    self.Window.Loot.Scroll:SetVerticalScroll(0);
     self:UpdateLootList();
 end
 

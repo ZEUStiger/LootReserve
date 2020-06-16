@@ -1,6 +1,5 @@
 -- TODO: Stop client session when the server or the client leaves the group
 -- TODO: Chat command support and announcements in raid chat
--- TODO: Scroll up on category change
 -- TODO: Guild-only checkbox
 -- TODO: Show server reserves in item tooltips
 -- TODO: Client popup on roll request
