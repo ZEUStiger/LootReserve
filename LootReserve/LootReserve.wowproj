@@ -26,6 +26,16 @@
     <Content Include="Data.lua">
       <SubType>Code</SubType>
     </Content>
+    <Content Include="Libs\LibCustomGlow-1.0\LibCustomGlow-1.0.lua">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="Libs\LibCustomGlow-1.0\LibCustomGlow-1.0.toc">
+      <SubType>TableOfContents</SubType>
+    </Content>
+    <Content Include="Libs\LibCustomGlow-1.0\LibCustomGlow-1.0.xml">
+      <SubType>Frame</SubType>
+    </Content>
+    <Content Include="Libs\LibCustomGlow-1.0\README.md" />
     <Content Include="LootReserve.toc">
       <SubType>TableOfContents</SubType>
     </Content>
@@ -263,6 +273,7 @@
     <Folder Include="Libs\AceTab-3.0\" />
     <Folder Include="Libs\AceTimer-3.0\" />
     <Folder Include="Libs\CallbackHandler-1.0\" />
+    <Folder Include="Libs\LibCustomGlow-1.0\" />
     <Folder Include="Libs\LibStub\" />
   </ItemGroup>
   <Import Project="$(DevEnvDir)\Extensions\Tools\MSBuild\AddonStudio\Wow\3.0\WowAddonStudio.targets" />
