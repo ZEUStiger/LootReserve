@@ -1,4 +1,6 @@
 function LootReserve.Server:UpdateReserveListUnits()
+    if InCombatLockdown() then return; end
+
     local list = self.Window.PanelReserves.Scroll.Container;
     list.Frames = list.Frames or { };
 
@@ -16,6 +18,8 @@ function LootReserve.Server:UpdateReserveListUnits()
 end
 
 function LootReserve.Server:UpdateReserveListRolls()
+    if InCombatLockdown() then return; end
+
     local list = self.Window.PanelReserves.Scroll.Container;
     list.Frames = list.Frames or { };
 
@@ -53,6 +57,8 @@ function LootReserve.Server:UpdateReserveListRolls()
 end
 
 function LootReserve.Server:UpdateReserveList()
+    if InCombatLockdown() then return; end
+
     local filter = self.Window.Search:GetText():gsub("^%s*(.-)%s*$", "%1"):upper();
     if #filter == 0 then
         filter = nil;
@@ -194,7 +200,11 @@ function LootReserve.Server:SetWindowTab(tab)
     self.Window.Search:SetShown(tab == 2 and not self.Window.Duration:IsShown());
 
     for i, panel in ipairs(self.Window.Panels) do
-        panel:SetShown(i == tab);
+        if panel == self.Window.PanelReserves and InCombatLockdown() then
+            self.Window.PanelReservesLockout:SetShown(i == tab);
+        else
+            panel:SetShown(i == tab);
+        end
     end
 end
 
@@ -210,6 +220,20 @@ function LootReserve.Server:OnWindowLoad(window)
     LootReserve:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(item, success)
         if item and self.CurrentSession and self.CurrentSession.ItemReserves[item] then
             self:UpdateReserveList();
+        end
+    end);
+    LootReserve:RegisterEvent("PLAYER_REGEN_DISABLED", function()
+        if self.Window.PanelReserves:IsShown() then
+            self.Window.PanelReserves:Hide();
+            self.Window.PanelReservesLockout:Show();
+        end
+    end);
+    LootReserve:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+        if self.Window.PanelReservesLockout:IsShown() then
+            self.Window.PanelReserves:Show();
+            self.Window.PanelReservesLockout:Hide();
+            self:UpdateReserveList();
+            self:UpdateReserveListRolls();
         end
     end);
 end

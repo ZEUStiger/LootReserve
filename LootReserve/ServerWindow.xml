@@ -128,6 +128,7 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
+						if InCombatLockdown() then return; end
 						local player = self:GetParent().Player;
 						local frame = self:GetParent():GetParent():GetParent();
 						local data = { Player = player, Item = frame.Item };
@@ -159,6 +160,7 @@
 				end;
 			</OnLoad>
 			<OnUpdate>
+				if InCombatLockdown() then return; end
 				self.ButtonDelete:SetShown(self:IsMouseOver());
 			</OnUpdate>
 		</Scripts>
@@ -526,14 +528,29 @@
 								self:SetScrollChild(self.Container);
 							</OnLoad>
 							<OnShow>
+								if InCombatLockdown() then return; end
 								self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
 							</OnShow>
 							<OnSizeChanged>
+								if InCombatLockdown() then return; end
 								self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
 							</OnSizeChanged>
 						</Scripts>
 					</ScrollFrame>
 				</Frames>
+			</Frame>
+			<Frame parentKey="PanelReservesLockout" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" x="7" y="-48" />
+					<Anchor point="BOTTOMRIGHT" x="-9" y="6" />
+				</Anchors>
+				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background">
+				</Backdrop>
+				<Layers>
+					<Layer>
+						<FontString inherits="GameFontNormal" text="Disabled in Combat" />
+					</Layer>
+				</Layers>
 			</Frame>
 		</Frames>
 		<Scripts>

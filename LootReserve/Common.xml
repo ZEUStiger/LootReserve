@@ -11,11 +11,13 @@
 			</OnMouseDown>
 			<OnMouseUp>
 				self:GetParent():StopMovingOrSizing();
-				
+
 				function round(num, numDecimalPlaces)
 					local mult = 10 ^ (numDecimalPlaces or 0)
 					return math.floor(num * mult + 0.5) / mult
 				end
+
+				if self:GetParent():IsProtected() and InCombatLockdown() then return; end
 
 				local point, relativeFrame, relativePoint, x, y = self:GetParent():GetPoint(1);
 				self:GetParent():ClearAllPoints();
@@ -43,6 +45,8 @@
 					local mult = 10 ^ (numDecimalPlaces or 0)
 					return math.floor(num * mult + 0.5) / mult
 				end
+
+				if self:GetParent():IsProtected() and InCombatLockdown() then return; end
 
 				local w, h = self:GetParent():GetSize();
 				self:GetParent():SetSize(round(w), round(h));
