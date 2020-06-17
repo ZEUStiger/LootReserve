@@ -356,6 +356,10 @@ function LootReserve.Server:CancelReserve(player, item, forced)
     removeFromTable(member.ReservedItems, item);
     LootReserve.Comm:SendCancelReserveResult(player, item, forced and LootReserve.Constants.CancelReserveResult.Forced or LootReserve.Constants.CancelReserveResult.OK, member.ReservesLeft);
 
+    if self.RequestedRoll and self.RequestedRoll.Item == item then
+        self.RequestedRoll.Players[player] = nil;
+    end
+
     local reserve = self.CurrentSession.ItemReserves[item];
     if reserve then
         removeFromTable(reserve.Players, player);
