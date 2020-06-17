@@ -13,7 +13,7 @@ LootReserve.Server =
     ReservableItems = { },
     DurationUpdateRegistered = false,
     RollMatcherRegistered = false,
-    LootTrackingRegistered = false,
+    SessionEventsRegistered = false,
 };
 
 StaticPopupDialogs["LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE"] =
@@ -136,8 +136,8 @@ self.CurrentSession.ItemReserves[16800] = { StartTime = time(), Players = { "Tag
             end
         end);
     end
-    if not self.LootTrackingRegistered then
-        self.LootTrackingRegistered = true;
+    if not self.SessionEventsRegistered then
+        self.SessionEventsRegistered = true;
         local loot = formatToRegexp(LOOT_ITEM);
         local lootMultiple = formatToRegexp(LOOT_ITEM_MULTIPLE);
         local lootSelf = formatToRegexp(LOOT_ITEM_SELF);
@@ -183,6 +183,22 @@ self.CurrentSession.ItemReserves[16800] = { StartTime = time(), Players = { "Tag
                 tracking.Players[looter] = (tracking.Players[looter] or 0) + count;
 
                 self:UpdateReserveList();
+            end
+        end);
+
+        GameTooltip:HookScript("OnTooltipSetItem", function(tooltip)
+            if self.CurrentSession then
+                local name, link = tooltip:GetItem();
+                if not link then return; end
+
+                local item = tonumber(link:match("item:(%d+)"));
+                if item and self.CurrentSession.ItemReserves[item] then
+                    local players = "";
+                    for _, player in ipairs(self.CurrentSession.ItemReserves[item].Players) do
+                        players = players .. format(#players > 0 and ", |c%s%s|r" or "|c%s%s|r", LootReserve:GetPlayerClassColor(player), player);
+                    end
+                    tooltip:AddLine("|TInterface\\BUTTONS\\UI-GroupLoot-Dice-Up:32:32:0:-4|t Reserved by " .. players, 1, 1, 1);
+                end
             end
         end);
     end
