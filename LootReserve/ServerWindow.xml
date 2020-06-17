@@ -500,6 +500,42 @@
 							<Anchor point="BOTTOM" relativeKey="$parent.ButtonStartSession" relativePoint="TOP" y="10" />
 						</Anchors>
 					</StatusBar>
+					<Frame parentKey="AddonUsers" hidden="true" enableMouse="true">
+						<Size x="30" y="12" />
+						<Anchors>
+							<Anchor point="BOTTOMRIGHT" x="-2" y="2" />
+						</Anchors>
+						<Layers>
+							<Layer>
+								<FontString parentKey="Text" inherits="GameFontNormalGraySmall">
+									<Anchors>
+										<Anchor point="RIGHT" />
+									</Anchors>
+									<Color r="0.5" g="0.5" b="0.5" />
+								</FontString>
+							</Layer>
+						</Layers>
+						<Scripts>
+							<OnLoad>
+								self.UpdateTooltip = function(self)
+									GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+									GameTooltip:SetText("AddOn Users");
+									for _, compatibility in ipairs({ true, false }) do
+										for player, compatible in LootReserve:Ordered(LootReserve.Server.AddonUsers) do
+											if compatible == compatibility then
+												GameTooltip:AddLine(format("|c%s%s|r%s", LootReserve:GetPlayerClassColor(player), player, compatible and "" or "|cFFFF0000 (outdated)|r"));
+											end
+										end
+									end
+									GameTooltip:Show();
+								end
+							</OnLoad>
+							<OnEnter>
+								self:UpdateTooltip();
+							</OnEnter>
+							<OnLeave function="GameTooltip_Hide" />
+						</Scripts>
+					</Frame>
 					<Frame parentKey="NoAuthority" hidden="true" setAllPoints="true" enableMouse="true" frameLevel="1000">
 						<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background-Dark" />
 						<Layers>

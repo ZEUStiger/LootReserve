@@ -39,7 +39,7 @@ function LootReserve:ShowError(fmt, ...)
 end
 
 function LootReserve:PrintError(fmt, ...)
-    DEFAULT_CHAT_FRAME:AddMessage("|cFFFFD200LootReserve: |r" .. format(fmt, ...), 1, 0.25, 0);
+    DEFAULT_CHAT_FRAME:AddMessage("|cFFFFD200LootReserve: |r" .. format(fmt, ...), 1, 0, 0);
 end
 
 function LootReserve:RegisterUpdate(handler)

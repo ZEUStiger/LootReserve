@@ -75,7 +75,10 @@ function LootReserve.Server:IsAddonUser(player)
 end
 
 function LootReserve.Server:SetAddonUser(player, isUser)
-    self.AddonUsers[player] = isUser;
+    if self.AddonUsers[player] ~= isUser then
+        self.AddonUsers[player] = isUser;
+        self:UpdateAddonUsers();
+    end
 end
 
 function LootReserve.Server:StartSession()
@@ -166,6 +169,8 @@ self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Se
                 self:StopSession();
                 self:ResetSession();
             end
+            table.wipe(self.AddonUsers);
+            self:UpdateAddonUsers();
         end);
 
         LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", function()
@@ -185,6 +190,7 @@ self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Se
                     self.CurrentSession.Members[player] = nil;
                 end
             end
+            self:UpdateAddonUsers();
         end);
 
         local loot = formatToRegexp(LOOT_ITEM);

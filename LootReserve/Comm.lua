@@ -115,12 +115,12 @@ function LootReserve.Comm:BroadcastVersion()
 end
 LootReserve.Comm.Handlers[Opcodes.Version] = function(sender, version, minAllowedVersion)
     if LootReserve.Version < minAllowedVersion then
-        LootReserve:PrintError("You're using an incompatible outdated version of LootReserve. Please update to version %s or newer to continue using the addon.", version);
-        LootReserve:ShowError("You're using an incompatible outdated version of LootReserve. Please update to version %s or newer to continue using the addon.", version);
+        LootReserve:PrintError("You're using an incompatible outdated version of LootReserve. Please update to version |cFFFFD200%s|r or newer to continue using the addon.", version);
+        LootReserve:ShowError("You're using an incompatible outdated version of LootReserve. Please update to version |cFFFFD200%s|r or newer to continue using the addon.", version);
         LootReserve.Comm:BroadcastReportIncompatibleVersion();
         LootReserve.Enabled = false;
     elseif LootReserve.Version < version then
-        LootReserve:PrintError("You're using an outdated version of LootReserve. Please update to version %s or newer.", version);
+        LootReserve:PrintError("You're using an outdated version of LootReserve. Please update to version |cFFFFD200%s|r or newer.", version);
     end
 end
 

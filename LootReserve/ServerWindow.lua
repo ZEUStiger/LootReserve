@@ -339,3 +339,17 @@ function LootReserve.Server:UpdateServerAuthority()
     --self.Window.PanelSession.ButtonStopSession:SetEnabled(hasAuthority);
     --self.Window.PanelSession.ButtonResetSession:SetEnabled(hasAuthority);
 end
+
+function LootReserve.Server:UpdateAddonUsers()
+    if GameTooltip:IsOwned(self.Window.PanelSession.AddonUsers) then
+        self.Window.PanelSession.AddonUsers:UpdateTooltip();
+    end
+    local count = 0;
+    for player, compatible in pairs(self.AddonUsers) do
+        if compatible then
+            count = count + 1;
+        end
+    end
+    self.Window.PanelSession.AddonUsers.Text:SetText(format("%d/%d", count, GetNumGroupMembers()));
+    self.Window.PanelSession.AddonUsers:SetShown(#self.AddonUsers > 0 or GetNumGroupMembers() > 0);
+end
