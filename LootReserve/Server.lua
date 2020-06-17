@@ -10,6 +10,7 @@ LootReserve.Server =
         ChatFallback = true,
     },
     RequestedRoll = nil,
+    AddonUsers = { },
 
     ReservableItems = { },
     DurationUpdateRegistered = false,
@@ -24,7 +25,7 @@ StaticPopupDialogs["LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE"] =
     button1 = YES,
     button2 = NO,
     OnAccept = function(self)
-        LootReserve.Server:CancelReserve(self.data.Player, self.data.Item, true);
+        LootReserve.Server:CancelReserve(self.data.Player, self.data.Item, false, true);
     end,
     timeout = 0,
     whileDead = 1,
@@ -67,6 +68,14 @@ end
 
 function LootReserve.Server:CanBeServer()
     return IsInRaid() and (UnitIsGroupLeader("player") or IsMasterLooter()) or LootReserve.Comm.SoloDebug;
+end
+
+function LootReserve.Server:IsAddonUser(player)
+    return player == UnitName("player") or self.AddonUsers[player] or false;
+end
+
+function LootReserve.Server:SetAddonUser(player, isUser)
+    self.AddonUsers[player] = isUser;
 end
 
 function LootReserve.Server:StartSession()
@@ -167,7 +176,7 @@ self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Se
                         table.insert(leavers, player);
 
                         for i = #member.ReservedItems, 1, -1 do
-                            self:CancelReserve(player, member.ReservedItems[i]);
+                            self:CancelReserve(player, member.ReservedItems[i], false, true);
                         end
                     end
                 end
@@ -293,7 +302,7 @@ self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Se
                 text = stringTrim(text);
                 if #text == 0 and command == "cancel" then
                     if #member.ReservedItems > 0 then
-                        self:CancelReserve(sender, member.ReservedItems[#member.ReservedItems]);
+                        self:CancelReserve(sender, member.ReservedItems[#member.ReservedItems], true);
                     end
                     return;
                 end
@@ -302,9 +311,9 @@ self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Se
                 if item then
                     if self.ReservableItems[item] then
                         if command == "reserve" then
-                            self:Reserve(sender, item);
+                            self:Reserve(sender, item, true);
                         elseif command == "cancel" then
-                            self:CancelReserve(sender, item);
+                            self:CancelReserve(sender, item, true);
                         end
                     else
                         SendChatMessage("That item is not reservable in this raid.", "WHISPER", nil, sender);
@@ -411,7 +420,7 @@ function LootReserve.Server:ResetSession()
     return true;
 end
 
-function LootReserve.Server:Reserve(player, item)
+function LootReserve.Server:Reserve(player, item, chat)
     if not self.CurrentSession then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.NoSession, 0);
         return;
@@ -480,7 +489,9 @@ function LootReserve.Server:Reserve(player, item)
                 member.ReservesLeft == 1 and "reserve" or "reserves"
             ), "WHISPER", nil, player);
         end
-        WhisperPlayer();
+        if chat or not self:IsAddonUser(player) then
+            WhisperPlayer();
+        end
 
         local function WhisperOthers()
             if #reserve.Players <= 1 then return; end
@@ -492,7 +503,7 @@ function LootReserve.Server:Reserve(player, item)
             end
 
             for _, other in ipairs(reserve.Players) do
-                if other ~= player then
+                if other ~= player and not self:IsAddonUser(other) then
                     local others = deepcopy(reserve.Players);
                     removeFromTable(others, other);
 
@@ -512,7 +523,7 @@ function LootReserve.Server:Reserve(player, item)
     self:UpdateReserveList();
 end
 
-function LootReserve.Server:CancelReserve(player, item, forced)
+function LootReserve.Server:CancelReserve(player, item, chat, forced)
     if not self.CurrentSession then
         LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.NoSession, 0);
         return;
@@ -566,7 +577,9 @@ function LootReserve.Server:CancelReserve(player, item, forced)
                 member.ReservesLeft == 1 and "reserve" or "reserves"
             ), "WHISPER", nil, player);
         end
-        WhisperPlayer();
+        if chat or not self:IsAddonUser(player) then
+            WhisperPlayer();
+        end
 
         local function WhisperOthers()
             if #reserve.Players == 0 then return; end
@@ -578,19 +591,21 @@ function LootReserve.Server:CancelReserve(player, item, forced)
             end
 
             for _, other in ipairs(reserve.Players) do
-                local others = deepcopy(reserve.Players);
-                removeFromTable(others, other);
+                if not self:IsAddonUser(other) then
+                    local others = deepcopy(reserve.Players);
+                    removeFromTable(others, other);
 
-                if #others == 0 then
-                    SendChatMessage(format("You are again the only contender for %s.", link), "WHISPER", nil, other);
-                else
-                    SendChatMessage(format("There %s now %d %s for %s you reserved: %s.",
-                        #others == 1 and "is" or "are",
-                        #others,
-                        #others == 1 and "contender" or "contenders",
-                        link,
-                        strjoin(", ", unpack(others))
-                    ), "WHISPER", nil, other);
+                    if #others == 0 then
+                        SendChatMessage(format("You are now the only contender for %s.", link), "WHISPER", nil, other);
+                    else
+                        SendChatMessage(format("There %s now %d %s for %s you reserved: %s.",
+                            #others == 1 and "is" or "are",
+                            #others,
+                            #others == 1 and "contender" or "contenders",
+                            link,
+                            strjoin(", ", unpack(others))
+                        ), "WHISPER", nil, other);
+                    end
                 end
             end
         end
@@ -650,7 +665,7 @@ function LootReserve.Server:RequestRoll(item)
             end
 
             for player, roll in pairs(self.RequestedRoll.Players) do
-                if roll == 0 then
+                if roll == 0 and not self:IsAddonUser(player) then
                     SendChatMessage(format("Please /roll on %s you reserved.", link), "WHISPER", nil, player);
                 end
             end
@@ -662,7 +677,7 @@ function LootReserve.Server:RequestRoll(item)
 end
 
 function LootReserve.Server:PassRoll(player, item)
-    if not self.RequestedRoll or self.RequestedRoll.Item ~= item or not self.RequestedRoll.Players[player] then
+    if not self:IsRolling(item) or not self.RequestedRoll.Players[player] then
         return;
     end
 

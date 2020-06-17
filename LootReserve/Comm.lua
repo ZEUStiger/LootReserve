@@ -11,17 +11,18 @@ LootReserve.Comm =
 local Opcodes =
 {
     Version = 1,
-    Hello = 2,
-    SessionInfo = 3,
-    SessionStop = 4,
-    SessionReset = 5,
-    ReserveItem = 6,
-    ReserveResult = 7,
-    ReserveInfo = 8,
-    CancelReserve = 9,
-    CancelReserveResult = 10,
-    RequestRoll = 11,
-    PassRoll = 12,
+    ReportIncompatibleVersion = 2,
+    Hello = 3,
+    SessionInfo = 4,
+    SessionStop = 5,
+    SessionReset = 6,
+    ReserveItem = 7,
+    ReserveResult = 8,
+    ReserveInfo = 9,
+    CancelReserve = 10,
+    CancelReserveResult = 11,
+    RequestRoll = 12,
+    PassRoll = 13,
 };
 
 function LootReserve.Comm:StartListening()
@@ -37,7 +38,9 @@ function LootReserve.Comm:StartListening()
                         LootReserve:Print("[DEBUG] Received: " .. text:gsub("|", "||"));
                     end
 
-                    handler(Ambiguate(sender, "short"), strsplit("|", message));
+                    sender = Ambiguate(sender, "short");
+                    LootReserve.Server:SetAddonUser(sender, true);
+                    handler(sender, strsplit("|", message));
                 end
             end
         end);
@@ -114,10 +117,19 @@ LootReserve.Comm.Handlers[Opcodes.Version] = function(sender, version, minAllowe
     if LootReserve.Version < minAllowedVersion then
         LootReserve:PrintError("You're using an incompatible outdated version of LootReserve. Please update to version %s or newer to continue using the addon.", version);
         LootReserve:ShowError("You're using an incompatible outdated version of LootReserve. Please update to version %s or newer to continue using the addon.", version);
+        LootReserve.Comm:BroadcastReportIncompatibleVersion();
         LootReserve.Enabled = false;
     elseif LootReserve.Version < version then
         LootReserve:PrintError("You're using an outdated version of LootReserve. Please update to version %s or newer.", version);
     end
+end
+
+-- ReportIncompatibleVersion
+function LootReserve.Comm:BroadcastReportIncompatibleVersion()
+    LootReserve.Comm:Broadcast(Opcodes.ReportIncompatibleVersion);
+end
+LootReserve.Comm.Handlers[Opcodes.ReportIncompatibleVersion] = function(sender)
+    LootReserve.Server:SetAddonUser(sender, false);
 end
 
 -- Hello
