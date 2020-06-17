@@ -108,6 +108,7 @@ function LootReserve.Server:StartSession()
         {
             [ItemID] =
             {
+                Item = ItemID,
                 StartTime = time(),
                 Players = { PlayerName, PlayerName, ... },
             },
@@ -142,8 +143,8 @@ function LootReserve.Server:StartSession()
         end
     end
 
-self.CurrentSession.ItemReserves[16800] = { StartTime = time(), Players = { "Tagar", "Mandula" } };
-self.CurrentSession.ItemReserves[16805] = { StartTime = time(), Players = { "Tagar" } };
+self.CurrentSession.ItemReserves[16800] = { Item = 16800, StartTime = time(), Players = { "Tagar", "Mandula" } };
+self.CurrentSession.ItemReserves[16805] = { Item = 16805, StartTime = time(), Players = { "Tagar" } };
 self.CurrentSession.Members["Tagar"] = { ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer, ReservedItems = { 16805, 16800 }, };
 self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer, ReservedItems = { 16800 }, };
 
@@ -459,6 +460,7 @@ function LootReserve.Server:Reserve(player, item, chat)
 
     local reserve = self.CurrentSession.ItemReserves[item] or
     {
+        Item = item,
         StartTime = time(),
         Players = { },
     };

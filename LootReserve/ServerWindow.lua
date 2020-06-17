@@ -182,8 +182,16 @@ function LootReserve.Server:UpdateReserveList(lockdown)
 
         return false;
     end
+
+    local function sorter(a, b)
+        if a.StartTime ~= b.StartTime then
+            return a.StartTime < b.StartTime;
+        else
+            return a.Item < b.Item;
+        end
+    end
     
-    for item, reserve in LootReserve:Ordered(self.CurrentSession.ItemReserves, function(a, b) return a.StartTime < b.StartTime; end) do
+    for item, reserve in LootReserve:Ordered(self.CurrentSession.ItemReserves, sorter) do
         if not filter or matchesFilter(item, reserve, filter) then
             createFrame(last, item, reserve);
         end
