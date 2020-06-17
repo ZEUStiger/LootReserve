@@ -162,7 +162,7 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
         session.AcceptingReserves,
         member.ReservesLeft,
         session.Settings.LootCategory,
-        session.Duration,
+        format("%.2f", session.Duration),
         session.Settings.Duration,
         itemReserves);
 end
