@@ -377,7 +377,7 @@ function LootReserve.Server:RequestRoll(item)
         return;
     end
 
-    if self.RequestedRoll then
+    if self.RequestedRoll and self.RequestedRoll.Item == item then
         -- Cancel roll
         self.RequestedRoll = nil;
         LootReserve.Comm:BroadcastRequestRoll(0, { });
