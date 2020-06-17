@@ -582,25 +582,11 @@
 					<Anchor point="BOTTOMRIGHT" x="-9" y="6" />
 				</Anchors>
 				<Frames>
-					<ScrollFrame parentKey="Scroll" inherits="UIPanelScrollFrameTemplate">
+					<ScrollFrame parentKey="Scroll" inherits="LootReserveScrollTemplate">
 						<Anchors>
 							<Anchor point="TOPLEFT" x="1" y="-1" />
 							<Anchor point="BOTTOMRIGHT" x="-23" y="1" />
 						</Anchors>
-						<Frames>
-							<Frame parentKey="Container" />
-						</Frames>
-						<Scripts>
-							<OnLoad>
-								self:SetScrollChild(self.Container);
-							</OnLoad>
-							<OnShow>
-								self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
-							</OnShow>
-							<OnSizeChanged>
-								self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
-							</OnSizeChanged>
-						</Scripts>
 					</ScrollFrame>
 				</Frames>
 			</Frame>

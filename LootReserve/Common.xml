@@ -132,6 +132,22 @@
 			</OnClick>
 		</Scripts>
 	</Button>
+	<ScrollFrame name="LootReserveScrollTemplate" inherits="UIPanelScrollFrameTemplate" virtual="true">
+		<Frames>
+			<Frame parentKey="Container" />
+		</Frames>
+		<Scripts>
+			<OnLoad>
+				self:SetScrollChild(self.Container);
+			</OnLoad>
+			<OnShow>
+				self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
+			</OnShow>
+			<OnSizeChanged>
+				self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
+			</OnSizeChanged>
+		</Scripts>
+	</ScrollFrame>
 	<Font name="LootReserveDurationStatusBarFont" font="Fonts\FRIZQT__.TTF" outline="NORMAL" virtual="true">
 		<FontHeight>
 			<AbsValue val="11" />

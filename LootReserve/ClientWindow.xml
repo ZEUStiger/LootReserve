@@ -211,19 +211,11 @@
 					<EdgeSize val="16" />
 				</Backdrop>
 				<Frames>
-					<ScrollFrame parentKey="Scroll" inherits="UIPanelScrollFrameTemplate">
+					<ScrollFrame parentKey="Scroll" inherits="LootReserveScrollTemplate">
 						<Anchors>
 							<Anchor point="TOPLEFT" x="5" y="-5" />
 							<Anchor point="BOTTOMRIGHT" x="-27" y="5" />
 						</Anchors>
-						<Frames>
-							<Frame parentKey="Container" />
-						</Frames>
-						<Scripts>
-							<OnLoad>
-								self:SetScrollChild(self.Container);
-							</OnLoad>
-						</Scripts>
 					</ScrollFrame>
 				</Frames>
 			</Frame>
@@ -238,25 +230,11 @@
 					<EdgeSize val="16" />
 				</Backdrop>
 				<Frames>
-					<ScrollFrame parentKey="Scroll" inherits="UIPanelScrollFrameTemplate">
+					<ScrollFrame parentKey="Scroll" inherits="LootReserveScrollTemplate">
 						<Anchors>
 							<Anchor point="TOPLEFT" x="5" y="-5" />
 							<Anchor point="BOTTOMRIGHT" x="-27" y="5" />
 						</Anchors>
-						<Frames>
-							<Frame parentKey="Container" />
-						</Frames>
-						<Scripts>
-							<OnLoad>
-								self:SetScrollChild(self.Container);
-							</OnLoad>
-							<OnShow>
-								self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
-							</OnShow>
-							<OnSizeChanged>
-								self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
-							</OnSizeChanged>
-						</Scripts>
 					</ScrollFrame>
 				</Frames>
 			</Frame>
