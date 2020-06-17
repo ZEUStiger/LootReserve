@@ -230,6 +230,11 @@ function LootReserve.Server:OnWindowLoad(window)
     PanelTemplates_SetTab(self.Window, 1);
     self:SetWindowTab(1);
 
+    local function updateAuthority() self:UpdateServerAuthority(); end
+    LootReserve:RegisterEvent("GROUP_JOINED", updateAuthority);
+    LootReserve:RegisterEvent("GROUP_LEFT", updateAuthority);
+    LootReserve:RegisterEvent("PARTY_LEADER_CHANGED", updateAuthority);
+    LootReserve:RegisterEvent("PARTY_LOOT_METHOD_CHANGED", updateAuthority);
     LootReserve:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(item, success)
         if item and self.CurrentSession and self.CurrentSession.ItemReserves[item] then
             self:UpdateReserveList();
@@ -302,6 +307,7 @@ function LootReserve.Server:SessionStarted()
     self.Window.PanelSession.ButtonResetSession:Hide();
     self:OnWindowTabClick(self.Window.TabReserves);
     PlaySound(SOUNDKIT.GS_CHARACTER_SELECTION_ENTER_WORLD);
+    self:UpdateServerAuthority();
 end
 
 function LootReserve.Server:SessionStopped()
@@ -314,6 +320,7 @@ function LootReserve.Server:SessionStopped()
         self.Window.Duration:Hide();
         self.Window.Search:Show();
     end
+    self:UpdateServerAuthority();
 end
 
 function LootReserve.Server:SessionReset()
@@ -322,4 +329,13 @@ function LootReserve.Server:SessionReset()
     self.Window.PanelSession.ButtonStartSession:Show();
     self.Window.PanelSession.ButtonStopSession:Hide();
     self.Window.PanelSession.ButtonResetSession:Hide();
+    self:UpdateServerAuthority();
+end
+
+function LootReserve.Server:UpdateServerAuthority()
+    local hasAuthority = self:CanBeServer();
+    self.Window.PanelSession.ButtonStartSession:SetEnabled(hasAuthority);
+    self.Window.PanelSession.NoAuthority:SetShown(not hasAuthority and not self.CurrentSession);
+    --self.Window.PanelSession.ButtonStopSession:SetEnabled(hasAuthority);
+    --self.Window.PanelSession.ButtonResetSession:SetEnabled(hasAuthority);
 end

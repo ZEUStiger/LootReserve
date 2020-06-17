@@ -495,6 +495,14 @@
 							<Anchor point="BOTTOM" relativeKey="$parent.ButtonStartSession" relativePoint="TOP" y="10" />
 						</Anchors>
 					</StatusBar>
+					<Frame parentKey="NoAuthority" hidden="true" setAllPoints="true" enableMouse="true" frameLevel="1000">
+						<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background-Dark" />
+						<Layers>
+							<Layer>
+								<FontString inherits="GameFontNormal" text="You must be the raid leader|nor the master looter" />
+							</Layer>
+						</Layers>
+					</Frame>
 				</Frames>
 			</Frame>
 			<Frame parentKey="PanelReserves" parentArray="Panels" hidden="true">
