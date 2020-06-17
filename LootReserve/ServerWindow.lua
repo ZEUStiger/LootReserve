@@ -229,6 +229,7 @@ function LootReserve.Server:OnWindowLoad(window)
     PanelTemplates_SetNumTabs(self.Window, 2);
     PanelTemplates_SetTab(self.Window, 1);
     self:SetWindowTab(1);
+    self:UpdateServerAuthority();
 
     local function updateAuthority() self:UpdateServerAuthority(); end
     LootReserve:RegisterEvent("GROUP_JOINED", updateAuthority);
@@ -335,9 +336,8 @@ end
 function LootReserve.Server:UpdateServerAuthority()
     local hasAuthority = self:CanBeServer();
     self.Window.PanelSession.ButtonStartSession:SetEnabled(hasAuthority);
-    self.Window.PanelSession.NoAuthority:SetShown(not hasAuthority and not self.CurrentSession);
-    --self.Window.PanelSession.ButtonStopSession:SetEnabled(hasAuthority);
-    --self.Window.PanelSession.ButtonResetSession:SetEnabled(hasAuthority);
+    self.Window.PanelSession:SetAlpha(hasAuthority and 1 or 0.15);
+    self.Window.NoAuthority:SetShown(not hasAuthority and not self.CurrentSession);
 end
 
 function LootReserve.Server:UpdateAddonUsers()
