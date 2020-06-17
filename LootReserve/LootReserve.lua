@@ -19,7 +19,7 @@ LootReserve.EventFrame:Show();
 StaticPopupDialogs["LOOTRESERVE_GENERIC_ERROR"] =
 {
     text = "%s",
-    button1 = OK,
+    button1 = CLOSE,
     timeout = 0,
     whileDead = 1,
     hideOnEscape = 1,
@@ -35,11 +35,11 @@ function LootReserve:OnDisable()
 end
 
 function LootReserve:ShowError(fmt, ...)
-    StaticPopup_Show("LOOTRESERVE_GENERIC_ERROR", "|cFFFFD200LootReserve|r|n" .. format(fmt, ...));
+    StaticPopup_Show("LOOTRESERVE_GENERIC_ERROR", "|cFFFFD200LootReserve|r|n|n" .. format(fmt, ...) .. "|n ");
 end
 
 function LootReserve:PrintError(fmt, ...)
-    DEFAULT_CHAT_FRAME:AddMessage("|cFFFFD200LootReserve: |r|cFFFF4000" .. format(fmt, ...) .. "|r");
+    DEFAULT_CHAT_FRAME:AddMessage("|cFFFFD200LootReserve: |r" .. format(fmt, ...), 1, 0.25, 0);
 end
 
 function LootReserve:RegisterUpdate(handler)
@@ -64,6 +64,21 @@ function LootReserve:RegisterEvent(event, handler)
 
     LootReserve.EventFrame.RegisteredEvents[event] = LootReserve.EventFrame.RegisteredEvents[event] or { };
     table.insert(LootReserve.EventFrame.RegisteredEvents[event], handler);
+end
+
+function LootReserve:IsPlayerOnline(player)
+    for i = 1, MAX_RAID_MEMBERS do
+        local name, _, _, _, _, _, _, online = GetRaidRosterInfo(i);
+
+        if LootReserve.Comm.SoloDebug and i == 1 then
+            name = UnitName("player");
+            online = true;
+        end
+
+        if name and Ambiguate(name, "short") == player then
+            return online;
+        end
+    end
 end
 
 function LootReserve:GetPlayerClassColor(player)

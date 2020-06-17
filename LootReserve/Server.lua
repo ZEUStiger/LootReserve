@@ -213,16 +213,9 @@ self.CurrentSession.ItemReserves[16800] = { StartTime = time(), Players = { "Tag
 end
 
 function LootReserve.Server:BroadcastSessionInfo()
-    -- TOOD: Redo as Members iteration
-    for i = 1, MAX_RAID_MEMBERS do
-        local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
-        if LootReserve.Comm.SoloDebug and i == 1 then
-            name = UnitName("player");
-            online = true;
-        end
-        if name and online then
-            name = Ambiguate(name, "short");
-            LootReserve.Comm:SendSessionInfo(name, self.CurrentSession);
+    for player in pairs(self.CurrentSession.Members) do
+        if LootReserve:IsPlayerOnline(player) then
+            LootReserve.Comm:SendSessionInfo(player, true);
         end
     end
 end

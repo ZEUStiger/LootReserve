@@ -95,7 +95,7 @@ function LootReserve.Comm:WhisperServer(opcode, ...)
     if LootReserve.Client.SessionServer then
         self:Whisper(LootReserve.Client.SessionServer, opcode, ...);
     else
-        print("No Active Session");
+        LootReserve:ShowError("Loot reserves aren't active in your raid");
     end
 end
 function LootReserve.Comm:BroadcastOrWhisper(target, opcode, ...)
@@ -133,12 +133,15 @@ LootReserve.Comm.Handlers[Opcodes.Hello] = function(sender)
     LootReserve.Comm:SendVersion(sender);
 
     if LootReserve.Server.CurrentSession then
-        LootReserve.Comm:SendSessionInfo(sender, LootReserve.Server.CurrentSession);
+        LootReserve.Comm:SendSessionInfo(sender);
     end
 end
 
 -- SessionInfo
-function LootReserve.Comm:SendSessionInfo(target, session, starting)
+function LootReserve.Comm:SendSessionInfo(target, starting)
+    local session = LootReserve.Server.CurrentSession;
+    if not session then return; end
+
     local member = session.Members[Ambiguate(target, "short")];
     if not member then return; end
 
@@ -228,18 +231,19 @@ LootReserve.Comm.Handlers[Opcodes.ReserveResult] = function(sender, item, result
 
     if LootReserve.Client.SessionServer == sender then
         LootReserve.Client.RemainingReserves = remainingReserves;
+        local message = "Failed to reserve the item:|n%s"
         if result == LootReserve.Constants.ReserveResult.OK then
-            print("ReserveResult: OK");
+            -- OK
         elseif result == LootReserve.Constants.ReserveResult.NoSession then
-            print("ReserveResult: NoSession");
+            LootReserve:ShowError(message, "Loot reserves aren't active in your raid");
         elseif result == LootReserve.Constants.ReserveResult.NotMember then
-            print("ReserveResult: NotMember");
-        elseif result == LootReserve.Constants.ReserveResult.AlreadyReserved then
-            print("ReserveResult: AlreadyReserved");
-        elseif result == LootReserve.Constants.ReserveResult.NoReservesLeft then
-            print("ReserveResult: NoReservesLeft");
+            LootReserve:ShowError(message, "You are not participating in loot reserves");
         elseif result == LootReserve.Constants.ReserveResult.ItemNotReservable then
-            print("ReserveResult: ItemNotReservable");
+            LootReserve:ShowError(message, "That item cannot be reserved in this raid");
+        elseif result == LootReserve.Constants.ReserveResult.AlreadyReserved then
+            LootReserve:ShowError(message, "You are already reserving that item");
+        elseif result == LootReserve.Constants.ReserveResult.NoReservesLeft then
+            LootReserve:ShowError(message, "You already reserved too many items");
         end
 
         LootReserve.Client:SetItemPending(item, false);
@@ -295,18 +299,28 @@ LootReserve.Comm.Handlers[Opcodes.CancelReserveResult] = function(sender, item, 
 
     if LootReserve.Client.SessionServer == sender then
         LootReserve.Client.RemainingReserves = remainingReserves;
+        local message = "Failed to cancel reserve of the item:|n%s"
         if result == LootReserve.Constants.CancelReserveResult.OK then
-            print("CancelReserveResult: OK");
+            -- OK
         elseif result == LootReserve.Constants.CancelReserveResult.NoSession then
-            print("CancelReserveResult: NoSession");
+            LootReserve:ShowError(message, "Loot reserves aren't active in your raid");
         elseif result == LootReserve.Constants.CancelReserveResult.NotMember then
-            print("CancelReserveResult: NotMember");
-        elseif result == LootReserve.Constants.CancelReserveResult.NotReserved then
-            print("CancelReserveResult: NotReserved");
-        elseif result == LootReserve.Constants.CancelReserveResult.Forced then
-            print("CancelReserveResult: Forced");
+            LootReserve:ShowError(message, "You are not participating in loot reserves");
         elseif result == LootReserve.Constants.CancelReserveResult.ItemNotReservable then
-            print("CancelReserveResult: ItemNotReservable");
+            LootReserve:ShowError(message, "That item cannot be reserved in this raid");
+        elseif result == LootReserve.Constants.CancelReserveResult.NotReserved then
+            LootReserve:ShowError(message, "You did not reserve that item");
+        elseif result == LootReserve.Constants.CancelReserveResult.Forced then
+            local function ShowForced()
+                local name, link = GetItemInfo(item);
+                if name and link then
+                    LootReserve:ShowError("|c%s%s|r removed your reserve for item %s", LootReserve:GetPlayerClassColor(sender), sender, link);
+                    LootReserve:PrintError("|c%s%s|r removed your reserve for item %s", LootReserve:GetPlayerClassColor(sender), sender, link);
+                else
+                    C_Timer:After(0.25, ShowForced);
+                end
+            end
+            ShowForced();
         end
 
         LootReserve.Client:SetItemPending(item, false);
