@@ -35,7 +35,7 @@ function LootReserve.Comm:StartListening()
                 local handler = self.Handlers[tonumber(opcode)];
                 if handler then
                     if self.Debug then
-                        LootReserve:Print("[DEBUG] Received: " .. text:gsub("|", "||"));
+                        print("[DEBUG] Received: " .. text:gsub("|", "||"));
                     end
 
                     sender = Ambiguate(sender, "short");
@@ -67,7 +67,7 @@ function LootReserve.Comm:Broadcast(opcode, ...)
     end
 
     if self.Debug then
-        LootReserve:Print("[DEBUG] Raid Broadcast: " .. message:gsub("|", "||"));
+        print("[DEBUG] Raid Broadcast: " .. message:gsub("|", "||"));
     end
 
     if self.SoloDebug then
@@ -89,7 +89,7 @@ function LootReserve.Comm:Whisper(target, opcode, ...)
     end
 
     if self.Debug then
-        LootReserve:Print("[DEBUG] Sent to " .. target .. ": " .. message:gsub("|", "||"));
+        print("[DEBUG] Sent to " .. target .. ": " .. message:gsub("|", "||"));
     end
 
     C_ChatInfo.SendAddonMessage(self.Prefix, message, "WHISPER", target);

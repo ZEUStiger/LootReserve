@@ -744,8 +744,4 @@ LootReserve.Data =
             },
         },
     },
-    Loot =
-    {
-        [12345] = { Alias = "T2 Priest Boots Foot Feet" },
-    },
 };

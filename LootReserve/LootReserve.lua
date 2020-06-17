@@ -1,13 +1,11 @@
--- TODO: Stop client session when the server or the client leaves the group
--- TODO: Chat command support and announcements in raid chat
--- TODO: Show server reserves in item tooltips
--- TODO: Client popup on roll request
 -- TODO: Ask to clean up loot list
--- TODO: Disable server window buttons when not authority
--- TODO: Move item tooltips to icon only
+-- TODO: Save server session
+-- TODO: Request client session when entering group
+-- TODO: Request client session when relogging
+-- TODO: Request client session when reloading UI
+-- TODO: Chat replies for reserve/cancel
 
-LootReserve = LibStub("AceAddon-3.0"):NewAddon("LootReserve", "AceConsole-3.0", "AceEvent-3.0");
-
+LootReserve = LibStub("AceAddon-3.0"):NewAddon("LootReserve");
 LootReserve.Version = "2020-06-10";
 LootReserve.MinAllowedVersion = "2020-06-10";
 LootReserve.Enabled = true;
