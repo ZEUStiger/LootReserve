@@ -64,7 +64,7 @@
 		</KeyValues>
 		<Size y="32" />
 		<Frames>
-			<Frame parentKey="Icon" enableMouse="true">
+			<Button parentKey="Icon" enableMouse="true">
 				<Size x="32" y="32" />
 				<Anchors>
 					<Anchor point="TOPLEFT" />
@@ -75,6 +75,11 @@
 					</Layer>
 				</Layers>
 				<Scripts>
+					<OnClick>
+						if button == "LeftButton" then
+							HandleModifiedItemClick(self:GetParent():GetParent().Link);
+						end
+					</OnClick>
 					<OnEnter>
 						if self:GetParent().tooltipRight then
 							GameTooltip:SetOwner(self, "ANCHOR_NONE");
@@ -88,7 +93,7 @@
 					</OnEnter>
 					<OnLeave function="GameTooltip_Hide" />
 				</Scripts>
-			</Frame>
+			</Button>
 			<Frame parentKey="IconGlow">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeKey="$parent.Icon" x="-5" y="5" />
