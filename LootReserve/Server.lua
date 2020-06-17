@@ -106,8 +106,6 @@ function LootReserve.Server:StartSession()
         ]]
     };
 
-self.CurrentSession.ItemReserves[16800] = { StartTime = time(), Players = { "Tagar", "Mandula" } };
-
     for i = 1, MAX_RAID_MEMBERS do
         local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
         if LootReserve.Comm.SoloDebug and i == 1 then
@@ -123,6 +121,11 @@ self.CurrentSession.ItemReserves[16800] = { StartTime = time(), Players = { "Tag
         end
     end
 
+self.CurrentSession.ItemReserves[16800] = { StartTime = time(), Players = { "Tagar", "Mandula" } };
+self.CurrentSession.ItemReserves[16805] = { StartTime = time(), Players = { "Tagar" } };
+self.CurrentSession.Members["Tagar"] = { ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer, ReservedItems = { 16805, 16800 }, };
+self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer, ReservedItems = { 16800 }, };
+
     if self.CurrentSession.Settings.Duration ~= 0 and not self.DurationUpdateRegistered then
         self.DurationUpdateRegistered = true;
         LootReserve:RegisterUpdate(function(elapsed)
@@ -136,8 +139,36 @@ self.CurrentSession.ItemReserves[16800] = { StartTime = time(), Players = { "Tag
             end
         end);
     end
+
     if not self.SessionEventsRegistered then
         self.SessionEventsRegistered = true;
+
+        LootReserve:RegisterEvent("GROUP_LEFT", function()
+            if self.CurrentSession then
+                self:StopSession();
+                self:ResetSession();
+            end
+        end);
+
+        LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", function()
+            if self.CurrentSession then
+                local leavers = { };
+                for player, member in pairs(self.CurrentSession.Members) do
+                    if not UnitInRaid(player) then
+                        table.insert(leavers, player);
+
+                        for i = #member.ReservedItems, 1, -1 do
+                            self:CancelReserve(player, member.ReservedItems[i]);
+                        end
+                    end
+                end
+
+                for _, player in ipairs(leavers) do
+                    self.CurrentSession.Members[player] = nil;
+                end
+            end
+        end);
+
         local loot = formatToRegexp(LOOT_ITEM);
         local lootMultiple = formatToRegexp(LOOT_ITEM_MULTIPLE);
         local lootSelf = formatToRegexp(LOOT_ITEM_SELF);

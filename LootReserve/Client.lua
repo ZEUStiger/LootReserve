@@ -14,6 +14,7 @@ LootReserve.Client =
 
     PendingItems = { },
     DurationUpdateRegistered = false,
+    SessionEventsRegistered = false,
 
     SelectedCategory = nil,
 };
@@ -37,6 +38,30 @@ function LootReserve.Client:StartSession(server, starting, acceptingReserves, re
                     self.Duration = 0;
                     self:StopSession();
                 end
+            end
+        end);
+    end
+
+    if not self.SessionEventsRegistered then
+        self.SessionEventsRegistered = true;
+        
+        LootReserve:RegisterEvent("GROUP_LEFT", function()
+            if self.SessionServer then
+                self:StopSession();
+                self:ResetSession();
+                self:UpdateCategories();
+                self:UpdateLootList();
+                self:UpdateReserveStatus();
+            end
+        end);
+        
+        LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", function()
+            if self.SessionServer and not UnitInRaid(self.SessionServer) then
+                self:StopSession();
+                self:ResetSession();
+                self:UpdateCategories();
+                self:UpdateLootList();
+                self:UpdateReserveStatus();
             end
         end);
     end
