@@ -275,7 +275,11 @@ LootReserve.Comm.Handlers[Opcodes.ReserveInfo] = function(sender, item, players)
         end
         LootReserve.Client.ItemReserves[item] = players;
 
-        LootReserve.Client:UpdateReserveStatus();
+        if LootReserve.Client.SelectedCategory and LootReserve.Client.SelectedCategory.Reserves then
+            LootReserve.Client:UpdateLootList();
+        else
+            LootReserve.Client:UpdateReserveStatus();
+        end
     end
 end
 
@@ -331,7 +335,11 @@ LootReserve.Comm.Handlers[Opcodes.CancelReserveResult] = function(sender, item, 
         end
 
         LootReserve.Client:SetItemPending(item, false);
-        LootReserve.Client:UpdateReserveStatus();
+        if LootReserve.Client.SelectedCategory and LootReserve.Client.SelectedCategory.Reserves then
+            LootReserve.Client:UpdateLootList();
+        else
+            LootReserve.Client:UpdateReserveStatus();
+        end
     end
 end
 

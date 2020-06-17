@@ -371,7 +371,7 @@ function LootReserve.Server:ResumeSession()
     self:BroadcastSessionInfo();
 
     if self.CurrentSession.Settings.ChatFallback then
-        SendChatMessage("Accepting loot reserves again.", "RAID");
+        SendChatMessage("Accepting loot reserves again. Whisper !reserve ItemLinkOrName", "RAID");
     end
 
     self:UpdateReserveList();
