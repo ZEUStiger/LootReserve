@@ -183,9 +183,8 @@
 	</Button>
 	<Frame name="LootReserveReserveListTemplate" virtual="true" enableMouse="true">
 		<Size y="200" />
-		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border">
 			<BackgroundInsets left="5" right="5" top="5" bottom="5" />
-			<TileSize val="32" />
 			<EdgeSize val="16" />
 			<BorderColor r="1" g="1" b="1" a="1" />
 		</Backdrop>

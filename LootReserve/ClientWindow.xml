@@ -205,9 +205,8 @@
 					<Anchor point="TOPRIGHT" relativeKey="$parent.Search" relativePoint="BOTTOMRIGHT" x="1" />
 					<Anchor point="BOTTOMLEFT" x="16" y="16" />
 				</Anchors>
-				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border">
 					<BackgroundInsets left="5" right="5" top="5" bottom="5" />
-					<TileSize val="32" />
 					<EdgeSize val="16" />
 				</Backdrop>
 				<Frames>
@@ -224,9 +223,8 @@
 					<Anchor point="TOPLEFT" relativeKey="$parent.Search" relativePoint="TOPRIGHT" />
 					<Anchor point="BOTTOMRIGHT" x="-16" y="16" />
 				</Anchors>
-				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border" tile="true">
+				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border">
 					<BackgroundInsets left="5" right="5" top="5" bottom="5" />
-					<TileSize val="32" />
 					<EdgeSize val="16" />
 				</Backdrop>
 				<Frames>
