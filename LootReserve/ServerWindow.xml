@@ -408,7 +408,7 @@
 							</OnLoad>
 							<OnTextChanged>
 								local count = tonumber(self:GetText());
-								if count then
+								if count and count > 0 then
 									LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer = count;
 								else
 									self:SetText("");

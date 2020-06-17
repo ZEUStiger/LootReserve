@@ -5,23 +5,23 @@ LootReserve.Comm =
     Handlers = { },
     Listening = false,
     Debug = true,
-    SoloDebug = true,
+    SoloDebug = false,
 };
 
 local Opcodes =
 {
     Version = 1,
     Hello = 2,
-    SessionInfo = 4,
-    SessionStop = 5,
-    SessionReset = 6,
-    ReserveItem = 7,
-    ReserveResult = 8,
-    ReserveInfo = 9,
-    CancelReserve = 10,
-    CancelReserveResult = 11,
-    RequestRoll = 12,
-    PassRoll = 13,
+    SessionInfo = 3,
+    SessionStop = 4,
+    SessionReset = 5,
+    ReserveItem = 6,
+    ReserveResult = 7,
+    ReserveInfo = 8,
+    CancelReserve = 9,
+    CancelReserveResult = 10,
+    RequestRoll = 11,
+    PassRoll = 12,
 };
 
 function LootReserve.Comm:StartListening()
@@ -98,22 +98,17 @@ function LootReserve.Comm:WhisperServer(opcode, ...)
         LootReserve:ShowError("Loot reserves aren't active in your raid");
     end
 end
-function LootReserve.Comm:BroadcastOrWhisper(target, opcode, ...)
-    if target then
-        self:Whisper(target, opcode, ...);
-    else
-        self:Broadcast(opcode, ...);
-    end
-end
 
 -- Version
 function LootReserve.Comm:SendVersion(target)
-    LootReserve.Comm:BroadcastOrWhisper(target, Opcodes.Version,
+    LootReserve.Comm:Whisper(target, Opcodes.Version,
         LootReserve.Version,
         LootReserve.MinAllowedVersion);
 end
 function LootReserve.Comm:BroadcastVersion()
-    self:SendVersion();
+    LootReserve.Comm:Broadcast(Opcodes.Version,
+        LootReserve.Version,
+        LootReserve.MinAllowedVersion);
 end
 LootReserve.Comm.Handlers[Opcodes.Version] = function(sender, version, minAllowedVersion)
     if LootReserve.Version < minAllowedVersion then
@@ -317,7 +312,7 @@ LootReserve.Comm.Handlers[Opcodes.CancelReserveResult] = function(sender, item, 
                     LootReserve:ShowError("|c%s%s|r removed your reserve for item %s", LootReserve:GetPlayerClassColor(sender), sender, link);
                     LootReserve:PrintError("|c%s%s|r removed your reserve for item %s", LootReserve:GetPlayerClassColor(sender), sender, link);
                 else
-                    C_Timer:After(0.25, ShowForced);
+                    C_Timer.After(0.25, ShowForced);
                 end
             end
             ShowForced();
