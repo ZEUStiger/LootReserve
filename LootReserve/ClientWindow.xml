@@ -144,7 +144,7 @@
 		</Scripts>
 	</Frame>
 	<Frame name="LootReserveClientWindow" parent="UIParent" inherits="BasicFrameTemplateWithInset" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true">
-		<Size x="700" y="500" />
+		<Size x="650" y="450" />
 		<Anchors>
 			<Anchor point="CENTER" />
 		</Anchors>

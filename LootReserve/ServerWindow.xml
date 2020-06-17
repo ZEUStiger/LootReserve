@@ -283,7 +283,7 @@
 		</Frames>
 	</Frame>
 	<Frame name="LootReserveServerWindow" inherits="BasicFrameTemplateWithInset" parent="UIParent" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true">
-		<Size x="327" y="435" />
+		<Size x="230" y="360" />
 		<Anchors>
 			<Anchor point="CENTER" />
 		</Anchors>
