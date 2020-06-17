@@ -10,6 +10,26 @@
 			<EdgeSize val="16" />
 		</Backdrop>
 		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture alpha="0.25" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD">
+					<Size y="32" />
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" x="4" y="4" />
+						<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOM" y="4" />
+					</Anchors>
+					<TexCoords left="0" right="0.25" top="0" bottom="1" />
+					<Color r="1" g="0.82" b="0" />
+				</Texture>
+				<Texture alpha="0.25" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD">
+					<Size y="32" />
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativePoint="BOTTOM" y="4" />
+						<Anchor point="BOTTOMRIGHT" x="-4" y="4" />
+					</Anchors>
+					<TexCoords left="0.75" right="1" top="0" bottom="1" />
+					<Color r="1" g="0.82" b="0" />
+				</Texture>
+			</Layer>
 			<Layer>
 				<FontString parentKey="LabelSender" inherits="GameFontNormal">
 					<Size y="30" />
