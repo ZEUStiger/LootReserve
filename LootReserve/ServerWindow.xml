@@ -208,7 +208,7 @@
 				<Scripts>
 					<OnLoad>
 						self.UpdateTooltip = function(self)
-							local rollingThisItem = LootReserve.Server.RequestedRoll and LootReserve.Server.RequestedRoll.Item == self:GetParent().Item;
+							local rollingThisItem = LootReserve.Server:IsRolling(self:GetParent().Item);
 							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 							GameTooltip:SetText(rollingThisItem and "End Roll" or "Request Roll");
 							GameTooltip:AddLine(rollingThisItem and "Stop accepting rolls for this item." or "Ask all players who reserved this item to /roll on it.", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
@@ -216,7 +216,12 @@
 						end
 					</OnLoad>
 					<OnClick>
-						LootReserve.Server:RequestRoll(self:GetParent().Item);
+						if LootReserve.Server:IsRolling(self:GetParent().Item) then
+							LootReserve.Server:CancelRollRequest(self:GetParent().Item);
+						else
+							LootReserve.Server:RequestRoll(self:GetParent().Item);
+						end
+
 						if GameTooltip:IsOwned(self) then
 							self:UpdateTooltip();
 						end

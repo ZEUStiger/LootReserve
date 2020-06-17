@@ -549,7 +549,7 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
     removeFromTable(member.ReservedItems, item);
     LootReserve.Comm:SendCancelReserveResult(player, item, forced and LootReserve.Constants.CancelReserveResult.Forced or LootReserve.Constants.CancelReserveResult.OK, member.ReservesLeft);
 
-    if self.RequestedRoll and self.RequestedRoll.Item == item then
+    if self:IsRolling(item) then
         self.RequestedRoll.Players[player] = nil;
     end
 
@@ -559,6 +559,7 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
         LootReserve.Comm:BroadcastReserveInfo(item, reserve.Players);
         -- Remove the item entirely if all reserves were cancelled
         if #reserve.Players == 0 then
+            self:CancelRollRequest(item);
             self.CurrentSession.ItemReserves[item] = nil;
         end
     end
@@ -616,18 +617,23 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
     self:UpdateReserveListRolls();
 end
 
+function LootReserve.Server:IsRolling(item)
+    return self.RequestedRoll and self.RequestedRoll.Item == item;
+end
+
+function LootReserve.Server:CancelRollRequest(item)
+    if self:IsRolling(item) then
+        self.RequestedRoll = nil;
+        LootReserve.Comm:BroadcastRequestRoll(0, { });
+        self:UpdateReserveListRolls();
+        return;
+    end
+end
+
 function LootReserve.Server:RequestRoll(item)
     local reserve = self.CurrentSession.ItemReserves[item];
     if not reserve then
         LootReserve:ShowError("That item is not reserved by anyone");
-        return;
-    end
-
-    if self.RequestedRoll and self.RequestedRoll.Item == item then
-        -- Cancel roll
-        self.RequestedRoll = nil;
-        LootReserve.Comm:BroadcastRequestRoll(0, { });
-        self:UpdateReserveListRolls();
         return;
     end
 

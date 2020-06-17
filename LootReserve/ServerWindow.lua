@@ -27,7 +27,7 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
 
     for _, frame in ipairs(list.Frames) do
         if frame:IsShown() then
-            local rollingThisItem = self.RequestedRoll and self.RequestedRoll.Item == frame.Item;
+            local rollingThisItem = self:IsRolling(frame.Item);
 
             frame.ReservesFrame.HeaderRoll:SetShown(rollingThisItem);
             frame.RequestRollButton.CancelIcon:SetShown(rollingThisItem);
