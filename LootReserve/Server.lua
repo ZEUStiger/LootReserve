@@ -627,29 +627,40 @@ function LootReserve.Server:ResetSession()
 end
 
 function LootReserve.Server:Reserve(player, item, chat)
+    if not LootReserve:IsPlayerOnline(player) then
+        LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.NotInRaid, 0);
+        if chat then SendChatMessage("You are not in the raid", "WHISPER", nil, player); end
+        return;
+    end
+
     if not self.CurrentSession then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.NoSession, 0);
+        if chat then SendChatMessage("Loot reserves aren't active in your raid", "WHISPER", nil, player); end
         return;
     end
 
     local member = self.CurrentSession.Members[player];
     if not member then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.NotMember, 0);
+        if chat then SendChatMessage("You are not participating in loot reserves", "WHISPER", nil, player); end
         return;
     end
 
     if not self.ReservableItems[item] then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.ItemNotReservable, member.ReservesLeft);
+        if chat then SendChatMessage("That item cannot be reserved in this raid", "WHISPER", nil, player); end
         return;
     end
 
     if LootReserve:Contains(member.ReservedItems, item) then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.AlreadyReserved, member.ReservesLeft);
+        if chat then SendChatMessage("You are already reserving that item", "WHISPER", nil, player); end
         return;
     end
 
     if member.ReservesLeft <= 0 then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.NoReservesLeft, member.ReservesLeft);
+        if chat then SendChatMessage("You already reserved too many items", "WHISPER", nil, player); end
         return;
     end
 
@@ -731,24 +742,34 @@ function LootReserve.Server:Reserve(player, item, chat)
 end
 
 function LootReserve.Server:CancelReserve(player, item, chat, forced)
+    if not LootReserve:IsPlayerOnline(player) then
+        LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.NotInRaid, 0);
+        if chat then SendChatMessage("You are not in the raid", "WHISPER", nil, player); end
+        return;
+    end
+
     if not self.CurrentSession then
         LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.NoSession, 0);
+        if chat then SendChatMessage("Loot reserves aren't active in your raid", "WHISPER", nil, player); end
         return;
     end
 
     local member = self.CurrentSession.Members[player];
     if not member then
         LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.NotMember, 0);
+        if chat then SendChatMessage("You are not participating in loot reserves", "WHISPER", nil, player); end
         return;
     end
 
     if not self.ReservableItems[item] then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.CancelReserveResult.ItemNotReservable, member.ReservesLeft);
+        if chat then SendChatMessage("That item cannot be reserved in this raid", "WHISPER", nil, player); end
         return;
     end
 
     if not LootReserve:Contains(member.ReservedItems, item) then
         LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.NotReserved, member.ReservesLeft);
+        if chat then SendChatMessage("You did not reserve that item", "WHISPER", nil, player); end
         return;
     end
 
