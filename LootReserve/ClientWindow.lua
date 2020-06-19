@@ -122,7 +122,7 @@ function LootReserve.Client:UpdateLootList()
 
     if self.SelectedCategory and self.SelectedCategory.Reserves and self.SessionServer then
         for item in pairs(self.ItemReserves) do
-            if self:IsItemReservedByMe(item) then
+            if self.SelectedCategory.Reserves == "my" and self:IsItemReservedByMe(item) or self:IsItemReserved(item) then
                 createFrame(item);
             end
         end

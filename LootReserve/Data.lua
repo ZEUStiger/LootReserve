@@ -5,7 +5,13 @@ LootReserve.Data =
         [-100] = {
             Children =
             {
-                { Name = "My Reserves", Reserves = true },
+                { Name = "My Reserves", Reserves = "my" },
+            },
+        },
+        [-75] = {
+            Children =
+            {
+                { Name = "All Reserves", Reserves = "all" },
             },
         },
         [-50] = {
