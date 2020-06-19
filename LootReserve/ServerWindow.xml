@@ -397,9 +397,6 @@
 										end
 									end
 								end);
-								if LootReserve.Server.NewSessionSettings.LootCategory then
-									UIDropDownMenu_SetSelectedValue(self, LootReserve.Server.NewSessionSettings.LootCategory);
-								end
 							</OnLoad>
 						</Scripts>
 					</Frame>
@@ -411,7 +408,6 @@
 						<Scripts>
 							<OnLoad>
 								self:SetJustifyH("CENTER");
-								self:SetText(tostring(LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer));
 								self.Left:SetPoint("LEFT", self, "LEFT", 0, 0);
 							</OnLoad>
 							<OnTextChanged>
@@ -451,9 +447,6 @@
 										info.checked = false;
 									end
 								end);
-								if LootReserve.Server.NewSessionSettings.Duration then
-									UIDropDownMenu_SetSelectedValue(self, LootReserve.Server.NewSessionSettings.Duration);
-								end
 							</OnLoad>
 						</Scripts>
 					</Frame>

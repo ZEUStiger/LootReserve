@@ -17,6 +17,7 @@ LootReserve.Server =
     RollMatcherRegistered = false,
     ChatFallbackRegistered = false,
     SessionEventsRegistered = false,
+    AllItemNamesCached = false,
 };
 
 StaticPopupDialogs["LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE"] =
@@ -81,73 +82,83 @@ function LootReserve.Server:SetAddonUser(player, isUser)
     end
 end
 
-function LootReserve.Server:StartSession()
-    if not self:CanBeServer() then
-        LootReserve:ShowError("You must be the raid leader or the master looter to start loot reserves");
-        return;
+function LootReserve.Server:Load()
+    -- Copy data from saved variables into runtime tables
+    -- Don't outright replace tables, as new versions of the addon could've added more fields that would be missing in the saved data
+    local function loadInto(to, from, field)
+        if from and to and field then
+            if from[field] then
+                for k, v in pairs(from[field]) do
+                    to[field] = to[field] or { };
+                    to[field][k] = v;
+                    empty = false;
+                end
+            end
+            from[field] = to[field];
+        end
     end
-
+    loadInto(self, LootReserveCharacterSave.Server, "CurrentSession");
+    loadInto(self, LootReserveCharacterSave.Server, "RequestedRoll");
+    loadInto(self, LootReserveGlobalSave.Server, "NewSessionSettings");
+    
+    -- Verify that all the required fields are present in the session
     if self.CurrentSession then
-        LootReserve:ShowError("Loot reserves are already started");
-        return;
-    end
-
-    if LootReserve.Client.SessionServer then
-        LootReserve:ShowError("Loot reserves are already started in this raid");
-        return;
-    end
-
-    self.CurrentSession =
-    {
-        AcceptingReserves = true,
-        Settings = deepcopy(self.NewSessionSettings),
-        Duration = self.NewSessionSettings.Duration,
-        Members = { },
-        ItemReserves = { },
-        --[[
-        {
-            [ItemID] =
-            {
-                Item = ItemID,
-                StartTime = time(),
-                Players = { PlayerName, PlayerName, ... },
-            },
-            ...
-        },
-        ]]
-        LootTracking = { },
-        --[[
-        {
-            [ItemID] =
-            {
-                TotalCount = 0,
-                Players = { [PlayerName] = Count, ... },
-            },
-            ...
-        },
-        ]]
-    };
-
-    for i = 1, MAX_RAID_MEMBERS do
-        local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
-        if LootReserve.Comm.SoloDebug and i == 1 then
-            name = UnitName("player");
+        local function verifySessionField(field)
+            if self.CurrentSession and self.CurrentSession[field] == nil then
+                self.CurrentSession = nil;
+            end
         end
-        if name then
-            name = Ambiguate(name, "short");
-            self.CurrentSession.Members[name] =
-            {
-                ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
-                ReservedItems = { },
-            };
+
+        local fields = { "AcceptingReserves", "Settings", "Duration", "DurationEndTimestamp", "Members", "ItemReserves" };
+        for _, field in ipairs(fields) do
+            verifySessionField(field);
         end
     end
 
-self.CurrentSession.ItemReserves[16800] = { Item = 16800, StartTime = time(), Players = { "Tagar", "Mandula" } };
-self.CurrentSession.ItemReserves[16805] = { Item = 16805, StartTime = time(), Players = { "Tagar" } };
-self.CurrentSession.Members["Tagar"] = { ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer, ReservedItems = { 16805, 16800 }, };
-self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer, ReservedItems = { 16800 }, };
+    -- Rearm the duration timer, to make it expire at about the same time (second precision) as it would've otherwise if the server didn't log out/reload UI
+    -- Unless the timer would've expired during that time, in which case set it to a dummy 1 second to allow the code to finish reserves properly upon expiration
+    if self.CurrentSession and self.CurrentSession.AcceptingReserves and self.CurrentSession.Duration ~= 0 then
+        self.CurrentSession.Duration = math.max(1, self.CurrentSession.DurationEndTimestamp - time());
+    end
 
+    -- Update the UI according to loaded settings
+    self:LoadNewSessionSessings();
+end
+
+function LootReserve.Server:Startup()
+    if self.CurrentSession and self:CanBeServer() then
+        -- Hook handlers
+        self:PrepareSession();
+        -- Inform other players about ongoing session
+        self:BroadcastSessionInfo();
+        -- Update UI
+        if self.CurrentSession.AcceptingReserves then
+            self:SessionStarted();
+        else
+            self:SessionStopped();
+        end
+        self:UpdateReserveList();
+
+        -- Hook roll handlers if needed
+        if self.RequestedRoll then
+            self:PrepareRequestRoll();
+        end
+
+        self.Window:Show();
+
+        -- Immediately after logging in retrieving raid member names might not work (names not yet cached?)
+        -- so update the UI a little bit later, otherwise reserving players will show up as "(not in raid)"
+        -- until the next group roster change
+        C_Timer.After(5, function()
+            self:UpdateReserveList();
+        end);
+    end
+
+    -- Show reserves even if no longer the server, just a failsafe
+    self:UpdateReserveList();
+end
+
+function LootReserve.Server:PrepareSession()
     if self.CurrentSession.Settings.Duration ~= 0 and not self.DurationUpdateRegistered then
         self.DurationUpdateRegistered = true;
         LootReserve:RegisterUpdate(function(elapsed)
@@ -164,6 +175,15 @@ self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Se
 
     if not self.SessionEventsRegistered then
         self.SessionEventsRegistered = true;
+
+        -- For the future. But it needs proper periodic time sync broadcasts to work correctly anyway
+        --[[
+        LootReserve:RegisterEvent("LOADING_SCREEN_DISABLED", function()
+            if self.CurrentSession and self.CurrentSession.AcceptingReserves and self.CurrentSession.Duration ~= 0 then
+                self.CurrentSession.Duration = math.max(1, self.CurrentSession.DurationEndTimestamp - time());
+            end
+        end);
+        ]]
 
         LootReserve:RegisterEvent("GROUP_LEFT", function()
             if self.CurrentSession then
@@ -278,82 +298,155 @@ self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Se
         end);
     end
 
-    LootReserve.Comm:BroadcastVersion();
-    self:BroadcastSessionInfo(true);
-    if self.CurrentSession.Settings.ChatFallback then
-        local category = LootReserve.Data.Categories[self.CurrentSession.Settings.LootCategory];
-        local duration = self.CurrentSession.Settings.Duration
-        local count = self.CurrentSession.Settings.MaxReservesPerPlayer;
-        SendChatMessage(format("Loot reserves are now started%s%s. %d reserved %s per character. Whisper !reserve ItemLinkOrName",
-            category and format(" for %s", category.Name) or "",
-            duration ~= 0 and format(" and will last for %d:%02d minutes", math.floor(duration / 60), duration % 60) or "",
-            count,
-            count == 1 and "item" or "items"
-        ), "RAID");
+    self.AllItemNamesCached = false; -- If category is changed - other item names might need to be cached
 
-        if not self.ChatFallbackRegistered then
-            self.ChatFallbackRegistered = true;
+    if self.CurrentSession.Settings.ChatFallback and not self.ChatFallbackRegistered then
+        self.ChatFallbackRegistered = true;
 
-            local prefixA = "!reserve";
-            local prefixB = "!res";
+        -- Precache item names
+        local function updateItemNameCache()
+            if self.AllItemNamesCached then return self.AllItemNamesCached; end
 
-            local function ProcessChat(text, sender)
-                sender = Ambiguate(sender, "short");
-                if not self.CurrentSession then return; end;
-
-                local member = self.CurrentSession.Members[sender];
-                if not member then return; end
-
-                text = stringTrim(text);
-                if stringStartsWith(text, prefixA) then
-                    text = text:sub(1 + #prefixA);
-                elseif stringStartsWith(text, prefixB) then
-                    text = text:sub(1 + #prefixB);
-                else
-                    return;
-                end
-
-                if not self.CurrentSession.AcceptingReserves then
-                    SendChatMessage("Loot reserves are no longer being accepted.", "WHISPER", nil, sender);
-                    return;
-                end
-
-                text = stringTrim(text);
-                local command = "reserve";
-                if stringStartsWith(text, "cancel") then
-                    text = text:sub(1 + #("cancel"));
-                    command = "cancel";
-                end
-
-                text = stringTrim(text);
-                if #text == 0 and command == "cancel" then
-                    if #member.ReservedItems > 0 then
-                        self:CancelReserve(sender, member.ReservedItems[#member.ReservedItems], true);
-                    end
-                    return;
-                end
-
-                local item = tonumber(text:match("item:(%d+)"));
-                if item then
-                    if self.ReservableItems[item] then
-                        if command == "reserve" then
-                            self:Reserve(sender, item, true);
-                        elseif command == "cancel" then
-                            self:CancelReserve(sender, item, true);
+            self.AllItemNamesCached = true;
+            for id, category in pairs(LootReserve.Data.Categories) do
+                if category.Children then
+                    for _, child in ipairs(category.Children) do
+                        if child.Loot then
+                            for _, item in ipairs(child.Loot) do
+                                if item ~= 0 and self.ReservableItems[item] then
+                                    if not GetItemInfo(item) then
+                                        self.AllItemNamesCached = false;
+                                    end
+                                end
+                            end
                         end
-                    else
-                        SendChatMessage("That item is not reservable in this raid.", "WHISPER", nil, sender);
+                    end
+                end
+            end
+            return self.AllItemNamesCached;
+        end
+
+        local prefixA = "!reserve";
+        local prefixB = "!res";
+
+        local function ProcessChat(text, sender)
+            sender = Ambiguate(sender, "short");
+            if not self.CurrentSession then return; end;
+
+            local member = self.CurrentSession.Members[sender];
+            if not member or not LootReserve:IsPlayerOnline(sender) then return; end
+
+            text = text:lower();
+            text = stringTrim(text);
+            if stringStartsWith(text, prefixA) then
+                text = text:sub(1 + #prefixA);
+            elseif stringStartsWith(text, prefixB) then
+                text = text:sub(1 + #prefixB);
+            else
+                return;
+            end
+
+            if not self.CurrentSession.AcceptingReserves then
+                SendChatMessage("Loot reserves are no longer being accepted.", "WHISPER", nil, sender);
+                return;
+            end
+
+            text = stringTrim(text);
+            local command = "reserve";
+            if stringStartsWith(text, "cancel") then
+                text = text:sub(1 + #("cancel"));
+                command = "cancel";
+            end
+
+            text = stringTrim(text);
+            if #text == 0 and command == "cancel" then
+                if #member.ReservedItems > 0 then
+                    self:CancelReserve(sender, member.ReservedItems[#member.ReservedItems], true);
+                end
+                return;
+            end
+
+            local function handleItemCommand(item, command)
+                if self.ReservableItems[item] then
+                    if command == "reserve" then
+                        self:Reserve(sender, item, true);
+                    elseif command == "cancel" then
+                        self:CancelReserve(sender, item, true);
                     end
                 else
-                    text = stringTrim(text, "[%s%[%]]");
-                    -- TODO: Name search
+                    SendChatMessage("That item is not reservable in this raid.", "WHISPER", nil, sender);
                 end
             end
 
-            LootReserve:RegisterEvent("CHAT_MSG_WHISPER", ProcessChat);
-            LootReserve:RegisterEvent("CHAT_MSG_RAID", ProcessChat); -- Just in case some people can't follow instructions
-            LootReserve:RegisterEvent("CHAT_MSG_RAID_LEADER", ProcessChat); -- Just in case some people can't follow instructions
-            LootReserve:RegisterEvent("CHAT_MSG_RAID_WARNING", ProcessChat); -- Just in case some people can't follow instructions
+            local item = tonumber(text:match("item:(%d+)"));
+            if item then
+                handleItemCommand(item, command);
+            else
+                text = stringTrim(text, "[%s%[%]]");
+                text = text:upper();
+                local function handleItemCommandByName()
+                    if updateItemNameCache() then
+                        local match = nil;
+                        local matches = { };
+                        for id, category in pairs(LootReserve.Data.Categories) do
+                            if category.Children then
+                                for _, child in ipairs(category.Children) do
+                                    if child.Loot then
+                                        for _, item in ipairs(child.Loot) do
+                                            if item ~= 0 and self.ReservableItems[item] then
+                                                if string.find(GetItemInfo(item):upper(), text) then
+                                                    match = match and 0 or item;
+                                                    table.insert(matches, item);
+                                                end
+                                            end
+                                        end
+                                    end
+                                end
+                            end
+                        end
+
+                        if not match then
+                            SendChatMessage("Cannot find an item with that name.", "WHISPER", nil, sender);
+                        elseif match > 0 then
+                            handleItemCommand(match, command);
+                        elseif match == 0 then
+                            local names = { };
+                            for i = 1, math.min(5, #matches) do
+                                names[i] = GetItemInfo(matches[i]);
+                            end
+                            SendChatMessage(format("Try being more specific, %d items match that name: %s%s",
+                                #matches,
+                                strjoin(", ", unpack(names)),
+                                #matches > #names and format(" and %d more...", #matches - #names) or ""
+                            ), "WHISPER", nil, sender);
+                        end
+                    else
+                        C_Timer.After(0.25, handleItemCommandByName);
+                    end
+                end
+
+                if #text >= 3 then
+                    handleItemCommandByName();
+                else
+                    SendChatMessage("That name is too short, 3 or more letters required.", "WHISPER", nil, sender);
+                end
+            end
+        end
+
+        local chatTypes =
+        {
+            "CHAT_MSG_WHISPER",
+            -- Just in case some people can't follow instructions
+            "CHAT_MSG_SAY",
+            "CHAT_MSG_YELL",
+            "CHAT_MSG_PARTY",
+            "CHAT_MSG_PARTY_LEADER",
+            "CHAT_MSG_RAID",
+            "CHAT_MSG_RAID_LEADER",
+            "CHAT_MSG_RAID_WARNING",
+        };
+        for _, type in ipairs(chatTypes) do
+            LootReserve:RegisterEvent(type, ProcessChat);
         end
     end
 
@@ -371,6 +464,87 @@ self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Se
                 end
             end
         end
+    end
+end
+
+function LootReserve.Server:StartSession()
+    if not self:CanBeServer() then
+        LootReserve:ShowError("You must be the raid leader or the master looter to start loot reserves");
+        return;
+    end
+
+    if self.CurrentSession then
+        LootReserve:ShowError("Loot reserves are already started");
+        return;
+    end
+
+    if LootReserve.Client.SessionServer then
+        LootReserve:ShowError("Loot reserves are already started in this raid");
+        return;
+    end
+
+    self.CurrentSession =
+    {
+        AcceptingReserves = true,
+        Settings = deepcopy(self.NewSessionSettings),
+        Duration = self.NewSessionSettings.Duration,
+        DurationEndTimestamp = time() + self.NewSessionSettings.Duration, -- Used to resume the session after relog or UI reload
+        Members = { },
+        ItemReserves = { },
+        --[[
+        {
+            [ItemID] =
+            {
+                Item = ItemID,
+                StartTime = time(),
+                Players = { PlayerName, PlayerName, ... },
+            },
+            ...
+        },
+        ]]
+        LootTracking = { },
+        --[[
+        {
+            [ItemID] =
+            {
+                TotalCount = 0,
+                Players = { [PlayerName] = Count, ... },
+            },
+            ...
+        },
+        ]]
+    };
+    LootReserveCharacterSave.Server.CurrentSession = self.CurrentSession;
+
+    for i = 1, MAX_RAID_MEMBERS do
+        local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
+        if LootReserve.Comm.SoloDebug and i == 1 then
+            name = UnitName("player");
+        end
+        if name then
+            name = Ambiguate(name, "short");
+            self.CurrentSession.Members[name] =
+            {
+                ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
+                ReservedItems = { },
+            };
+        end
+    end
+
+    self:PrepareSession();
+
+    LootReserve.Comm:BroadcastVersion();
+    self:BroadcastSessionInfo(true);
+    if self.CurrentSession.Settings.ChatFallback then
+        local category = LootReserve.Data.Categories[self.CurrentSession.Settings.LootCategory];
+        local duration = self.CurrentSession.Settings.Duration
+        local count = self.CurrentSession.Settings.MaxReservesPerPlayer;
+        SendChatMessage(format("Loot reserves are now started%s%s. %d reserved %s per character. Whisper !reserve ItemLinkOrName",
+            category and format(" for %s", category.Name) or "",
+            duration ~= 0 and format(" and will last for %d:%02d minutes", math.floor(duration / 60), duration % 60) or "",
+            count,
+            count == 1 and "item" or "items"
+        ), "RAID");
     end
 
     self:UpdateReserveList();
@@ -394,6 +568,7 @@ function LootReserve.Server:ResumeSession()
     end
 
     self.CurrentSession.AcceptingReserves = true;
+    self.CurrentSession.DurationEndTimestamp = time() + math.floor(self.CurrentSession.Duration);
     self:BroadcastSessionInfo();
 
     if self.CurrentSession.Settings.ChatFallback then
@@ -656,9 +831,27 @@ end
 function LootReserve.Server:CancelRollRequest(item)
     if self:IsRolling(item) then
         self.RequestedRoll = nil;
+        LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
         LootReserve.Comm:BroadcastRequestRoll(0, { });
         self:UpdateReserveListRolls();
         return;
+    end
+end
+
+function LootReserve.Server:PrepareRequestRoll()
+    if not self.RollMatcherRegistered then
+        self.RollMatcherRegistered = true;
+
+        local rollMatcher = formatToRegexp(RANDOM_ROLL_RESULT);
+        LootReserve:RegisterEvent("CHAT_MSG_SYSTEM", function(text)
+            if self.RequestedRoll then
+                local player, roll, min, max = text:match(rollMatcher);
+                if player and roll and min == "1" and max == "100" and self.RequestedRoll.Players[player] == 0 and tonumber(roll) and LootReserve:IsPlayerOnline(player) then
+                    self.RequestedRoll.Players[player] = tonumber(roll);
+                    self:UpdateReserveListRolls();
+                end
+            end
+        end);
     end
 end
 
@@ -669,29 +862,19 @@ function LootReserve.Server:RequestRoll(item)
         return;
     end
 
-    if not self.RollMatcherRegistered then
-        self.RollMatcherRegistered = true;
-        local rollMatcher = formatToRegexp(RANDOM_ROLL_RESULT);
-        LootReserve:RegisterEvent("CHAT_MSG_SYSTEM", function(text)
-            if self.RequestedRoll then
-                local player, roll, min, max = text:match(rollMatcher);
-                if player and roll and min == "1" and max == "100" and self.RequestedRoll.Players[player] == 0 and tonumber(roll) then
-                    self.RequestedRoll.Players[player] = tonumber(roll);
-                    self:UpdateReserveListRolls();
-                end
-            end
-        end);
-    end
-
     self.RequestedRoll =
     {
         Item = item,
         Players = { },
     };
+    LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
 
     for _, player in ipairs(reserve.Players) do
         self.RequestedRoll.Players[player] = 0;
     end
+
+    self:PrepareRequestRoll();
+
     LootReserve.Comm:BroadcastRequestRoll(item, reserve.Players);
 
     if self.CurrentSession.Settings.ChatFallback then

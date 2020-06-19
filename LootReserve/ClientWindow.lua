@@ -336,6 +336,4 @@ function LootReserve.Client:OnWindowLoad(window)
             self:UpdateLootList();
         end
     end);
-
-    LootReserve.Comm:StartListening();
 end

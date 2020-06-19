@@ -1,18 +1,30 @@
--- TODO: Ask to clean up loot list
--- TODO: Save server session
--- TODO: Request client session when entering group
--- TODO: Request client session when relogging
--- TODO: Request client session when reloading UI
--- TODO: Chat replies for reserve/cancel
+local addon, ns = ...;
 
 LootReserve = LibStub("AceAddon-3.0"):NewAddon("LootReserve");
-LootReserve.Version = "2020-06-10";
-LootReserve.MinAllowedVersion = "2020-06-10";
+LootReserve.Version = GetAddOnMetadata(addon, "Version");
+LootReserve.MinAllowedVersion = "2020-06-19";
 LootReserve.Enabled = true;
+
 LootReserve.EventFrame = CreateFrame("Frame", nil, UIParent);
 LootReserve.EventFrame:SetPoint("TOPLEFT", UIParent, "TOPLEFT", 0, 0);
 LootReserve.EventFrame:SetSize(0, 0);
 LootReserve.EventFrame:Show();
+
+LootReserveCharacterSave =
+{
+    Server =
+    {
+        CurrentSession = nil,
+        RequestedRoll = nil,
+    },
+};
+LootReserveGlobalSave =
+{
+    Server =
+    {
+        NewSessionSettings = nil,
+    },
+};
 
 StaticPopupDialogs["LOOTRESERVE_GENERIC_ERROR"] =
 {
@@ -37,6 +49,24 @@ function SlashCmdList.RESERVE(command)
 end
 
 function LootReserve:OnInitialize()
+    LootReserve.Server:Load();
+
+    LootReserve.Comm:StartListening();
+    LootReserve:RegisterEvent("GROUP_JOINED", function()
+        -- Load server after client restart
+        -- Server session should not normally exist when the player is outside of any raid groups, so restarting it upon regular group join shouldn't break anything
+        LootReserve.Server:Startup();
+        -- Query other group members about their addon versions and request server session info if any
+        LootReserve.Comm:BroadcastHello();
+    end);
+
+    if IsInRaid() then
+        -- Load server after UI reload
+        -- This should be the only case when a player is already detected to be in a group at the time of addon loading
+        LootReserve.Server:Startup();
+        -- Query other group members about their addon versions and request server session info if any
+        LootReserve.Comm:BroadcastHello();
+    end
 end
 
 function LootReserve:OnEnable()

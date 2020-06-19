@@ -1,24 +1,3 @@
-function LootReserve.Server:UpdateReserveListUnits(lockdown)
-    lockdown = lockdown or InCombatLockdown();
-
-    local list = (lockdown and self.Window.PanelReservesLockdown or self.Window.PanelReserves).Scroll.Container;
-    list.Frames = list.Frames or { };
-
-    for _, frame in ipairs(list.Frames) do
-        if frame:IsShown() then
-            for _, button in ipairs(frame.ReservesFrame.Players) do
-                if button:IsShown() then
-                    local unit = LootReserve:GetRaidUnitID(button.Player);
-                    button.Unit = unit;
-                    if not lockdown then
-                        button:SetAttribute("unit", unit);
-                    end
-                end
-            end
-        end
-    end
-end
-
 function LootReserve.Server:UpdateReserveListRolls(lockdown)
     lockdown = lockdown or InCombatLockdown();
 
@@ -239,6 +218,7 @@ function LootReserve.Server:OnWindowLoad(window)
     PanelTemplates_SetTab(self.Window, 1);
     self:SetWindowTab(1);
     self:UpdateServerAuthority();
+    self:LoadNewSessionSessings();
 
     local function updateAuthority() self:UpdateServerAuthority(); end
     LootReserve:RegisterEvent("GROUP_JOINED", updateAuthority);
@@ -361,4 +341,16 @@ function LootReserve.Server:UpdateAddonUsers()
     end
     self.Window.PanelSession.AddonUsers.Text:SetText(format("%d/%d", count, GetNumGroupMembers()));
     self.Window.PanelSession.AddonUsers:SetShown(#self.AddonUsers > 0 or GetNumGroupMembers() > 0);
+end
+
+function LootReserve.Server:LoadNewSessionSessings()
+    local function setDropDownValue(dropDown, value)
+        ToggleDropDownMenu(nil, nil, dropDown);
+        UIDropDownMenu_SetSelectedValue(dropDown, value);
+        CloseMenus();
+    end
+
+    setDropDownValue(self.Window.PanelSession.DropDownRaid, self.NewSessionSettings.LootCategory);
+    self.Window.PanelSession.EditBoxCount:SetText(tostring(self.NewSessionSettings.MaxReservesPerPlayer));
+    setDropDownValue(self.Window.PanelSession.DropDownDuration, self.NewSessionSettings.Duration);
 end
