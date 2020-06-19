@@ -244,6 +244,8 @@ LootReserve.Comm.Handlers[Opcodes.ReserveResult] = function(sender, item, result
         local message = "Failed to reserve the item:|n%s"
         if result == LootReserve.Constants.ReserveResult.OK then
             -- OK
+        elseif result == LootReserve.Constants.ReserveResult.NotInRaid then
+            LootReserve:ShowError(message, "You are not in the raid");
         elseif result == LootReserve.Constants.ReserveResult.NoSession then
             LootReserve:ShowError(message, "Loot reserves aren't active in your raid");
         elseif result == LootReserve.Constants.ReserveResult.NotMember then
@@ -316,6 +318,8 @@ LootReserve.Comm.Handlers[Opcodes.CancelReserveResult] = function(sender, item, 
         local message = "Failed to cancel reserve of the item:|n%s"
         if result == LootReserve.Constants.CancelReserveResult.OK then
             -- OK
+        elseif result == LootReserve.Constants.CancelReserveResult.NotInRaid then
+            LootReserve:ShowError(message, "You are not in the raid");
         elseif result == LootReserve.Constants.CancelReserveResult.NoSession then
             LootReserve:ShowError(message, "Loot reserves aren't active in your raid");
         elseif result == LootReserve.Constants.CancelReserveResult.NotMember then
