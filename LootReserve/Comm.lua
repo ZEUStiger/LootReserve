@@ -186,6 +186,9 @@ LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, acce
 
     LootReserve.Client:UpdateCategories();
     LootReserve.Client:UpdateLootList();
+    if acceptingReserves then
+        LootReserve.Client.Window:Show();
+    end
 end
 
 -- SessionStop

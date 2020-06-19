@@ -143,7 +143,7 @@
 			</OnUpdate>
 		</Scripts>
 	</Frame>
-	<Frame name="LootReserveClientWindow" parent="UIParent" inherits="BasicFrameTemplateWithInset" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true">
+	<Frame name="LootReserveClientWindow" parent="UIParent" inherits="BasicFrameTemplateWithInset" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true" hidden="true">
 		<Size x="650" y="450" />
 		<Anchors>
 			<Anchor point="CENTER" />
@@ -241,6 +241,13 @@
 			<OnLoad>
 				LootReserve.Client:OnWindowLoad(self);
 			</OnLoad>
+			<OnShow>
+				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN);
+			</OnShow>
+			<OnHide>
+				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE);
+				DEFAULT_CHAT_FRAME:AddMessage("Loot Reserve window can be reopened by typing |cFFFFD200/reserve|r", 1, 1, 1);
+			</OnHide>
 		</Scripts>
 	</Frame>
 </Ui>
