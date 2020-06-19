@@ -91,7 +91,7 @@ function LootReserve.Client:HasRemainingReserves()
 end
 
 function LootReserve.Client:IsItemReserved(item)
-    return self:GetItemReservers(item) > 0;
+    return #self:GetItemReservers(item) > 0;
 end
 function LootReserve.Client:IsItemReservedByMe(item)
     for _, player in ipairs(self:GetItemReservers(item)) do
