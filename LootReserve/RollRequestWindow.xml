@@ -93,6 +93,7 @@
 			<OnLoad>
 				self:SetMinResize(300, 90);
 				self:SetMaxResize(1000, 90);
+				self.ItemFrame.Name:SetPoint("TOPLEFT", self.ItemFrame.Icon, "TOPRIGHT", 10, 0);
 			</OnLoad>
 		</Scripts>
 	</Frame>

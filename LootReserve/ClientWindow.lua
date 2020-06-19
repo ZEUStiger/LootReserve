@@ -5,12 +5,14 @@ function LootReserve.Client:UpdateReserveStatus()
     elseif not self.AcceptingReserves then
         self.Window.RemainingText:SetText("|cFF808080Loot reserves are no longer being accepted|r");
         --self.Window.RemainingTextGlow:SetVertexColor(1, 0, 0, 0.15);
+        -- animated in LootReserve.Client:OnWindowLoad instead
     else
         local reserves = LootReserve.Client:GetRemainingReserves();
         self.Window.RemainingText:SetText(format("You can reserve|cFF%s %d |rmore |4item:items;", reserves > 0 and "00FF00" or "FF0000", reserves));
         --self.Window.RemainingTextGlow:SetVertexColor(reserves > 0 and 0 or 1, reserves > 0 and 1 or 0, 0);
         --local r, g, b = self.Window.Duration:GetStatusBarColor();
         --self.Window.RemainingTextGlow:SetVertexColor(r, g, b, 0.15);
+        -- animated in LootReserve.Client:OnWindowLoad instead
     end
 
     local list = self.Window.Loot.Scroll.Container;

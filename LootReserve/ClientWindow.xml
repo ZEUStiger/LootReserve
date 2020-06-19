@@ -240,6 +240,7 @@
 		<Scripts>
 			<OnLoad>
 				LootReserve.Client:OnWindowLoad(self);
+				table.insert(UISpecialFrames, self:GetName());
 			</OnLoad>
 			<OnShow>
 				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN);

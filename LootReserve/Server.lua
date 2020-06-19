@@ -5,8 +5,8 @@ LootReserve.Server =
     NewSessionSettings =
     {
         LootCategory = 100,
-        MaxReservesPerPlayer = 5,
-        Duration = 600,
+        MaxReservesPerPlayer = 1,
+        Duration = 300,
         ChatFallback = true,
     },
     RequestedRoll = nil,
@@ -436,9 +436,14 @@ function LootReserve.Server:ResetSession()
         return;
     end
 
+    if self.RequestedRoll then
+        self:CancelRollRequest(self.RequestedRoll.Item);
+    end
+
     LootReserve.Comm:SendSessionReset();
 
     self.CurrentSession = nil;
+    LootReserveCharacterSave.Server.CurrentSession = self.CurrentSession;
 
     self:UpdateReserveList();
 

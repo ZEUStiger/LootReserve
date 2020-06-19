@@ -301,6 +301,10 @@
 					<Anchor point="TOPRIGHT" x="-7" y="-25" />
 				</Anchors>
 				<Scripts>
+					<OnLoad>
+						SearchBoxTemplate_OnLoad(self);
+						self.Instructions:SetText("Search items or players");
+					</OnLoad>
 					<OnTextChanged>
 						InputBoxInstructions_OnTextChanged(self);
 						LootReserve.Server:UpdateReserveList();

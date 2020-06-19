@@ -4,7 +4,7 @@ LootReserve.Comm =
     Prefix = "LootReserve",
     Handlers = { },
     Listening = false,
-    Debug = true,
+    Debug = false,
     SoloDebug = false,
 };
 

@@ -227,6 +227,7 @@ function LootReserve.Server:SetWindowTab(tab)
         end
         panel:SetShown(i == tab);
     end
+    self:UpdateServerAuthority();
 end
 
 function LootReserve.Server:OnWindowLoad(window)
@@ -344,8 +345,8 @@ end
 function LootReserve.Server:UpdateServerAuthority()
     local hasAuthority = self:CanBeServer();
     self.Window.PanelSession.ButtonStartSession:SetEnabled(hasAuthority);
-    self.Window.PanelSession:SetAlpha(hasAuthority and 1 or 0.15);
-    self.Window.NoAuthority:SetShown(not hasAuthority and not self.CurrentSession);
+    self.Window.PanelSession:SetAlpha((hasAuthority or self.CurrentSession) and 1 or 0.15);
+    self.Window.NoAuthority:SetShown(not hasAuthority and not self.CurrentSession and self.Window.PanelSession:IsShown());
 end
 
 function LootReserve.Server:UpdateAddonUsers()
