@@ -231,22 +231,13 @@ function LootReserve.Client:UpdateCategories()
         createCategoryButtonsRecursively(id, category);
     end
 
-    local needsSelect = not self.SelectedCategory or self.SelectedCategory.Reserves;
+    local needsSelect = not self.SelectedCategory;
     list.ContentHeight = 0;
     for i, frame in ipairs(list.Frames) do
         if i <= list.LastIndex and (frame.CategoryID < 0 or not self.LootCategory or frame.CategoryID == self.LootCategory) then
             frame:SetHeight(frame.DefaultHeight);
             frame:Show();
             list.ContentHeight = list.ContentHeight + frame.DefaultHeight;
-
-            if needsSelect and selected == nil then
-                if frame.CategoryID > 0 and self.LootCategory and frame.CategoryID == self.LootCategory then
-                    selected = false;
-                end
-            elseif selected == false then
-                selected = true;
-                frame:Click();
-            end
         else
             frame:Hide();
             frame:SetHeight(0.00001);
@@ -259,8 +250,8 @@ function LootReserve.Client:UpdateCategories()
     if needsSelect then
         local selected = nil;
         for i, frame in ipairs(list.Frames) do
-            if i <= list.LastIndex and (frame.CategoryID < 0 or not self.LootCategory or frame.CategoryID == self.LootCategory) then
-                if needsSelect and selected == nil then
+            if i <= list.LastIndex then
+                if selected == nil then
                     if frame.CategoryID > 0 and self.LootCategory and frame.CategoryID == self.LootCategory then
                         selected = false;
                     end
