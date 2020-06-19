@@ -35,7 +35,7 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
             local highest = 0;
             if self.RequestedRoll then
                 for player, roll in pairs(self.RequestedRoll.Players) do
-                    if highest < roll then
+                    if highest < roll and LootReserve:IsPlayerOnline(player) then
                         highest = roll;
                     end
                 end
@@ -47,7 +47,7 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
                         local roll = self.RequestedRoll.Players[button.Player];
                         local winner = roll > 0 and highest > 0 and roll == highest;
                         local pass = roll < 0;
-                        local color = winner and GREEN_FONT_COLOR or pass and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
+                        local color = not LootReserve:IsPlayerOnline(button.Player) and GRAY_FONT_COLOR or winner and GREEN_FONT_COLOR or pass and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
                         button.Roll:Show();
                         button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or "...");
                         button.Roll:SetTextColor(color.r, color.g, color.b);
@@ -147,7 +147,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
             if not lockdown then
                 button:SetAttribute("unit", unit);
             end
-            button.Name:SetText(format("|c%s%s|r", LootReserve:GetPlayerClassColor(player), player));
+            button.Name:SetText(format("|c%s%s|r%s", LootReserve:GetPlayerClassColor(player), player, LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or ""));
             button.Roll:SetText("");
             button.WinnerHighlight:Hide();
             reservesHeight = reservesHeight + button:GetHeight();

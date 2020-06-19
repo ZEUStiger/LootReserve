@@ -87,7 +87,7 @@ function LootReserve:IsPlayerOnline(player)
         end
 
         if name and Ambiguate(name, "short") == player then
-            return online;
+            return online or false;
         end
     end
 end

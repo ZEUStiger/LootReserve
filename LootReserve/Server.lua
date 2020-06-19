@@ -176,6 +176,8 @@ self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Se
 
         LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", function()
             if self.CurrentSession then
+                -- Remove member info for players who left (?)
+                --[[
                 local leavers = { };
                 for player, member in pairs(self.CurrentSession.Members) do
                     if not UnitInRaid(player) then
@@ -190,7 +192,24 @@ self.CurrentSession.Members["Mandula"] = { ReservesLeft = self.CurrentSession.Se
                 for _, player in ipairs(leavers) do
                     self.CurrentSession.Members[player] = nil;
                 end
+                ]]
+
+                -- Add member info for players who joined
+                for i = 1, MAX_RAID_MEMBERS do
+                    local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
+                    if name then
+                        name = Ambiguate(name, "short");
+                        if not self.CurrentSession.Members[name] then
+                            self.CurrentSession.Members[name] =
+                            {
+                                ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
+                                ReservedItems = { },
+                            };
+                        end
+                    end
+                end
             end
+            self:UpdateReserveList();
             self:UpdateAddonUsers();
         end);
 
@@ -511,7 +530,7 @@ function LootReserve.Server:Reserve(player, item, chat)
             end
 
             for _, other in ipairs(reserve.Players) do
-                if other ~= player and not self:IsAddonUser(other) then
+                if other ~= player and LootReserve:IsPlayerOnline(other) and not self:IsAddonUser(other) then
                     local others = deepcopy(reserve.Players);
                     removeFromTable(others, other);
 
@@ -600,7 +619,7 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
             end
 
             for _, other in ipairs(reserve.Players) do
-                if not self:IsAddonUser(other) then
+                if LootReserve:IsPlayerOnline(other) and not self:IsAddonUser(other) then
                     local others = deepcopy(reserve.Players);
                     removeFromTable(others, other);
 
