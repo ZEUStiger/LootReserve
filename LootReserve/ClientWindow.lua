@@ -122,7 +122,9 @@ function LootReserve.Client:UpdateLootList()
 
     if self.SelectedCategory and self.SelectedCategory.Reserves and self.SessionServer then
         for item in pairs(self.ItemReserves) do
-            if self.SelectedCategory.Reserves == "my" and self:IsItemReservedByMe(item) or self:IsItemReserved(item) then
+            if self.SelectedCategory.Reserves == "my" and self:IsItemReservedByMe(item) then
+                createFrame(item);
+            elseif self.SelectedCategory.Reserves == "all" and self:IsItemReserved(item) then
                 createFrame(item);
             end
         end
@@ -320,12 +322,16 @@ function LootReserve.Client:OnWindowLoad(window)
         end
     end);
     LootReserve:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(item, success)
-        if item and self.SelectedCategory and self.SelectedCategory.Loot then
+        if not item or not self.SelectedCategory then return; end
+
+        if self.SelectedCategory.Loot then
             for _, loot in ipairs(self.SelectedCategory.Loot) do
                 if item == loot then
                     self:UpdateLootList();
                 end
             end
+        elseif self.SelectedCategory.Search or self.SelectedCategory.Reserves then
+            self:UpdateLootList();
         end
     end);
 
