@@ -650,7 +650,7 @@ function LootReserve.Server:Reserve(player, item, chat)
         return;
     end
 
-    if not self.CurrentSession then
+    if not self.CurrentSession or not self.CurrentSession.AcceptingReserves then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.NoSession, 0);
         if chat then SendChatMessage("Loot reserves aren't active in your raid", "WHISPER", nil, player); end
         return;
@@ -765,7 +765,7 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
         return;
     end
 
-    if not self.CurrentSession then
+    if not self.CurrentSession or not self.CurrentSession.AcceptingReserves then
         LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.NoSession, 0);
         if chat then SendChatMessage("Loot reserves aren't active in your raid", "WHISPER", nil, player); end
         return;
