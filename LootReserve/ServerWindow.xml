@@ -130,7 +130,7 @@
 						local player = self:GetParent().Player;
 						local frame = self:GetParent():GetParent():GetParent();
 						local data = { Player = player, Item = frame.Item };
-						StaticPopup_Show("LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE", format("|c%s%s|r", LootReserve:GetPlayerClassColor(player), player), frame.Link, data);
+						StaticPopup_Show("LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE", LootReserve:ColoredPlayer(player), frame.Link, data);
 					</OnClick>
 				</Scripts>
 				<NormalTexture file="Interface\Buttons\UI-GroupLoot-Pass-Up" alpha="0.5"/>
@@ -365,7 +365,7 @@
 							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 							GameTooltip:SetText(#missingPlayers == 0 and "|cFF00FF00All players reserved items|r" or format("%d |4player:players; without reserves:", #missingPlayers));
 							for _, player in ipairs(missingPlayers) do
-								GameTooltip:AddLine(format("|c%s%s|r", LootReserve:GetPlayerClassColor(player), player));
+								GameTooltip:AddLine(LootReserve:ColoredPlayer(player));
 							end
 							GameTooltip:AddLine("Click for more options", GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
 							GameTooltip:Show();
@@ -378,7 +378,7 @@
 								if #member.ReservedItems == 0 then
 									table.insert(menuWhisperPlayers,
 									{
-										text = format("|c%s%s|r", LootReserve:GetPlayerClassColor(player), player),
+										text = LootReserve:ColoredPlayer(player),
 										arg1 = player,
 										func = function(info) ChatFrame_SendTell(info.arg1); end,
 									});
@@ -615,7 +615,7 @@
 									for _, compatibility in ipairs({ true, false }) do
 										for player, compatible in LootReserve:Ordered(LootReserve.Server.AddonUsers) do
 											if compatible == compatibility then
-												GameTooltip:AddLine(format("|c%s%s|r%s", LootReserve:GetPlayerClassColor(player), player, compatible and "" or "|cFFFF0000 (outdated)|r"));
+												GameTooltip:AddLine(format("%s%s", LootReserve:ColoredPlayer(player), compatible and "" or "|cFFFF0000 (outdated)|r"));
 											end
 										end
 									end

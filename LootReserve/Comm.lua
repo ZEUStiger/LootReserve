@@ -332,8 +332,8 @@ LootReserve.Comm.Handlers[Opcodes.CancelReserveResult] = function(sender, item, 
             local function ShowForced()
                 local name, link = GetItemInfo(item);
                 if name and link then
-                    LootReserve:ShowError("|c%s%s|r removed your reserve for item %s", LootReserve:GetPlayerClassColor(sender), sender, link);
-                    LootReserve:PrintError("|c%s%s|r removed your reserve for item %s", LootReserve:GetPlayerClassColor(sender), sender, link);
+                    LootReserve:ShowError("%s removed your reserve for item %s", LootReserve:ColoredPlayer(sender), link);
+                    LootReserve:PrintError("%s removed your reserve for item %s", LootReserve:ColoredPlayer(sender), link);
                 else
                     C_Timer.After(0.25, ShowForced);
                 end

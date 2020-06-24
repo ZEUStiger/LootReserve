@@ -109,7 +109,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         if tracking then
             local players = "";
             for player, count in pairs(tracking.Players) do
-                players = players .. (#players > 0 and ", " or "") .. format("|c%s%s|r", LootReserve:GetPlayerClassColor(player), player) .. (count > 1 and format(" (%d)", count) or "");
+                players = players .. (#players > 0 and ", " or "") .. LootReserve:ColoredPlayer(player) .. (count > 1 and format(" (%d)", count) or "");
             end
             frame.ItemFrame.Misc:SetText("Looted by " .. players);
         else
@@ -139,7 +139,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
             if not lockdown then
                 button:SetAttribute("unit", unit);
             end
-            button.Name:SetText(format("|c%s%s|r%s", LootReserve:GetPlayerClassColor(player), player, LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or ""));
+            button.Name:SetText(format("%s%s", LootReserve:ColoredPlayer(player), LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or ""));
             button.Roll:SetText("");
             button.WinnerHighlight:Hide();
             reservesHeight = reservesHeight + button:GetHeight();

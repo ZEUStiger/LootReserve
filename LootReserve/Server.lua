@@ -297,7 +297,7 @@ function LootReserve.Server:PrepareSession()
                 if item and self.CurrentSession.ItemReserves[item] then
                     local players = "";
                     for _, player in ipairs(self.CurrentSession.ItemReserves[item].Players) do
-                        players = players .. format(#players > 0 and ", |c%s%s|r" or "|c%s%s|r", LootReserve:GetPlayerClassColor(player), player);
+                        players = players .. (#players > 0 and ", " or "") .. LootReserve:ColoredPlayer(player);
                     end
                     tooltip:AddLine("|TInterface\\BUTTONS\\UI-GroupLoot-Dice-Up:32:32:0:-4|t Reserved by " .. players, 1, 1, 1);
                 end

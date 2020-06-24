@@ -20,7 +20,7 @@ function LootReserve.Client:RollRequested(sender, item, players)
 
     frame.Sender = sender;
     frame.Item = item;
-    frame.LabelSender:SetText(format("|c%s%s|r asks you to roll on the item you reserved:", LootReserve:GetPlayerClassColor(sender), sender));
+    frame.LabelSender:SetText(format("%s asks you to roll on the item you reserved:", LootReserve:ColoredPlayer(sender)));
     frame.ItemFrame.Icon:SetTexture(texture);
     frame.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
     frame.ItemFrame.Misc:SetText(type);

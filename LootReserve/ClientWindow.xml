@@ -106,7 +106,7 @@
 								elseif #reservers &gt; 0 then
 									local text = "It will be rolled among all contenders if it drops:";
 									for _, player in ipairs(reservers) do
-										text = text .. format("|n|c%s%s|r", LootReserve:GetPlayerClassColor(player), player);
+										text = text .. "|n" .. LootReserve:ColoredPlayer(player);
 									end
 									GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 									GameTooltip:SetText(format("Reserved by %d |4player:players;", #reservers));

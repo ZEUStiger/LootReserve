@@ -150,6 +150,10 @@ function LootReserve:GetRaidUnitID(player)
     end
 end
 
+function LootReserve:ColoredPlayer(player)
+    return format("|c%s%s|r", self:GetPlayerClassColor(player), player);
+end
+
 function LootReserve:Contains(table, item)
     for _, i in ipairs(table) do
         if i == item then
