@@ -52,21 +52,25 @@ function LootReserve:OnInitialize()
     LootReserve.Server:Load();
 
     LootReserve.Comm:StartListening();
+
+    local function Startup()
+        if IsInRaid() or LootReserve.Comm.SoloDebug then
+            LootReserve.Server:Startup();
+            -- Query other group members about their addon versions and request server session info if any
+            LootReserve.Comm:BroadcastHello();
+        end
+    end
+
     LootReserve:RegisterEvent("GROUP_JOINED", function()
-        -- Load server after client restart
+        -- Load client and server after WoW client restart
         -- Server session should not normally exist when the player is outside of any raid groups, so restarting it upon regular group join shouldn't break anything
-        LootReserve.Server:Startup();
-        -- Query other group members about their addon versions and request server session info if any
-        LootReserve.Comm:BroadcastHello();
+        -- With a delay, due to possible name cache issues
+        C_Timer.After(1, Startup);
     end);
 
-    if IsInRaid() or LootReserve.Comm.SoloDebug then
-        -- Load server after UI reload
-        -- This should be the only case when a player is already detected to be in a group at the time of addon loading
-        LootReserve.Server:Startup();
-        -- Query other group members about their addon versions and request server session info if any
-        LootReserve.Comm:BroadcastHello();
-    end
+    -- Load client and server after UI reload
+    -- This should be the only case when a player is already detected to be in a group at the time of addon loading
+    Startup();
 end
 
 function LootReserve:OnEnable()

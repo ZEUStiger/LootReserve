@@ -194,7 +194,7 @@ function LootReserve.Server:PrepareSession()
             self:UpdateAddonUsers();
         end);
 
-        LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", function()
+        local function UpdateGroupMembers()
             if self.CurrentSession then
                 -- Remove member info for players who left (?)
                 --[[
@@ -231,6 +231,13 @@ function LootReserve.Server:PrepareSession()
             end
             self:UpdateReserveList();
             self:UpdateAddonUsers();
+        end
+        
+        LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", UpdateGroupMembers);
+        LootReserve:RegisterEvent("UNIT_NAME_UPDATE", function(unit)
+            if unit and (stringStartsWith(unit, "raid") or stringStartsWith(unit, "party")) then
+                UpdateGroupMembers();
+            end
         end);
 
         local loot = formatToRegexp(LOOT_ITEM);
