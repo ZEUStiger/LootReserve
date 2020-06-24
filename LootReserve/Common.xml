@@ -20,8 +20,12 @@
 				if self:GetParent():IsProtected() and InCombatLockdown() then return; end
 
 				local point, relativeFrame, relativePoint, x, y = self:GetParent():GetPoint(1);
+				x = round(x);
+				y = round(y);
+				if (point == "CENTER" or point == "TOP" or point == "BOTTOM") and (round(self:GetParent():GetWidth() ) % 2 == 1) then x = x + 0.5; end
+				if (point == "CENTER" or point == "LEFT" or point == "RIGHT") and (round(self:GetParent():GetHeight()) % 2 == 1) then y = y + 0.5; end
 				self:GetParent():ClearAllPoints();
-				self:GetParent():SetPoint(point, relativeFrame, relativePoint, round(x), round(y));
+				self:GetParent():SetPoint(point, relativeFrame, relativePoint, x, y);
 			</OnMouseUp>
 		</Scripts>
 	</Button>
