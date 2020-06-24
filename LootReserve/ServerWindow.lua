@@ -215,9 +215,15 @@ function LootReserve.Server:SetWindowTab(tab)
     if self.Window.Duration:IsShown() and self.Window.Search:IsShown() then
         self.Window.Search:SetPoint("TOPLEFT", self.Window.Duration, "BOTTOMLEFT", 3, -3);
         self.Window.Search:SetPoint("TOPRIGHT", self.Window.Duration, "BOTTOMRIGHT", 3 - 80, -3);
+        if not InCombatLockdown() then
+            self.Window.PanelReserves:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -61);
+        end
     else
         self.Window.Search:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 10, -25);
         self.Window.Search:SetPoint("TOPRIGHT", self.Window, "TOPRIGHT", -7 - 80, -25);
+        if not InCombatLockdown() then
+            self.Window.PanelReserves:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -48);
+        end
     end
     self.Window.ButtonMenu:SetShown(self.Window.Search:IsShown());
 
@@ -327,7 +333,7 @@ function LootReserve.Server:SessionStopped()
     self.Window.PanelSession.ButtonStartSession:Show();
     self.Window.PanelSession.ButtonStopSession:Hide();
     self.Window.PanelSession.ButtonResetSession:Show();
-    if self.Window.PanelReserves:IsShown() then
+    if self.Window.PanelReserves:IsShown() or self.Window.PanelReservesLockdown:IsShown() then
         LootReserve.Server:SetWindowTab(2);
     end
     self:UpdateServerAuthority();

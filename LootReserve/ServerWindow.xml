@@ -644,7 +644,7 @@
 			</Frame>
 			<Frame parentKey="PanelReserves" parentArray="Panels" hidden="true">
 				<Anchors>
-					<Anchor point="TOPLEFT" relativeKey="$parent.Search" relativePoint="BOTTOMLEFT" x="-3" y="-3" />
+					<Anchor point="TOPLEFT" x="7" y="-48" />
 					<Anchor point="BOTTOMRIGHT" x="-9" y="6" />
 				</Anchors>
 				<Frames>
@@ -674,7 +674,7 @@
 			</Frame>
 			<Frame parentKey="PanelReservesLockdown" hidden="true">
 				<Anchors>
-					<Anchor point="TOPLEFT" x="7" y="-48" />
+					<Anchor point="TOPLEFT" relativeKey="$parent.Search" relativePoint="BOTTOMLEFT" x="-3" y="-3" />
 					<Anchor point="BOTTOMRIGHT" x="-9" y="6" />
 				</Anchors>
 				<Frames>
