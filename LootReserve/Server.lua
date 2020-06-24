@@ -924,7 +924,7 @@ function LootReserve.Server:RequestRoll(item)
             end
 
             for player, roll in pairs(self.RequestedRoll.Players) do
-                if roll == 0 and not self:IsAddonUser(player) then
+                if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
                     SendChatMessage(format("Please /roll on %s you reserved.", link), "WHISPER", nil, player);
                 end
             end
