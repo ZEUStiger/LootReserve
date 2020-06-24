@@ -294,6 +294,16 @@
 		<Frames>
 			<Button inherits="LootReserveCommonFrameMovingHeaderTemplate" />
 			<Button inherits="LootReserveCommonFrameSizeGrabberTemplate" />
+			<StatusBar parentKey="Duration" inherits="LootReserveDurationStatusBar">
+				<KeyValues>
+					<KeyValue key="server" value="true" type="boolean" />
+				</KeyValues>
+				<Size y="8" />
+				<Anchors>
+					<Anchor point="TOPLEFT" x="7" y="-27" />
+					<Anchor point="TOPRIGHT" x="-10" y="-27" />
+				</Anchors>
+			</StatusBar>
 			<EditBox parentKey="Search" inherits="SearchBoxTemplate">
 				<Size y="20" />
 				<Anchors>
@@ -304,6 +314,8 @@
 					<OnLoad>
 						SearchBoxTemplate_OnLoad(self);
 						self.Instructions:SetText("Search items or players");
+						self.Instructions:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -8, 0);
+						self.Instructions:SetWordWrap(false);
 					</OnLoad>
 					<OnTextChanged>
 						InputBoxInstructions_OnTextChanged(self);
@@ -311,16 +323,100 @@
 					</OnTextChanged>
 				</Scripts>
 			</EditBox>
-			<StatusBar parentKey="Duration" inherits="LootReserveDurationStatusBar">
-				<KeyValues>
-					<KeyValue key="server" value="true" type="boolean" />
-				</KeyValues>
-				<Size y="8" />
+			<Button parentKey="ButtonMenu" inherits="UIMenuButtonStretchTemplate">
+				<Size y="21" />
 				<Anchors>
-					<Anchor point="LEFT" relativeKey="$parent.Search" x="-2" />
-					<Anchor point="RIGHT" relativeKey="$parent.Search" x="-3" />
+					<Anchor point="TOPLEFT" relativeKey="$parent.Search" relativePoint="TOPRIGHT" x="0" y="0" />
+					<Anchor point="TOPRIGHT" relativeKey="$parent.Search" relativePoint="TOPRIGHT" x="80" y="0" />
 				</Anchors>
-			</StatusBar>
+				<Layers>
+					<Layer>
+						<Texture parentKey="Arrow" file="Interface\BUTTONS\UI-SortArrow">
+							<Size x="8" y="8" />
+							<Anchors>
+								<Anchor point="RIGHT" x="-8" />
+							</Anchors>
+							<TexCoords left="0" right="0.5" top="0" bottom="1" />
+						</Texture>
+						<Texture parentKey="Icon" file="Interface\CHATFRAME\UI-ChatConversationIcon">
+							<Size x="16" y="16" />
+							<Anchors>
+								<Anchor point="LEFT" x="6" />
+							</Anchors>
+						</Texture>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						self:SetPushedTextOffset(1, -1);
+						self.Text:ClearAllPoints();
+						self.Text:SetPoint("LEFT", self, "LEFT", 8 + 16, 0);
+						self.Text:SetPoint("RIGHT", self, "RIGHT", -8 - 8, 0);
+						self.Text:GetFontObject():SetJustifyH("LEFT");
+						self.UpdateTooltip = function(self)
+							local missingPlayers = { };
+							if LootReserve.Server.CurrentSession then
+								for player, member in pairs(LootReserve.Server.CurrentSession.Members) do
+									if #member.ReservedItems == 0 then
+										table.insert(missingPlayers, player);
+									end
+								end
+							end
+							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+							GameTooltip:SetText(#missingPlayers == 0 and "|cFF00FF00All players reserved items|r" or format("%d |4player:players; without reserves:", #missingPlayers));
+							for _, player in ipairs(missingPlayers) do
+								GameTooltip:AddLine(format("|c%s%s|r", LootReserve:GetPlayerClassColor(player), player));
+							end
+							GameTooltip:AddLine("Click for more options", GRAY_FONT_COLOR.r, GRAY_FONT_COLOR.g, GRAY_FONT_COLOR.b);
+							GameTooltip:Show();
+						end
+					</OnLoad>
+					<OnClick>
+						local menuWhisperPlayers = { };
+						if LootReserve.Server.CurrentSession then
+							for player, member in pairs(LootReserve.Server.CurrentSession.Members) do
+								if #member.ReservedItems == 0 then
+									table.insert(menuWhisperPlayers,
+									{
+										text = format("|c%s%s|r", LootReserve:GetPlayerClassColor(player), player),
+										arg1 = player,
+										func = function(info) ChatFrame_SendTell(info.arg1); end,
+									});
+								end
+							end
+						end
+						local menu =
+						{
+							{ text = "Players Without Reserves", isTitle = true },
+							{ text = "Whisper All", disabled = #menuWhisperPlayers == 0, func = function() LootReserve.Server:WhisperAllWithoutReserves(); end },
+							{ text = "Whisper...", keepShownOnClick = true, hasArrow = true, menuList = menuWhisperPlayers, disabled = #menuWhisperPlayers == 0 },
+							{ text = "", isTitle = true },
+							{ text = "Cancel" },
+						};
+						for _, menu in ipairs({ menu, menuWhisperPlayers }) do
+							for _, item in ipairs(menu) do
+								item.notCheckable = true;
+							end
+						end
+						
+						EasyMenu(menu, self:GetParent().Menu, self, 0, 0, "MENU");
+					</OnClick>
+					<OnMouseDown>
+						local x, y = self:GetPushedTextOffset();
+						self.Icon:SetPoint("LEFT", self, "LEFT", 6 + x, y);
+						self.Arrow:SetPoint("RIGHT", self, "RIGHT", -8 + x, y);
+					</OnMouseDown>
+					<OnMouseUp>
+						self.Icon:SetPoint("LEFT", self, "LEFT", 6, 0);
+						self.Arrow:SetPoint("RIGHT", self, "RIGHT", -8, 0);
+					</OnMouseUp>
+					<OnEnter>
+						self:UpdateTooltip();
+					</OnEnter>
+					<OnLeave function="GameTooltip_Hide" />
+				</Scripts>
+			</Button>
+			<Frame name="LootReserveServerMenu" parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
 			<Button parentKey="TabSession" inherits="LootReserveServerWindowTabTemplate" id="1" text="Raid Setup">
 				<Anchors>
 					<Anchor point="BOTTOMLEFT" x="11" y="-31" />
@@ -548,7 +644,7 @@
 			</Frame>
 			<Frame parentKey="PanelReserves" parentArray="Panels" hidden="true">
 				<Anchors>
-					<Anchor point="TOPLEFT" x="7" y="-48" />
+					<Anchor point="TOPLEFT" relativeKey="$parent.Search" relativePoint="BOTTOMLEFT" x="-3" y="-3" />
 					<Anchor point="BOTTOMRIGHT" x="-9" y="6" />
 				</Anchors>
 				<Frames>

@@ -944,3 +944,16 @@ function LootReserve.Server:PassRoll(player, item)
 
     self:UpdateReserveListRolls();
 end
+
+function LootReserve.Server:WhisperAllWithoutReserves()
+    if not self.CurrentSession then return; end
+
+    for player, member in pairs(self.CurrentSession.Members) do
+        if #member.ReservedItems == 0 and member.ReservesLeft > 0 and LootReserve:IsPlayerOnline(player) then
+            SendChatMessage(format("Don't forget to reserve your items. You have %d %s left.",
+                member.ReservesLeft,
+                member.ReservesLeft == 1 and "reserve" or "reserves"
+            ), "WHISPER", nil, player);
+        end
+    end
+end

@@ -59,6 +59,19 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         frame:Hide();
     end
 
+    local totalPlayers = 0;
+    if self.CurrentSession then
+        for _, member in pairs(self.CurrentSession.Members) do
+            if #member.ReservedItems > 0 then
+                totalPlayers = totalPlayers + 1;
+            end
+        end
+    end
+    self.Window.ButtonMenu:SetText(format("|cFF00FF00%d|r/%d", totalPlayers, GetNumGroupMembers()));
+    if GameTooltip:IsOwned(self.Window.ButtonMenu) then
+        self.Window.ButtonMenu:UpdateTooltip();
+    end
+
     if not self.CurrentSession then
         return;
     end
@@ -198,7 +211,15 @@ function LootReserve.Server:SetWindowTab(tab)
         self.Window.InsetBg:SetPoint("TOPLEFT", self.Window.Search, "BOTTOMLEFT", -6, 0);
     end
     self.Window.Duration:SetShown(tab == 2 and self.CurrentSession and self.CurrentSession.AcceptingReserves and self.CurrentSession.Duration ~= 0 and self.CurrentSession.Settings.Duration ~= 0);
-    self.Window.Search:SetShown(tab == 2 and not self.Window.Duration:IsShown());
+    self.Window.Search:SetShown(tab == 2);
+    if self.Window.Duration:IsShown() and self.Window.Search:IsShown() then
+        self.Window.Search:SetPoint("TOPLEFT", self.Window.Duration, "BOTTOMLEFT", 3, -3);
+        self.Window.Search:SetPoint("TOPRIGHT", self.Window.Duration, "BOTTOMRIGHT", 3 - 80, -3);
+    else
+        self.Window.Search:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 10, -25);
+        self.Window.Search:SetPoint("TOPRIGHT", self.Window, "TOPRIGHT", -7 - 80, -25);
+    end
+    self.Window.ButtonMenu:SetShown(self.Window.Search:IsShown());
 
     for i, panel in ipairs(self.Window.Panels) do
         if panel == self.Window.PanelReserves and InCombatLockdown() then
@@ -306,9 +327,8 @@ function LootReserve.Server:SessionStopped()
     self.Window.PanelSession.ButtonStartSession:Show();
     self.Window.PanelSession.ButtonStopSession:Hide();
     self.Window.PanelSession.ButtonResetSession:Show();
-    if self.Window.Duration:IsShown() then
-        self.Window.Duration:Hide();
-        self.Window.Search:Show();
+    if self.Window.PanelReserves:IsShown() then
+        LootReserve.Server:SetWindowTab(2);
     end
     self:UpdateServerAuthority();
 end
