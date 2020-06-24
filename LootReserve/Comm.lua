@@ -4,7 +4,7 @@ LootReserve.Comm =
     Prefix = "LootReserve",
     Handlers = { },
     Listening = false,
-    Debug = false,
+    Debug = true,
     SoloDebug = false,
 };
 
@@ -48,10 +48,10 @@ function LootReserve.Comm:StartListening()
 end
 
 function LootReserve.Comm:CanBroadcast()
-    return LootReserve.Enabled and (IsInRaid() or self.Debug);
+    return LootReserve.Enabled and (IsInRaid() or self.SoloDebug);
 end
 function LootReserve.Comm:CanWhisper(target)
-    return LootReserve.Enabled and ((IsInRaid() and UnitInRaid(target)) or self.Debug);
+    return LootReserve.Enabled and ((IsInRaid() and UnitInRaid(target)) or self.SoloDebug);
 end
 
 function LootReserve.Comm:Broadcast(opcode, ...)

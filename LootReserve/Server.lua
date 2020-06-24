@@ -497,6 +497,16 @@ function LootReserve.Server:StartSession()
         Duration = self.NewSessionSettings.Duration,
         DurationEndTimestamp = time() + self.NewSessionSettings.Duration, -- Used to resume the session after relog or UI reload
         Members = { },
+        --[[
+        {
+            [PlayerName] =
+            {
+                ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
+                ReservedItems = { ItemID, ItemID, ... },
+            },
+            ...
+        },
+        ]]
         ItemReserves = { },
         --[[
         {
