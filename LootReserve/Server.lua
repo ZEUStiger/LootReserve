@@ -62,10 +62,6 @@ end
 local function stringStartsWith(str, start)
     return str:sub(1, #start) == start;
 end
-local function stringTrim(str, chars)
-    chars = chars or "%s"
-    return (str:match("^" .. chars .. "*(.-)" .. chars .. "*$"));
-end
 
 function LootReserve.Server:CanBeServer()
     return IsInRaid() and (UnitIsGroupLeader("player") or IsMasterLooter()) or LootReserve.Comm.SoloDebug;
@@ -344,7 +340,7 @@ function LootReserve.Server:PrepareSession()
             if not member or not LootReserve:IsPlayerOnline(sender) then return; end
 
             text = text:lower();
-            text = stringTrim(text);
+            text = LootReserve:StringTrim(text);
             if stringStartsWith(text, prefixA) then
                 text = text:sub(1 + #prefixA);
             elseif stringStartsWith(text, prefixB) then
@@ -354,18 +350,18 @@ function LootReserve.Server:PrepareSession()
             end
 
             if not self.CurrentSession.AcceptingReserves then
-                SendChatMessage("Loot reserves are no longer being accepted.", "WHISPER", nil, sender);
+                LootReserve:SendChatMessage("Loot reserves are no longer being accepted.", "WHISPER", sender);
                 return;
             end
 
-            text = stringTrim(text);
+            text = LootReserve:StringTrim(text);
             local command = "reserve";
             if stringStartsWith(text, "cancel") then
                 text = text:sub(1 + #("cancel"));
                 command = "cancel";
             end
 
-            text = stringTrim(text);
+            text = LootReserve:StringTrim(text);
             if #text == 0 and command == "cancel" then
                 if #member.ReservedItems > 0 then
                     self:CancelReserve(sender, member.ReservedItems[#member.ReservedItems], true);
@@ -381,7 +377,7 @@ function LootReserve.Server:PrepareSession()
                         self:CancelReserve(sender, item, true);
                     end
                 else
-                    SendChatMessage("That item is not reservable in this raid.", "WHISPER", nil, sender);
+                    LootReserve:SendChatMessage("That item is not reservable in this raid.", "WHISPER", sender);
                 end
             end
 
@@ -389,7 +385,7 @@ function LootReserve.Server:PrepareSession()
             if item then
                 handleItemCommand(item, command);
             else
-                text = stringTrim(text, "[%s%[%]]");
+                text = LootReserve:StringTrim(text, "[%s%[%]]");
                 text = text:upper();
                 local function handleItemCommandByName()
                     if updateItemNameCache() then
@@ -413,7 +409,7 @@ function LootReserve.Server:PrepareSession()
                         end
 
                         if not match then
-                            SendChatMessage("Cannot find an item with that name.", "WHISPER", nil, sender);
+                            LootReserve:SendChatMessage("Cannot find an item with that name.", "WHISPER", sender);
                         elseif match > 0 then
                             handleItemCommand(match, command);
                         elseif match == 0 then
@@ -421,11 +417,11 @@ function LootReserve.Server:PrepareSession()
                             for i = 1, math.min(5, #matches) do
                                 names[i] = GetItemInfo(matches[i]);
                             end
-                            SendChatMessage(format("Try being more specific, %d items match that name: %s%s",
+                            LootReserve:SendChatMessage(format("Try being more specific, %d items match that name: %s%s",
                                 #matches,
                                 strjoin(", ", unpack(names)),
                                 #matches > #names and format(" and %d more...", #matches - #names) or ""
-                            ), "WHISPER", nil, sender);
+                            ), "WHISPER", sender);
                         end
                     else
                         C_Timer.After(0.25, handleItemCommandByName);
@@ -435,7 +431,7 @@ function LootReserve.Server:PrepareSession()
                 if #text >= 3 then
                     handleItemCommandByName();
                 else
-                    SendChatMessage("That name is too short, 3 or more letters required.", "WHISPER", nil, sender);
+                    LootReserve:SendChatMessage("That name is too short, 3 or more letters required.", "WHISPER", sender);
                 end
             end
         end
@@ -556,7 +552,7 @@ function LootReserve.Server:StartSession()
         local category = LootReserve.Data.Categories[self.CurrentSession.Settings.LootCategory];
         local duration = self.CurrentSession.Settings.Duration
         local count = self.CurrentSession.Settings.MaxReservesPerPlayer;
-        SendChatMessage(format("Loot reserves are now started%s%s. %d reserved %s per character. Whisper !reserve ItemLinkOrName",
+        LootReserve:SendChatMessage(format("Loot reserves are now started%s%s. %d reserved %s per character. Whisper !reserve ItemLinkOrName",
             category and format(" for %s", category.Name) or "",
             duration ~= 0 and format(" and will last for %d:%02d minutes", math.floor(duration / 60), duration % 60) or "",
             count,
@@ -589,7 +585,7 @@ function LootReserve.Server:ResumeSession()
     self:BroadcastSessionInfo();
 
     if self.CurrentSession.Settings.ChatFallback then
-        SendChatMessage("Accepting loot reserves again. Whisper !reserve ItemLinkOrName", "RAID");
+        LootReserve:SendChatMessage("Accepting loot reserves again. Whisper !reserve ItemLinkOrName", "RAID");
     end
 
     self:UpdateReserveList();
@@ -609,7 +605,7 @@ function LootReserve.Server:StopSession()
     LootReserve.Comm:SendSessionStop();
 
     if self.CurrentSession.Settings.ChatFallback then
-        SendChatMessage("No longer accepting loot reserves.", "RAID");
+        LootReserve:SendChatMessage("No longer accepting loot reserves.", "RAID");
     end
 
     self:UpdateReserveList();
@@ -646,38 +642,38 @@ end
 function LootReserve.Server:Reserve(player, item, chat)
     if not LootReserve:IsPlayerOnline(player) then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.NotInRaid, 0);
-        if chat then SendChatMessage("You are not in the raid", "WHISPER", nil, player); end
+        if chat then LootReserve:SendChatMessage("You are not in the raid", "WHISPER", player); end
         return;
     end
 
     if not self.CurrentSession or not self.CurrentSession.AcceptingReserves then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.NoSession, 0);
-        if chat then SendChatMessage("Loot reserves aren't active in your raid", "WHISPER", nil, player); end
+        if chat then LootReserve:SendChatMessage("Loot reserves aren't active in your raid", "WHISPER", player); end
         return;
     end
 
     local member = self.CurrentSession.Members[player];
     if not member then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.NotMember, 0);
-        if chat then SendChatMessage("You are not participating in loot reserves", "WHISPER", nil, player); end
+        if chat then LootReserve:SendChatMessage("You are not participating in loot reserves", "WHISPER", player); end
         return;
     end
 
     if not self.ReservableItems[item] then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.ItemNotReservable, member.ReservesLeft);
-        if chat then SendChatMessage("That item cannot be reserved in this raid", "WHISPER", nil, player); end
+        if chat then LootReserve:SendChatMessage("That item cannot be reserved in this raid", "WHISPER", player); end
         return;
     end
 
     if LootReserve:Contains(member.ReservedItems, item) then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.AlreadyReserved, member.ReservesLeft);
-        if chat then SendChatMessage("You are already reserving that item", "WHISPER", nil, player); end
+        if chat then LootReserve:SendChatMessage("You are already reserving that item", "WHISPER", player); end
         return;
     end
 
     if member.ReservesLeft <= 0 then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.NoReservesLeft, member.ReservesLeft);
-        if chat then SendChatMessage("You already reserved too many items", "WHISPER", nil, player); end
+        if chat then LootReserve:SendChatMessage("You already reserved too many items", "WHISPER", player); end
         return;
     end
 
@@ -717,12 +713,12 @@ function LootReserve.Server:Reserve(player, item, chat)
                     strjoin(", ", unpack(others)));
             end
 
-            SendChatMessage(format("You reserved %s.%s %s more %s available. You can cancel with !reserve cancel [ItemLinkOrName]",
+            LootReserve:SendChatMessage(format("You reserved %s.%s %s more %s available. You can cancel with !reserve cancel [ItemLinkOrName]",
                 link,
                 post,
                 member.ReservesLeft == 0 and "No" or tostring(member.ReservesLeft),
                 member.ReservesLeft == 1 and "reserve" or "reserves"
-            ), "WHISPER", nil, player);
+            ), "WHISPER", player);
         end
         if chat or not self:IsAddonUser(player) then
             WhisperPlayer();
@@ -742,13 +738,13 @@ function LootReserve.Server:Reserve(player, item, chat)
                     local others = deepcopy(reserve.Players);
                     removeFromTable(others, other);
 
-                    SendChatMessage(format("There %s now %d %s for %s you reserved: %s.",
+                    LootReserve:SendChatMessage(format("There %s now %d %s for %s you reserved: %s.",
                         #others == 1 and "is" or "are",
                         #others,
                         #others == 1 and "contender" or "contenders",
                         link,
                         strjoin(", ", unpack(others))
-                    ), "WHISPER", nil, other);
+                    ), "WHISPER", other);
                 end
             end
         end
@@ -761,32 +757,32 @@ end
 function LootReserve.Server:CancelReserve(player, item, chat, forced)
     if not LootReserve:IsPlayerOnline(player) then
         LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.NotInRaid, 0);
-        if chat then SendChatMessage("You are not in the raid", "WHISPER", nil, player); end
+        if chat then LootReserve:SendChatMessage("You are not in the raid", "WHISPER", player); end
         return;
     end
 
     if not self.CurrentSession or not self.CurrentSession.AcceptingReserves then
         LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.NoSession, 0);
-        if chat then SendChatMessage("Loot reserves aren't active in your raid", "WHISPER", nil, player); end
+        if chat then LootReserve:SendChatMessage("Loot reserves aren't active in your raid", "WHISPER", player); end
         return;
     end
 
     local member = self.CurrentSession.Members[player];
     if not member then
         LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.NotMember, 0);
-        if chat then SendChatMessage("You are not participating in loot reserves", "WHISPER", nil, player); end
+        if chat then LootReserve:SendChatMessage("You are not participating in loot reserves", "WHISPER", player); end
         return;
     end
 
     if not self.ReservableItems[item] then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.CancelReserveResult.ItemNotReservable, member.ReservesLeft);
-        if chat then SendChatMessage("That item cannot be reserved in this raid", "WHISPER", nil, player); end
+        if chat then LootReserve:SendChatMessage("That item cannot be reserved in this raid", "WHISPER", player); end
         return;
     end
 
     if not LootReserve:Contains(member.ReservedItems, item) then
         LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.NotReserved, member.ReservesLeft);
-        if chat then SendChatMessage("You did not reserve that item", "WHISPER", nil, player); end
+        if chat then LootReserve:SendChatMessage("You did not reserve that item", "WHISPER", player); end
         return;
     end
 
@@ -817,11 +813,11 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
                 return;
             end
 
-            SendChatMessage(format(forced and "Your reserve for %s has been forcibly removed. %d more %s available." or "You cancelled your reserve for %s. %d more %s available.",
+            LootReserve:SendChatMessage(format(forced and "Your reserve for %s has been forcibly removed. %d more %s available." or "You cancelled your reserve for %s. %d more %s available.",
                 link,
                 member.ReservesLeft,
                 member.ReservesLeft == 1 and "reserve" or "reserves"
-            ), "WHISPER", nil, player);
+            ), "WHISPER", player);
         end
         if chat or not self:IsAddonUser(player) then
             WhisperPlayer();
@@ -842,15 +838,15 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
                     removeFromTable(others, other);
 
                     if #others == 0 then
-                        SendChatMessage(format("You are now the only contender for %s.", link), "WHISPER", nil, other);
+                        LootReserve:SendChatMessage(format("You are now the only contender for %s.", link), "WHISPER", other);
                     else
-                        SendChatMessage(format("There %s now %d %s for %s you reserved: %s.",
+                        LootReserve:SendChatMessage(format("There %s now %d %s for %s you reserved: %s.",
                             #others == 1 and "is" or "are",
                             #others,
                             #others == 1 and "contender" or "contenders",
                             link,
                             strjoin(", ", unpack(others))
-                        ), "WHISPER", nil, other);
+                        ), "WHISPER", other);
                     end
                 end
             end
@@ -925,7 +921,7 @@ function LootReserve.Server:RequestRoll(item)
 
             for player, roll in pairs(self.RequestedRoll.Players) do
                 if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
-                    SendChatMessage(format("Please /roll on %s you reserved.", link), "WHISPER", nil, player);
+                    LootReserve:SendChatMessage(format("Please /roll on %s you reserved.", link), "WHISPER", player);
                 end
             end
         end
@@ -950,10 +946,10 @@ function LootReserve.Server:WhisperAllWithoutReserves()
 
     for player, member in pairs(self.CurrentSession.Members) do
         if #member.ReservedItems == 0 and member.ReservesLeft > 0 and LootReserve:IsPlayerOnline(player) then
-            SendChatMessage(format("Don't forget to reserve your items. You have %d %s left.",
+            LootReserve:SendChatMessage(format("Don't forget to reserve your items. You have %d %s left.",
                 member.ReservesLeft,
                 member.ReservesLeft == 1 and "reserve" or "reserves"
-            ), "WHISPER", nil, player);
+            ), "WHISPER", player);
         end
     end
 end

@@ -112,6 +112,32 @@ function LootReserve:RegisterEvent(event, handler)
     table.insert(LootReserve.EventFrame.RegisteredEvents[event], handler);
 end
 
+function LootReserve:SendChatMessage(text, channel, target)
+    local function Send(text)
+        if #text > 0 then
+            if ChatThrottleLib then
+                ChatThrottleLib:SendChatMessage("NORMAL", self.Comm.Prefix, text, channel, nil, target);
+            else
+                SendChatMessage(text, channel, nil, target);
+            end
+        end
+    end
+
+    if #text <= 250 then
+        Send(text);
+    else
+        local accumulator = "";
+        for word in text:gmatch("[^ ]- ") do
+            if #accumulator + #word > 250 then
+                Send(self:StringTrim(accumulator));
+                accumulator = "";
+            end
+            accumulator = accumulator .. word;
+        end
+        Send(self:StringTrim(accumulator));
+    end
+end
+
 function LootReserve:IsPlayerOnline(player)
     for i = 1, MAX_RAID_MEMBERS do
         local name, _, _, _, _, _, _, online = GetRaidRosterInfo(i);
@@ -153,6 +179,11 @@ end
 
 function LootReserve:ColoredPlayer(player)
     return format("|c%s%s|r", self:GetPlayerClassColor(player), player);
+end
+
+function LootReserve:StringTrim(str, chars)
+    chars = chars or "%s"
+    return (str:match("^" .. chars .. "*(.-)" .. chars .. "*$"));
 end
 
 function LootReserve:Contains(table, item)
