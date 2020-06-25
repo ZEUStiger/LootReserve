@@ -81,14 +81,6 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         local frame = list.Frames[list.LastIndex];
         while not frame do
             frame = CreateFrame("Frame", nil, list, "LootReserveReserveListTemplate");
-
-            if #list.Frames == 0 then
-                frame:SetPoint("TOPLEFT", list, "TOPLEFT");
-                frame:SetPoint("TOPRIGHT", list, "TOPRIGHT");
-            else
-                frame:SetPoint("TOPLEFT", list.Frames[#list.Frames], "BOTTOMLEFT", 0, 0);
-                frame:SetPoint("TOPRIGHT", list.Frames[#list.Frames], "BOTTOMRIGHT", 0, 0);
-            end
             table.insert(list.Frames, frame);
             frame = list.Frames[list.LastIndex];
         end
@@ -122,13 +114,6 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         for i, player in ipairs(reserve.Players) do
             if i > #frame.ReservesFrame.Players then
                 local button = CreateFrame("Button", nil, frame.ReservesFrame, lockdown and "LootReserveReserveListPlayerTemplate" or "LootReserveReserveListPlayerSecureTemplate");
-                if #frame.ReservesFrame.Players == 0 then
-                    button:SetPoint("TOPLEFT", frame.ReservesFrame, "TOPLEFT", 0, -14);
-                    button:SetPoint("TOPRIGHT", frame.ReservesFrame, "TOPRIGHT", 0, 0);
-                else
-                    button:SetPoint("TOPLEFT", frame.ReservesFrame.Players[i - 1], "BOTTOMLEFT");
-                    button:SetPoint("TOPRIGHT", frame.ReservesFrame.Players[i - 1], "BOTTOMRIGHT");
-                end
                 table.insert(frame.ReservesFrame.Players, button);
             end
             local unit = LootReserve:GetRaidUnitID(player);
@@ -142,6 +127,8 @@ function LootReserve.Server:UpdateReserveList(lockdown)
             button.Name:SetText(format("%s%s", LootReserve:ColoredPlayer(player), LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or ""));
             button.Roll:SetText("");
             button.WinnerHighlight:Hide();
+            button:SetPoint("TOPLEFT", frame.ReservesFrame, "TOPLEFT", 0, 5 - reservesHeight);
+            button:SetPoint("TOPRIGHT", frame.ReservesFrame, "TOPRIGHT", 0, 5 - reservesHeight);
             reservesHeight = reservesHeight + button:GetHeight();
             last = i;
         end
@@ -150,6 +137,8 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         end
 
         frame:SetHeight(44 + reservesHeight);
+        frame:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -list.ContentHeight);
+        frame:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, -list.ContentHeight);
         list.ContentHeight = list.ContentHeight + frame:GetHeight();
     end
 
