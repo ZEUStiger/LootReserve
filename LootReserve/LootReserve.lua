@@ -126,6 +126,7 @@ function LootReserve:SendChatMessage(text, channel, target)
     if #text <= 250 then
         Send(text);
     else
+        text = text .. " ";
         local accumulator = "";
         for word in text:gmatch("[^ ]- ") do
             if #accumulator + #word > 250 then
