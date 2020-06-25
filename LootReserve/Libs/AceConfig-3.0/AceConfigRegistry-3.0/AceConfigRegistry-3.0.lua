@@ -8,15 +8,15 @@
 -- :IterateOptionsTables() (and :GetOptionsTable() if only given one argument) return a function reference that the requesting config handling addon must call with valid "uiType", "uiName".
 -- @class file
 -- @name AceConfigRegistry-3.0
--- @release $Id: AceConfigRegistry-3.0.lua 998 2010-12-01 18:39:53Z nevcairiel $
-local MAJOR, MINOR = "AceConfigRegistry-3.0", 13
+-- @release $Id: AceConfigRegistry-3.0.lua 1207 2019-06-23 12:08:33Z nevcairiel $
+local CallbackHandler = LibStub("CallbackHandler-1.0")
+
+local MAJOR, MINOR = "AceConfigRegistry-3.0", 20
 local AceConfigRegistry = LibStub:NewLibrary(MAJOR, MINOR)
 
 if not AceConfigRegistry then return end
 
 AceConfigRegistry.tables = AceConfigRegistry.tables or {}
-
-local CallbackHandler = LibStub:GetLibrary("CallbackHandler-1.0")
 
 if not AceConfigRegistry.callbacks then
 	AceConfigRegistry.callbacks = CallbackHandler:New(AceConfigRegistry)
@@ -57,8 +57,8 @@ local istable={["table"]=true,   _="table"}
 local ismethodtable={["table"]=true,["string"]=true,["function"]=true,   _="methodname, funcref or table"}
 local optstring={["nil"]=true,["string"]=true, _="string"}
 local optstringfunc={["nil"]=true,["string"]=true,["function"]=true, _="string or funcref"}
+local optstringnumberfunc={["nil"]=true,["string"]=true,["number"]=true,["function"]=true, _="string, number or funcref"}
 local optnumber={["nil"]=true,["number"]=true, _="number"}
-local optmethod={["nil"]=true,["string"]=true,["function"]=true, _="methodname or funcref"}
 local optmethodfalse={["nil"]=true,["string"]=true,["function"]=true,["boolean"]={[false]=true},  _="methodname, funcref or false"}
 local optmethodnumber={["nil"]=true,["string"]=true,["function"]=true,["number"]=true,  _="methodname, funcref or number"}
 local optmethodtable={["nil"]=true,["string"]=true,["function"]=true,["table"]=true,  _="methodname, funcref or table"}
@@ -66,6 +66,7 @@ local optmethodbool={["nil"]=true,["string"]=true,["function"]=true,["boolean"]=
 local opttable={["nil"]=true,["table"]=true,  _="table"}
 local optbool={["nil"]=true,["boolean"]=true,  _="boolean"}
 local optboolnumber={["nil"]=true,["boolean"]=true,["number"]=true,  _="boolean or number"}
+local optstringnumber={["nil"]=true,["string"]=true,["number"]=true, _="string or number"}
 
 local basekeys={
 	type=isstring,
@@ -82,24 +83,31 @@ local basekeys={
 		dialogHidden=optmethodbool,
 		dropdownHidden=optmethodbool,
 	cmdHidden=optmethodbool,
-	icon=optstringfunc,
+	icon=optstringnumberfunc,
 	iconCoords=optmethodtable,
 	handler=opttable,
 	get=optmethodfalse,
 	set=optmethodfalse,
 	func=optmethodfalse,
 	arg={["*"]=true},
-	width=optstring,
+	width=optstringnumber,
 }
 
 local typedkeys={
-	header={},
+	header={
+		control=optstring,
+		dialogControl=optstring,
+		dropdownControl=optstring,
+	},
 	description={
-		image=optstringfunc,
+		image=optstringnumberfunc,
 		imageCoords=optmethodtable,
 		imageHeight=optnumber,
 		imageWidth=optnumber,
 		fontSize=optstringfunc,
+		control=optstring,
+		dialogControl=optstring,
+		dropdownControl=optstring,
 	},
 	group={
 		args=istable,
@@ -112,10 +120,13 @@ local typedkeys={
 		childGroups=optstring,
 	},
 	execute={
-		image=optstringfunc,
+		image=optstringnumberfunc,
 		imageCoords=optmethodtable,
 		imageHeight=optnumber,
 		imageWidth=optnumber,
+		control=optstring,
+		dialogControl=optstring,
+		dropdownControl=optstring,
 	},
 	input={
 		pattern=optstring,
@@ -127,8 +138,11 @@ local typedkeys={
 	},
 	toggle={
 		tristate=optbool,
-		image=optstringfunc,
+		image=optstringnumberfunc,
 		imageCoords=optmethodtable,
+		control=optstring,
+		dialogControl=optstring,
+		dropdownControl=optstring,
 	},
 	tristate={
 	},
@@ -140,9 +154,13 @@ local typedkeys={
 		step=optnumber,
 		bigStep=optnumber,
 		isPercent=optbool,
+		control=optstring,
+		dialogControl=optstring,
+		dropdownControl=optstring,
 	},
 	select={
 		values=ismethodtable,
+		sorting=optmethodtable,
 		style={
 			["nil"]=true,
 			["string"]={dropdown=true,radio=true},
@@ -162,10 +180,15 @@ local typedkeys={
 		dropdownControl=optstring,
 	},
 	color={
-		hasAlpha=optbool,
+		hasAlpha=optmethodbool,
+		control=optstring,
+		dialogControl=optstring,
+		dropdownControl=optstring,
 	},
 	keybinding={
-		-- TODO
+		control=optstring,
+		dialogControl=optstring,
+		dropdownControl=optstring,
 	},
 }
 
@@ -288,7 +311,8 @@ end
 -- @param appName The application name as given to `:RegisterOptionsTable()`
 -- @param options The options table, OR a function reference that generates it on demand. \\
 -- See the top of the page for info on arguments passed to such functions.
-function AceConfigRegistry:RegisterOptionsTable(appName, options)
+-- @param skipValidation Skip options table validation (primarily useful for extremely huge options, with a noticeable slowdown)
+function AceConfigRegistry:RegisterOptionsTable(appName, options, skipValidation)
 	if type(options)=="table" then
 		if options.type~="group" then	-- quick sanity checker
 			error(MAJOR..": RegisterOptionsTable(appName, options): 'options' - missing type='group' member in root group", 2)
@@ -296,7 +320,7 @@ function AceConfigRegistry:RegisterOptionsTable(appName, options)
 		AceConfigRegistry.tables[appName] = function(uiType, uiName, errlvl)
 			errlvl=(errlvl or 0)+1
 			validateGetterArgs(uiType, uiName, errlvl)
-			if not AceConfigRegistry.validated[uiType][appName] then
+			if not AceConfigRegistry.validated[uiType][appName] and not skipValidation then
 				AceConfigRegistry:ValidateOptionsTable(options, appName, errlvl)	-- upgradable
 				AceConfigRegistry.validated[uiType][appName] = true
 			end
@@ -307,7 +331,7 @@ function AceConfigRegistry:RegisterOptionsTable(appName, options)
 			errlvl=(errlvl or 0)+1
 			validateGetterArgs(uiType, uiName, errlvl)
 			local tab = assert(options(uiType, uiName, appName))
-			if not AceConfigRegistry.validated[uiType][appName] then
+			if not AceConfigRegistry.validated[uiType][appName] and not skipValidation then
 				AceConfigRegistry:ValidateOptionsTable(tab, appName, errlvl)	-- upgradable
 				AceConfigRegistry.validated[uiType][appName] = true
 			end
