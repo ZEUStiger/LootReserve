@@ -3,6 +3,7 @@ local addon, ns = ...;
 LootReserve = LibStub("AceAddon-3.0"):NewAddon("LootReserve");
 LootReserve.Version = GetAddOnMetadata(addon, "Version");
 LootReserve.MinAllowedVersion = "2020-06-19";
+LootReserve.LatestKnownVersion = LootReserve.Version;
 LootReserve.Enabled = true;
 
 LootReserve.EventFrame = CreateFrame("Frame", nil, UIParent);
