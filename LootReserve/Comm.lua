@@ -28,8 +28,7 @@ local Opcodes =
 function LootReserve.Comm:StartListening()
     if not self.Listening then
         self.Listening = true;
-        C_ChatInfo.RegisterAddonMessagePrefix(self.Prefix);
-        LootReserve:RegisterEvent("CHAT_MSG_ADDON", function(prefix, text, channel, sender, target, zoneChannelID, localID, name, instanceID)
+        LootReserve:RegisterComm(self.Prefix, function(prefix, text, channel, sender)
             if LootReserve.Enabled and prefix == self.Prefix then
                 local opcode, message = strsplit("|", text, 2);
                 local handler = self.Handlers[tonumber(opcode)];
@@ -71,9 +70,9 @@ function LootReserve.Comm:Broadcast(opcode, ...)
     end
 
     if self.SoloDebug then
-        C_ChatInfo.SendAddonMessage(self.Prefix, message, "WHISPER", UnitName("player"));
+        LootReserve:SendCommMessage(self.Prefix, message, "WHISPER", UnitName("player"));
     else
-        C_ChatInfo.SendAddonMessage(self.Prefix, message, "RAID");
+        LootReserve:SendCommMessage(self.Prefix, message, "RAID");
     end
 end
 function LootReserve.Comm:Whisper(target, opcode, ...)
@@ -92,7 +91,7 @@ function LootReserve.Comm:Whisper(target, opcode, ...)
         print("[DEBUG] Sent to " .. target .. ": " .. message:gsub("|", "||"));
     end
 
-    C_ChatInfo.SendAddonMessage(self.Prefix, message, "WHISPER", target);
+    LootReserve:SendCommMessage(self.Prefix, message, "WHISPER", target);
 end
 function LootReserve.Comm:WhisperServer(opcode, ...)
     if LootReserve.Client.SessionServer then
@@ -123,7 +122,7 @@ LootReserve.Comm.Handlers[Opcodes.Version] = function(sender, version, minAllowe
         LootReserve.Comm:BroadcastReportIncompatibleVersion();
         LootReserve.Enabled = false;
     elseif LootReserve.Version < version then
-        LootReserve:PrintError("You're using an outdated version of LootReserve. Please update to version |cFFFFD200%s|r or newer.", version);
+        LootReserve:PrintError("You're using an outdated version of LootReserve. It will continue to work, but please update to version |cFFFFD200%s|r or newer.", version);
     end
 end
 
