@@ -54,7 +54,7 @@ function LootReserve.Client:UpdateReserveStatus()
 end
 
 function LootReserve.Client:UpdateLootList()
-    local filter = self.Window.Search:GetText():gsub("^%s*(.-)%s*$", "%1"):upper();
+    local filter = LootReserve:TransformSearchText(self.Window.Search:GetText());
     if #filter < 3 then
         filter = nil;
     end

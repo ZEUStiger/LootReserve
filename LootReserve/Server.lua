@@ -385,8 +385,7 @@ function LootReserve.Server:PrepareSession()
             if item then
                 handleItemCommand(item, command);
             else
-                text = LootReserve:StringTrim(text, "[%s%[%]]");
-                text = text:upper();
+                text = LootReserve:TransformSearchText(text);
                 local function handleItemCommandByName()
                     if updateItemNameCache() then
                         local match = nil;

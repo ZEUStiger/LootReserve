@@ -1,4 +1,4 @@
-local addon, ns = ...;
+﻿local addon, ns = ...;
 
 LootReserve = LibStub("AceAddon-3.0"):NewAddon("LootReserve", "AceComm-3.0");
 LootReserve.Version = GetAddOnMetadata(addon, "Version");
@@ -180,6 +180,13 @@ end
 
 function LootReserve:ColoredPlayer(player)
     return format("|c%s%s|r", self:GetPlayerClassColor(player), player);
+end
+
+function LootReserve:TransformSearchText(text)
+    text = self:StringTrim(text, "[%s%[%]]");
+    text = text:upper();
+    text = text:gsub("`", "'"):gsub("´", "'"); -- For whatever reason [`´] doesn't work
+    return text;
 end
 
 function LootReserve:StringTrim(str, chars)

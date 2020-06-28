@@ -44,7 +44,7 @@ end
 function LootReserve.Server:UpdateReserveList(lockdown)
     lockdown = lockdown or InCombatLockdown();
 
-    local filter = self.Window.Search:GetText():gsub("^%s*(.-)%s*$", "%1"):upper();
+    local filter = LootReserve:TransformSearchText(self.Window.Search:GetText());
     if #filter == 0 then
         filter = nil;
     end
@@ -143,7 +143,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
     end
 
     local function matchesFilter(item, reserve, filter)
-        filter = (filter or ""):gsub("^%s*(.-)%s*$", "%1"):upper();
+        filter = LootReserve:TransformSearchText(filter or "");
         if #filter == 0 then
             return true;
         end
