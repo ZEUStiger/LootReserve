@@ -24,6 +24,7 @@ LootReserveGlobalSave =
     Server =
     {
         NewSessionSettings = nil,
+        Settings = nil,
     },
 };
 
@@ -115,7 +116,7 @@ end
 function LootReserve:SendChatMessage(text, channel, target)
     local function Send(text)
         if #text > 0 then
-            if ChatThrottleLib then
+            if ChatThrottleLib and LootReserve.Server.Settings.ChatThrottle then
                 ChatThrottleLib:SendChatMessage("NORMAL", self.Comm.Prefix, text, channel, nil, target);
             else
                 SendChatMessage(text, channel, nil, target);

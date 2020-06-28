@@ -228,6 +228,7 @@ end
 function LootReserve.Server:OnWindowLoad(window)
     self.Window = window;
     self.Window.TopLeftCorner:SetSize(32, 32); -- Blizzard UI bug?
+    self.Window.TitleText:SetPoint("TOP", self.Window, "TOP", 0, -4);
     self.Window.TitleText:SetText("Loot Reserve Server");
     self.Window:SetMinResize(230, 360);
     PanelTemplates_SetNumTabs(self.Window, 2);

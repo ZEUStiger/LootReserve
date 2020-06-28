@@ -9,6 +9,11 @@ LootReserve.Server =
         Duration = 300,
         ChatFallback = true,
     },
+    Settings =
+    {
+        ChatUpdates = true,
+        ChatThrottle = false,
+    },
     RequestedRoll = nil,
     AddonUsers = { },
 
@@ -96,6 +101,7 @@ function LootReserve.Server:Load()
     loadInto(self, LootReserveCharacterSave.Server, "CurrentSession");
     loadInto(self, LootReserveCharacterSave.Server, "RequestedRoll");
     loadInto(self, LootReserveGlobalSave.Server, "NewSessionSettings");
+    loadInto(self, LootReserveGlobalSave.Server, "Settings");
     
     -- Verify that all the required fields are present in the session
     if self.CurrentSession then
@@ -747,7 +753,9 @@ function LootReserve.Server:Reserve(player, item, chat)
                 end
             end
         end
-        WhisperOthers();
+        if self.Settings.ChatUpdates then
+            WhisperOthers();
+        end
     end
 
     self:UpdateReserveList();
@@ -850,7 +858,9 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
                 end
             end
         end
-        WhisperOthers();
+        if self.Settings.ChatUpdates then
+            WhisperOthers();
+        end
     end
 
     self:UpdateReserveList();
