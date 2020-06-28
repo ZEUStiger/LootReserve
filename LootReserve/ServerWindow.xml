@@ -413,10 +413,12 @@
 				<Scripts>
 					<OnLoad>
 						self:SetPushedTextOffset(1, -1);
+						self:SetNormalFontObject(GameFontHighlightSmallLeft);
+						self:SetHighlightFontObject(GameFontHighlightSmallLeft);
+						self:SetDisabledFontObject(GameFontDisableSmallLeft);
 						self.Text:ClearAllPoints();
 						self.Text:SetPoint("LEFT", self, "LEFT", 8 + 16, 0);
 						self.Text:SetPoint("RIGHT", self, "RIGHT", -8 - 8, 0);
-						self.Text:GetFontObject():SetJustifyH("LEFT");
 						self.UpdateTooltip = function(self)
 							local missingPlayers = { };
 							if LootReserve.Server.CurrentSession then
