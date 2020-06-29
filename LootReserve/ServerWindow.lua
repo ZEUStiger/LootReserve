@@ -25,10 +25,11 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
                     if rollingThisItem and self.RequestedRoll.Players[button.Player] then
                         local roll = self.RequestedRoll.Players[button.Player];
                         local winner = roll > 0 and highest > 0 and roll == highest;
-                        local pass = roll < 0;
-                        local color = not LootReserve:IsPlayerOnline(button.Player) and GRAY_FONT_COLOR or winner and GREEN_FONT_COLOR or pass and GRAY_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
+                        local pass = roll == -1;
+                        local deleted = roll == -2;
+                        local color = not LootReserve:IsPlayerOnline(button.Player) and GRAY_FONT_COLOR or winner and GREEN_FONT_COLOR or pass and GRAY_FONT_COLOR or deleted and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
                         button.Roll:Show();
-                        button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or "...");
+                        button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or deleted and "DEL" or "...");
                         button.Roll:SetTextColor(color.r, color.g, color.b);
                         button.WinnerHighlight:SetShown(winner);
                     else
@@ -76,7 +77,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         return;
     end
     
-    local function createFrame(i, item, reserve)
+    local function createFrame(item, reserve)
         list.LastIndex = list.LastIndex + 1;
         local frame = list.Frames[list.LastIndex];
         while not frame do
@@ -89,10 +90,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
 
         frame.Item = item;
 
-        local name, link, _, _, _, type, subtype, _, _, texture = GetItemInfo(item);
-        if subtype and type ~= subtype then
-            type = type .. ", " .. subtype;
-        end
+        local name, link, _, _, _, _, _, _, _, texture = GetItemInfo(item);
         frame.Link = link;
 
         frame.ItemFrame.Icon:SetTexture(texture);
@@ -174,7 +172,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
     
     for item, reserve in LootReserve:Ordered(self.CurrentSession.ItemReserves, sorter) do
         if not filter or matchesFilter(item, reserve, filter) then
-            createFrame(last, item, reserve);
+            createFrame(item, reserve);
         end
     end
     for i = list.LastIndex + 1, #list.Frames do
@@ -184,6 +182,219 @@ function LootReserve.Server:UpdateReserveList(lockdown)
     list:SetSize(list:GetParent():GetWidth(), math.max(list.ContentHeight or 0, list:GetParent():GetHeight() - 1));
 
     self:UpdateReserveListRolls(lockdown);
+end
+
+function LootReserve.Server:UpdateRollListRolls(lockdown)
+    lockdown = lockdown or InCombatLockdown();
+
+    local list = (lockdown and self.Window.PanelRollsLockdown or self.Window.PanelRolls).Scroll.Container;
+    list.Frames = list.Frames or { };
+
+    for i, frame in ipairs(list.Frames) do
+        if frame:IsShown() and frame.Roll then
+            local rollingThisItem = self:IsRolling(frame.Item);
+
+            frame.ReservesFrame.HeaderRoll:Show();
+            frame.RequestRollButton.CancelIcon:SetShown(not frame.Historical and rollingThisItem);
+
+            local highest = 0;
+            for player, roll in pairs(frame.Roll.Players) do
+                if highest < roll and LootReserve:IsPlayerOnline(player) then
+                    highest = roll;
+                end
+            end
+
+            for _, button in ipairs(frame.ReservesFrame.Players) do
+                if button:IsShown() then
+                    if frame.Roll.Players[button.Player] then
+                        local roll = frame.Roll.Players[button.Player];
+                        local winner = roll > 0 and highest > 0 and roll == highest;
+                        local pass = roll == -1;
+                        local deleted = roll == -2;
+                        local color = winner and GREEN_FONT_COLOR or pass and GRAY_FONT_COLOR or deleted and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
+                        button.Roll:Show();
+                        button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or deleted and "DEL" or "...");
+                        button.Roll:SetTextColor(color.r, color.g, color.b);
+                        button.WinnerHighlight:SetShown(winner);
+                    else
+                        button.Roll:Hide();
+                        button.WinnerHighlight:Hide();
+                    end
+                end
+            end
+        end
+    end
+end
+
+function LootReserve.Server:UpdateRollList(lockdown)
+    lockdown = lockdown or InCombatLockdown();
+
+    local filter = LootReserve:TransformSearchText(self.Window.Search:GetText());
+    if #filter == 0 then
+        filter = nil;
+    end
+
+    local list = (lockdown and self.Window.PanelRollsLockdown or self.Window.PanelRolls).Scroll.Container;
+    list.Frames = list.Frames or { };
+    list.LastIndex = 0;
+    list.ContentHeight = 0;
+
+    -- Clear everything
+    for _, frame in ipairs(list.Frames) do
+        frame:Hide();
+    end
+
+    local firstHistorical = true;
+    if list.HistoryHeader then
+        list.HistoryHeader:Hide();
+    else
+        list.HistoryHeader = CreateFrame("Frame", nil, list, "LootReserveRollHistoryHeader");
+    end
+
+    local function createFrame(item, roll, historical)
+        list.LastIndex = list.LastIndex + 1;
+        local frame = list.Frames[list.LastIndex];
+        while not frame do
+            frame = CreateFrame("Frame", nil, list, item and "LootReserveReserveListTemplate" or "LootReserveRollPlaceholderTemplate");
+            table.insert(list.Frames, frame);
+            frame = list.Frames[list.LastIndex];
+        end
+
+        frame:Show();
+
+        if item and roll then
+            frame.Item = item;
+
+            local name, link, _, _, _, type, subtype, _, _, texture = GetItemInfo(item);
+            if subtype and type ~= subtype then
+                type = type .. ", " .. subtype;
+            end
+            frame.Link = link;
+            frame.Historical = historical;
+            frame.Roll = roll;
+
+            frame:SetBackdropBorderColor(historical and 0.25 or 1, historical and 0.25 or 1, historical and 0.25 or 1);
+            frame.RequestRollButton:SetShown(not historical);
+            frame.RequestRollButton:SetWidth(frame.RequestRollButton:IsShown() and 32 or 0.00001);
+            frame.ItemFrame.Icon:SetTexture(texture);
+            frame.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
+
+            if historical then
+                frame.ItemFrame.Misc:SetText(roll.StartTime and date(format("%%B%s%%e  %%H:%%M", date("*t", roll.StartTime).day < 10 and "" or " "), roll.StartTime) or "");
+            else
+                local reservers = 0;
+                if LootReserve.Server.CurrentSession then
+                    local reserve = LootReserve.Server.CurrentSession.ItemReserves[item];
+                    reservers = reserve and #reserve.Players or 0;
+                end
+                frame.ItemFrame.Misc:SetText(reservers > 0 and format("Reserved by %d |4player:players;", reservers) or "Not reserved");
+            end
+
+            local reservesHeight = 5 + 12 + 2;
+            local last = 0;
+            frame.ReservesFrame.Players = frame.ReservesFrame.Players or { };
+            for player, roll in LootReserve:Ordered(roll.Players, function(aRoll, bRoll, aPlayer, bPlayer)
+                if aRoll ~= bRoll then
+                    return aRoll > bRoll;
+                else
+                    return aPlayer < bPlayer;
+                end
+            end) do
+                last = last + 1;
+                if last > #frame.ReservesFrame.Players then
+                    local button = CreateFrame("Button", nil, frame.ReservesFrame, lockdown and "LootReserveReserveListPlayerTemplate" or "LootReserveReserveListPlayerSecureTemplate");
+                    table.insert(frame.ReservesFrame.Players, button);
+                end
+                local unit = LootReserve:GetRaidUnitID(player);
+                local button = frame.ReservesFrame.Players[last];
+                button:Show();
+                button.Player = player;
+                button.Unit = unit;
+                if not lockdown then
+                    button:SetAttribute("unit", unit);
+                end
+                button.Name:SetText(format("%s%s", LootReserve:ColoredPlayer(player), not historical and LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or ""));
+                button.Roll:SetText("");
+                button.WinnerHighlight:Hide();
+                button:SetPoint("TOPLEFT", frame.ReservesFrame, "TOPLEFT", 0, 5 - reservesHeight);
+                button:SetPoint("TOPRIGHT", frame.ReservesFrame, "TOPRIGHT", 0, 5 - reservesHeight);
+                reservesHeight = reservesHeight + button:GetHeight();
+            end
+            for i = last + 1, #frame.ReservesFrame.Players do
+                frame.ReservesFrame.Players[i]:Hide();
+            end
+
+            frame.ReservesFrame.HeaderPlayer:SetText(roll.Custom and "Rolled by" or "Reserved by");
+            frame.ReservesFrame.NoRollsPlaceholder:SetShown(last == 0);
+            if frame.ReservesFrame.NoRollsPlaceholder:IsShown() then
+                reservesHeight = reservesHeight + 16;
+            end
+
+            frame:SetHeight(44 + reservesHeight);
+        else
+            frame:SetShown(not self.RequestedRoll);
+            frame:SetHeight(frame:IsShown() and 45 or 0.00001);
+        end
+
+        if historical and firstHistorical then
+            firstHistorical = false;
+            list.HistoryHeader:Show();
+            list.HistoryHeader:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -list.ContentHeight);
+            list.HistoryHeader:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, -list.ContentHeight);
+            list.ContentHeight = list.ContentHeight + list.HistoryHeader:GetHeight();
+        end
+
+        frame:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -list.ContentHeight);
+        frame:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, -list.ContentHeight);
+        list.ContentHeight = list.ContentHeight + frame:GetHeight();
+    end
+
+    local function matchesFilter(item, roll, filter)
+        filter = LootReserve:TransformSearchText(filter or "");
+        if #filter == 0 then
+            return true;
+        end
+
+        local name, link = GetItemInfo(item);
+        if name then
+            if string.find(name:upper(), filter) then
+                return true;
+            end
+        end
+
+        for player, _ in pairs(roll.Players) do
+            if string.find(player:upper(), filter) then
+                return true;
+            end
+        end
+
+        return false;
+    end
+
+    createFrame();
+    if self.CurrentSession then
+        if self.RequestedRoll then
+            if not filter or matchesFilter(self.RequestedRoll.Item, self.RequestedRoll, filter) then
+                createFrame(self.RequestedRoll.Item, self.RequestedRoll, false);
+            end
+        end
+    else
+        list.Frames[1]:Hide();
+        list.ContentHeight = 0;
+    end
+    for i = #self.RollHistory, 1, -1 do
+        local roll = self.RollHistory[i];
+        if not filter or matchesFilter(roll.Item, roll, filter) then
+            createFrame(roll.Item, roll, true);
+        end
+    end
+    for i = list.LastIndex + 1, #list.Frames do
+        list.Frames[i]:Hide();
+    end
+
+    list:SetSize(list:GetParent():GetWidth(), math.max(list.ContentHeight or 0, list:GetParent():GetHeight() - 1));
+
+    self:UpdateRollListRolls(lockdown);
 end
 
 function LootReserve.Server:OnWindowTabClick(tab)
@@ -196,29 +407,45 @@ end
 function LootReserve.Server:SetWindowTab(tab)
     if tab == 1 then
         self.Window.InsetBg:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 4, -24);
+        self.Window.Duration:Hide();
+        self.Window.Search:Hide();
+        self.Window.ButtonMenu:Hide();
     elseif tab == 2 then
         self.Window.InsetBg:SetPoint("TOPLEFT", self.Window.Search, "BOTTOMLEFT", -6, 0);
-    end
-    self.Window.Duration:SetShown(tab == 2 and self.CurrentSession and self.CurrentSession.AcceptingReserves and self.CurrentSession.Duration ~= 0 and self.CurrentSession.Settings.Duration ~= 0);
-    self.Window.Search:SetShown(tab == 2);
-    if self.Window.Duration:IsShown() and self.Window.Search:IsShown() then
-        self.Window.Search:SetPoint("TOPLEFT", self.Window.Duration, "BOTTOMLEFT", 3, -3);
-        self.Window.Search:SetPoint("TOPRIGHT", self.Window.Duration, "BOTTOMRIGHT", 3 - 80, -3);
-        if not InCombatLockdown() then
-            self.Window.PanelReserves:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -61);
+        self.Window.Duration:SetShown(self.CurrentSession and self.CurrentSession.AcceptingReserves and self.CurrentSession.Duration ~= 0 and self.CurrentSession.Settings.Duration ~= 0);
+        self.Window.Search:Show();
+        self.Window.ButtonMenu:Show();
+        if self.Window.Duration:IsShown() then
+            self.Window.Search:SetPoint("TOPLEFT", self.Window.Duration, "BOTTOMLEFT", 3, -3);
+            self.Window.Search:SetPoint("TOPRIGHT", self.Window.Duration, "BOTTOMRIGHT", 3 - 80, -3);
+            if not InCombatLockdown() then
+                self.Window.PanelReserves:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -61);
+            end
+        else
+            self.Window.Search:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 10, -25);
+            self.Window.Search:SetPoint("TOPRIGHT", self.Window, "TOPRIGHT", -7 - 80, -25);
+            if not InCombatLockdown() then
+                self.Window.PanelReserves:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -48);
+            end
         end
-    else
+    elseif tab == 3 then
+        self.Window.InsetBg:SetPoint("TOPLEFT", self.Window.Search, "BOTTOMLEFT", -6, 0);
+        self.Window.Duration:Hide();
+        self.Window.Search:Show();
+        self.Window.ButtonMenu:Hide();
         self.Window.Search:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 10, -25);
-        self.Window.Search:SetPoint("TOPRIGHT", self.Window, "TOPRIGHT", -7 - 80, -25);
+        self.Window.Search:SetPoint("TOPRIGHT", self.Window, "TOPRIGHT", -7, -25);
         if not InCombatLockdown() then
-            self.Window.PanelReserves:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -48);
+            self.Window.PanelRolls:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -48);
         end
     end
-    self.Window.ButtonMenu:SetShown(self.Window.Search:IsShown());
 
     for i, panel in ipairs(self.Window.Panels) do
         if panel == self.Window.PanelReserves and InCombatLockdown() then
             panel = self.Window.PanelReservesLockdown;
+        end
+        if panel == self.Window.PanelRolls and InCombatLockdown() then
+            panel = self.Window.PanelRollsLockdown;
         end
         panel:SetShown(i == tab);
     end
@@ -231,7 +458,7 @@ function LootReserve.Server:OnWindowLoad(window)
     self.Window.TitleText:SetPoint("TOP", self.Window, "TOP", 0, -4);
     self.Window.TitleText:SetText("Loot Reserve Server");
     self.Window:SetMinResize(230, 360);
-    PanelTemplates_SetNumTabs(self.Window, 2);
+    PanelTemplates_SetNumTabs(self.Window, 3);
     PanelTemplates_SetTab(self.Window, 1);
     self:SetWindowTab(1);
     self:UpdateServerAuthority();
@@ -246,17 +473,35 @@ function LootReserve.Server:OnWindowLoad(window)
         if item and self.CurrentSession and self.CurrentSession.ItemReserves[item] then
             self:UpdateReserveList();
         end
+        -- TODO: Test
+        if item and self.RequestedRoll and self.RequestedRoll.Item == item then
+            self:UpdateRollList();
+            return;
+        end
+        if item and self.RollHistory then
+            for _, roll in ipairs(self.RollHistory) do
+                if roll.Item == item then
+                    self:UpdateRollList();
+                end
+            end
+        end
     end);
     LootReserve:RegisterEvent("PLAYER_REGEN_DISABLED", function()
-        -- Swap out the real (tained) reserves panel for a slightly less functional one, but one that doesn't have taint
+        -- Swap out the real (tained) reserves and rolls panels for slightly less functional ones, but ones that don't have taint
         if self.Window.PanelReserves:IsShown() then
             self.Window.PanelReserves:Hide();
             self.Window.PanelReservesLockdown:Show();
+        end
+        if self.Window.PanelRolls:IsShown() then
+            self.Window.PanelRolls:Hide();
+            self.Window.PanelRollsLockdown:Show();
         end
         -- Sync changes between real and lockdown panels
         self:UpdateReserveList(true);
         self.Window.PanelReservesLockdown.Scroll:UpdateScrollChildRect();
         self.Window.PanelReservesLockdown.Scroll:SetVerticalScroll(self.Window.PanelReserves.Scroll:GetVerticalScroll());
+        self.Window.PanelRollsLockdown.Scroll:UpdateScrollChildRect();
+        self.Window.PanelRollsLockdown.Scroll:SetVerticalScroll(self.Window.PanelRolls.Scroll:GetVerticalScroll());
     end);
     LootReserve:RegisterEvent("PLAYER_REGEN_ENABLED", function()
         -- Restore original reserves panel
@@ -264,10 +509,16 @@ function LootReserve.Server:OnWindowLoad(window)
             self.Window.PanelReservesLockdown:Hide();
             self.Window.PanelReserves:Show();
         end
+        if self.Window.PanelRollsLockdown:IsShown() then
+            self.Window.PanelRollsLockdown:Hide();
+            self.Window.PanelRolls:Show();
+        end
         -- Sync changes between real and lockdown panels
         self:UpdateReserveList();
         self.Window.PanelReserves.Scroll:UpdateScrollChildRect();
         self.Window.PanelReserves.Scroll:SetVerticalScroll(self.Window.PanelReservesLockdown.Scroll:GetVerticalScroll());
+        self.Window.PanelRolls.Scroll:UpdateScrollChildRect();
+        self.Window.PanelRolls.Scroll:SetVerticalScroll(self.Window.PanelRollsLockdown.Scroll:GetVerticalScroll());
     end);
 end
 
@@ -315,6 +566,7 @@ function LootReserve.Server:SessionStarted()
     self:OnWindowTabClick(self.Window.TabReserves);
     PlaySound(SOUNDKIT.GS_CHARACTER_SELECTION_ENTER_WORLD);
     self:UpdateServerAuthority();
+    self:UpdateRollList();
 end
 
 function LootReserve.Server:SessionStopped()
@@ -326,7 +578,11 @@ function LootReserve.Server:SessionStopped()
     if self.Window.PanelReserves:IsShown() or self.Window.PanelReservesLockdown:IsShown() then
         LootReserve.Server:SetWindowTab(2);
     end
+    if self.Window.PanelRolls:IsShown() or self.Window.PanelRollsLockdown:IsShown() then
+        LootReserve.Server:SetWindowTab(3);
+    end
     self:UpdateServerAuthority();
+    self:UpdateRollList();
 end
 
 function LootReserve.Server:SessionReset()
@@ -336,6 +592,7 @@ function LootReserve.Server:SessionReset()
     self.Window.PanelSession.ButtonStopSession:Hide();
     self.Window.PanelSession.ButtonResetSession:Hide();
     self:UpdateServerAuthority();
+    self:UpdateRollList();
 end
 
 function LootReserve.Server:UpdateServerAuthority()

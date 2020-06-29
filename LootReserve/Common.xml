@@ -145,9 +145,11 @@
 				self:SetScrollChild(self.Container);
 			</OnLoad>
 			<OnShow>
+				if self:IsProtected() and InCombatLockdown() then return; end
 				self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
 			</OnShow>
 			<OnSizeChanged>
+				if self:IsProtected() and InCombatLockdown() then return; end
 				self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
 			</OnSizeChanged>
 		</Scripts>

@@ -17,6 +17,7 @@ LootReserveCharacterSave =
     {
         CurrentSession = nil,
         RequestedRoll = nil,
+        RollHistory = nil,
     },
 };
 LootReserveGlobalSave =
@@ -212,7 +213,7 @@ function LootReserve:Ordered(tbl, sorter)
         end
         if sorter then
             table.sort(orderedIndex, function(a, b)
-                return sorter(t[a], t[b]);
+                return sorter(t[a], t[b], a, b);
             end);
         else
             table.sort(orderedIndex);

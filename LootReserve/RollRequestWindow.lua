@@ -1,6 +1,6 @@
 local LibCustomGlow = LibStub("LibCustomGlow-1.0");
 
-function LootReserve.Client:RollRequested(sender, item, players)
+function LootReserve.Client:RollRequested(sender, item, players, custom)
     local frame = LootReserveRollRequestWindow;
 
     if LibCustomGlow then
@@ -20,7 +20,7 @@ function LootReserve.Client:RollRequested(sender, item, players)
 
     frame.Sender = sender;
     frame.Item = item;
-    frame.LabelSender:SetText(format("%s asks you to roll on the item you reserved:", LootReserve:ColoredPlayer(sender)));
+    frame.LabelSender:SetText(format(custom and "%s offers you to roll on this item:" or "%s asks you to roll on the item you reserved:", LootReserve:ColoredPlayer(sender)));
     frame.ItemFrame.Icon:SetTexture(texture);
     frame.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
     frame.ItemFrame.Misc:SetText(type);

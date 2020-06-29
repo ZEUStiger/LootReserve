@@ -23,6 +23,7 @@ local Opcodes =
     CancelReserveResult = 11,
     RequestRoll = 12,
     PassRoll = 13,
+    DeletedRoll = 14,
 };
 
 function LootReserve.Comm:StartListening()
@@ -353,13 +354,15 @@ LootReserve.Comm.Handlers[Opcodes.CancelReserveResult] = function(sender, item, 
 end
 
 -- RequestRoll
-function LootReserve.Comm:BroadcastRequestRoll(item, players)
+function LootReserve.Comm:BroadcastRequestRoll(item, players, custom)
     LootReserve.Comm:Broadcast(Opcodes.RequestRoll,
         item,
-        strjoin(",", unpack(players)));
+        strjoin(",", unpack(players)),
+        custom and 1 or 0);
 end
-LootReserve.Comm.Handlers[Opcodes.RequestRoll] = function(sender, item, players)
+LootReserve.Comm.Handlers[Opcodes.RequestRoll] = function(sender, item, players, custom)
     item = tonumber(item);
+    custom = tonumber(custom) == 1;
 
     if LootReserve.Client.SessionServer == sender then
         if #players > 0 then
@@ -367,7 +370,7 @@ LootReserve.Comm.Handlers[Opcodes.RequestRoll] = function(sender, item, players)
         else
             players = { };
         end
-        LootReserve.Client:RollRequested(sender, item, players);
+        LootReserve.Client:RollRequested(sender, item, players, custom);
     end
 end
 
@@ -381,5 +384,27 @@ LootReserve.Comm.Handlers[Opcodes.PassRoll] = function(sender, item)
 
     if LootReserve.Server.CurrentSession then
         LootReserve.Server:PassRoll(sender, item);
+    end
+end
+
+-- DeletedRoll
+function LootReserve.Comm:SendDeletedRoll(player, item)
+    LootReserve.Comm:Whisper(player, Opcodes.DeletedRoll,
+        item);
+end
+LootReserve.Comm.Handlers[Opcodes.DeletedRoll] = function(sender, item)
+    item = tonumber(item);
+
+    if LootReserve.Client.SessionServer == sender then
+        local function ShowDeleted()
+            local name, link = GetItemInfo(item);
+            if name and link then
+                LootReserve:ShowError("%s deleted your roll for item %s", LootReserve:ColoredPlayer(sender), link);
+                LootReserve:PrintError("%s deleted your roll for item %s", LootReserve:ColoredPlayer(sender), link);
+            else
+                C_Timer.After(0.25, ShowDeleted);
+            end
+        end
+        ShowDeleted();
     end
 end

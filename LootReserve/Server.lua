@@ -15,6 +15,7 @@ LootReserve.Server =
         ChatThrottle = false,
     },
     RequestedRoll = nil,
+    RollHistory = { },
     AddonUsers = { },
 
     ReservableItems = { },
@@ -32,6 +33,19 @@ StaticPopupDialogs["LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE"] =
     button2 = NO,
     OnAccept = function(self)
         LootReserve.Server:CancelReserve(self.data.Player, self.data.Item, false, true);
+    end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+};
+
+StaticPopupDialogs["LOOTRESERVE_CONFIRM_FORCED_CANCEL_ROLL"] =
+{
+    text = "Are you sure you want to delete %s's roll for item %s?",
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function(self)
+        LootReserve.Server:DeleteRoll(self.data.Player, self.data.Item);
     end,
     timeout = 0,
     whileDead = 1,
@@ -100,6 +114,7 @@ function LootReserve.Server:Load()
     end
     loadInto(self, LootReserveCharacterSave.Server, "CurrentSession");
     loadInto(self, LootReserveCharacterSave.Server, "RequestedRoll");
+    loadInto(self, LootReserveCharacterSave.Server, "RollHistory");
     loadInto(self, LootReserveGlobalSave.Server, "NewSessionSettings");
     loadInto(self, LootReserveGlobalSave.Server, "Settings");
     
@@ -873,10 +888,13 @@ end
 
 function LootReserve.Server:CancelRollRequest(item)
     if self:IsRolling(item) then
+        table.insert(self.RollHistory, self.RequestedRoll);
+
         self.RequestedRoll = nil;
         LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
         LootReserve.Comm:BroadcastRequestRoll(0, { });
         self:UpdateReserveListRolls();
+        self:UpdateRollList();
         return;
     end
 end
@@ -889,9 +907,10 @@ function LootReserve.Server:PrepareRequestRoll()
         LootReserve:RegisterEvent("CHAT_MSG_SYSTEM", function(text)
             if self.RequestedRoll then
                 local player, roll, min, max = text:match(rollMatcher);
-                if player and roll and min == "1" and max == "100" and self.RequestedRoll.Players[player] == 0 and tonumber(roll) and LootReserve:IsPlayerOnline(player) then
+                if player and roll and min == "1" and max == "100" and ((self.RequestedRoll.Custom and self.RequestedRoll.Players[player] ~= -2) or (not self.RequestedRoll.Custom and self.RequestedRoll.Players[player] == 0)) and tonumber(roll) and LootReserve:IsPlayerOnline(player) then
                     self.RequestedRoll.Players[player] = tonumber(roll);
                     self:UpdateReserveListRolls();
+                    self:UpdateRollList();
                 end
             end
         end);
@@ -908,6 +927,8 @@ function LootReserve.Server:RequestRoll(item)
     self.RequestedRoll =
     {
         Item = item,
+        StartTime = time(),
+        Custom = nil,
         Players = { },
     };
     LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
@@ -938,16 +959,87 @@ function LootReserve.Server:RequestRoll(item)
     end
 
     self:UpdateReserveListRolls();
+    self:UpdateRollList();
+end
+
+function LootReserve.Server:RequestCustomRoll(item)
+    self.RequestedRoll =
+    {
+        Item = item,
+        StartTime = time(),
+        Custom = true,
+        Players = { },
+    };
+    LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
+
+    self:PrepareRequestRoll();
+
+    local players = { };
+    for i = 1, MAX_RAID_MEMBERS do
+        local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
+        if LootReserve.Comm.SoloDebug and i == 1 then
+            name = UnitName("player");
+            online = true;
+        end
+        if name and online then
+            name = Ambiguate(name, "short");
+            table.insert(players, name);
+        end
+    end
+
+    LootReserve.Comm:BroadcastRequestRoll(item, players, true);
+    if self.CurrentSession.Settings.ChatFallback then
+        local function BroadcastRoll()
+            local name, link = GetItemInfo(item);
+            if not name or not link then
+                C_Timer.After(0.25, BroadcastRoll);
+                return;
+            end
+
+            LootReserve:SendChatMessage(format("Roll on %s", link), (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAIDWARNING" or "RAID");
+        end
+        BroadcastRoll();
+    end
+
+    self:UpdateRollList();
 end
 
 function LootReserve.Server:PassRoll(player, item)
-    if not self:IsRolling(item) or not self.RequestedRoll.Players[player] then
+    if not self:IsRolling(item) or not self.RequestedRoll.Players[player] or self.RequestedRoll.Players[player] < 0 then
         return;
     end
 
     self.RequestedRoll.Players[player] = -1;
 
     self:UpdateReserveListRolls();
+    self:UpdateRollListRolls();
+end
+
+function LootReserve.Server:DeleteRoll(player, item)
+    if not self:IsRolling(item) or not self.RequestedRoll.Players[player] or self.RequestedRoll.Players[player] < 0 then
+        return;
+    end
+
+    self.RequestedRoll.Players[player] = -2;
+
+    LootReserve.Comm:SendDeletedRoll(player, item);
+    if self.CurrentSession.Settings.ChatFallback then
+        local function WhisperPlayer()
+            local name, link = GetItemInfo(item);
+            if not name or not link then
+                C_Timer.After(0.25, BroadcastRoll);
+                return;
+            end
+
+            LootReserve:SendChatMessage(format("Your roll on item %s was deleted", link), "WHISPER", player);
+        end
+        if not self:IsAddonUser(player) then
+            WhisperPlayer();
+        end
+    end
+
+    self:UpdateReserveListRolls();
+    self:UpdateRollListRolls();
 end
 
 function LootReserve.Server:WhisperAllWithoutReserves()

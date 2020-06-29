@@ -130,18 +130,30 @@
 						local player = self:GetParent().Player;
 						local frame = self:GetParent():GetParent():GetParent();
 						local data = { Player = player, Item = frame.Item };
-						StaticPopup_Show("LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE", LootReserve:ColoredPlayer(player), frame.Link, data);
+						local popup = "LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE";
+						if frame.Roll then
+							popup = "LOOTRESERVE_CONFIRM_FORCED_CANCEL_ROLL";
+						end
+						StaticPopup_Show(popup, LootReserve:ColoredPlayer(player), frame.Link, data);
 					</OnClick>
 				</Scripts>
 				<NormalTexture file="Interface\Buttons\UI-GroupLoot-Pass-Up" alpha="0.5"/>
 				<HighlightTexture file="Interface\Buttons\UI-GroupLoot-Pass-Up" alpha="0.5" alphaMode="ADD"/>
 				<PushedTexture file="Interface\Buttons\UI-GroupLoot-Pass-Down" alpha="0.5"/>
 			</Button>
-			<Frame parentKey="DropDown" inherits="UIDropDownMenuTemplate" hidden="true" />
 		</Frames>
 		<Scripts>
 			<OnUpdate>
-				self.ButtonDelete:SetShown(self:IsMouseOver());
+				if self:IsProtected() and InCombatLockdown() then return; end
+				local frame = self:GetParent():GetParent();
+				if not self:IsMouseOver() or self:GetParent():GetParent().Historical then
+					self.ButtonDelete:Hide();
+				elseif not frame.Roll then
+					self.ButtonDelete:Show();
+				else
+					local roll = frame.Roll.Players[self.Player];
+					self.ButtonDelete:SetShown(roll and roll > 0);
+				end
 			</OnUpdate>
 		</Scripts>
 	</Button>
@@ -157,6 +169,9 @@
 				</Texture>
 			</Layer>
 		</Layers>
+		<Frames>
+			<Frame parentKey="DropDown" inherits="UIDropDownMenuTemplate" hidden="true" />
+		</Frames>
 		<Scripts>
 			<OnLoad>
 				self:RegisterForClicks("LeftButtonUp", "RightButtonUp");
@@ -172,10 +187,6 @@
 					ToggleDropDownMenu(nil, nil, self.DropDown, "cursor", 0, 0);
 				end);
 			</OnLoad>
-			<OnUpdate>
-				if InCombatLockdown() then return; end
-				self.ButtonDelete:SetShown(self:IsMouseOver());
-			</OnUpdate>
 		</Scripts>
 	</Button>
 	<Frame name="LootReserveReserveListTemplate" virtual="true" enableMouse="true">
@@ -260,6 +271,14 @@
 								<Anchor point="TOPRIGHT" relativeKey="$parent.HeaderRoll" relativePoint="TOPLEFT" />
 							</Anchors>
 						</FontString>
+						<FontString parentKey="NoRollsPlaceholder" inherits="GameFontNormalSmall" text="- No Rolls -" justifyH="CENTER" hidden="true">
+							<Size y="16" />
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.HeaderPlayer" relativePoint="BOTTOMLEFT" y="-2" />
+								<Anchor point="TOPRIGHT" relativeKey="$parent.HeaderRoll" relativePoint="BOTTOMRIGHT" y="-2" />
+							</Anchors>
+							<Color r="0.5" g="0.5" b="0.5" />
+						</FontString>
 					</Layer>
 					<Layer layer="ARTWORK">
 						<Texture parentKey="HeaderGlow" alpha="0.25" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD">
@@ -282,6 +301,237 @@
 				</Layers>
 			</Frame>
 		</Frames>
+	</Frame>
+	<Frame name="LootReserveRollPlaceholderTemplate" virtual="true" enableMouse="true">
+		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border">
+			<BackgroundInsets left="5" right="5" top="5" bottom="5" />
+			<EdgeSize val="16" />
+			<BorderColor r="1" g="1" b="1" a="1" />
+		</Backdrop>
+		<Frames>
+			<Button parentKey="RequestRollButton" hidden="true">
+				<Size x="32" y="32" />
+				<Anchors>
+					<Anchor point="TOPRIGHT" x="-6" y="-6" />
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootReserve.Server:RequestCustomRoll(self:GetParent().Item);
+						local frame = self:GetParent();
+						frame:SetItem(nil);
+					</OnClick>
+					<OnEnter>
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						GameTooltip:SetText("Start Roll");
+						GameTooltip:Show();
+					</OnEnter>
+					<OnLeave function="GameTooltip_Hide" />
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\UI-GroupLoot-Dice-Up" />
+				<HighlightTexture file="Interface\Buttons\UI-GroupLoot-Dice-Highlight" alphaMode="ADD" />
+				<PushedTexture file="Interface\Buttons\UI-GroupLoot-Dice-Down" />
+			</Button>
+			<Button parentKey="ItemFrame">
+				<Size y="32" />
+				<Anchors>
+					<Anchor point="TOPLEFT" x="6" y="-6" />
+					<Anchor point="TOPRIGHT" relativeKey="$parent.RequestRollButton" relativePoint="TOPLEFT" x="-5" />
+				</Anchors>
+				<Frames>
+					<Button parentKey="Icon" enableMouse="true">
+						<Size x="32" y="32" />
+						<Anchors>
+							<Anchor point="TOPLEFT" />
+						</Anchors>
+						<Layers>
+							<Layer level="BACKGROUND">
+								<Texture file="Interface\Buttons\UI-EmptySlot-Disabled">
+									<Size x="40" y="40" />
+									<Anchors>
+										<Anchor point="TOPLEFT" x="-4" y="4" />
+									</Anchors>
+									<TexCoords left="0.140625" right="0.84375" top="0.140625" bottom="0.84375" />
+								</Texture>
+							</Layer>
+							<Layer level="BORDER">
+								<Texture parentKey="Texture" setAllPoints="true" nonBlocking="true" />
+							</Layer>
+							<Layer level="OVERLAY">
+								<Texture parentKey="CancelIcon" file="Interface\Buttons\UI-GroupLoot-Pass-Up" hidden="true">
+									<Size x="16" y="16" />
+									<Anchors>
+										<Anchor point="CENTER" />
+									</Anchors>
+								</Texture>
+							</Layer>
+						</Layers>
+						<PushedTexture file="Interface\Buttons\UI-Quickslot-Depress"/>
+						<HighlightTexture file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD" />
+						<Scripts>
+							<OnLoad>
+								self:RegisterForDrag("LeftButton");
+								self.DropHandler = function(self)
+									local frame = self:GetParent():GetParent();
+									local type, item, link = GetCursorInfo();
+									ClearCursor();
+									if type == "item" and item then
+										frame:SetItem(item);
+									elseif frame.Item then
+										frame:SetItem(nil);
+									else
+										-- TODO: Show dropdown with non-soulbound items from bags
+									end
+								end
+							</OnLoad>
+							<OnClick>
+								self:DropHandler();
+							</OnClick>
+							<!--OnDragStart>
+								self:DropHandler();
+							</OnDragStart-->
+							<OnReceiveDrag>
+								self:DropHandler();
+							</OnReceiveDrag>
+							<OnEnter>
+								local frame = self:GetParent():GetParent();
+								if frame.Item and not CursorHasItem() then
+									self.CancelIcon:Show();
+								else
+									self.CancelIcon:Hide();
+								end
+								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								GameTooltip:SetText("Drop an item here");
+								GameTooltip:AddLine("Or click to select among relevant items", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
+								GameTooltip:Show();
+							</OnEnter>
+							<OnLeave>
+								GameTooltip_Hide(self);
+								self.CancelIcon:Hide();
+							</OnLeave>
+						</Scripts>
+					</Button>
+				</Frames>
+				<Layers>
+					<Layer>
+						<FontString parentKey="Name" inherits="GameFontNormalLarge" justifyH="LEFT">
+							<Size y="20" />
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.Icon" relativePoint="TOPRIGHT" x="5" />
+								<Anchor point="TOPRIGHT" />
+							</Anchors>
+						</FontString>
+						<FontString parentKey="Misc" inherits="GameFontNormalGraySmall" justifyH="LEFT">
+							<Size y="12" />
+							<Anchors>
+								<Anchor point="TOPLEFT" relativeKey="$parent.Name" relativePoint="BOTTOMLEFT" />
+								<Anchor point="BOTTOMRIGHT" />
+							</Anchors>
+						</FontString>
+					</Layer>
+				</Layers>
+				<Scripts>
+					<OnLoad>
+						self.Icon.SetTexture = function(self, texture)
+							self.Texture:SetTexture(texture);
+						end
+					</OnLoad>
+					<OnClick>
+						if button == "LeftButton" then
+							HandleModifiedItemClick(self:GetParent().Link);
+						end
+					</OnClick>
+				</Scripts>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnLoad>
+				self.SetItem = function(self, item)
+					if item then
+						self.Item = item;
+
+						local name, link, _, _, _, type, subtype, _, _, texture = GetItemInfo(item);
+						self.Link = link;
+
+						if not name or not link then
+							C_Timer.After(0.25, function()
+								if self.Item == item then
+									self:SetItem(item);
+								end
+							end);
+							return;
+						end
+
+						local reservers = 0;
+						if LootReserve.Server.CurrentSession then
+							local reserve = LootReserve.Server.CurrentSession.ItemReserves[item];
+							reservers = reserve and #reserve.Players or 0;
+						end
+
+						self.ItemFrame.Icon:SetTexture(texture);
+						--self.ItemFrame.Icon.CancelIcon:SetShown(GameTooltip:IsOwned(self.ItemFrame.Icon)); -- Looks better without it
+						self.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
+						self.ItemFrame.Misc:SetText(reservers > 0 and format("Reserved by %d |4player:players;", reservers) or "Not reserved");
+						self.RequestRollButton:Show();
+						self.RequestRollButton:SetWidth(32);
+					else
+						self.Item = nil;
+						self.Link = nil;
+						self.ItemFrame.Icon:SetTexture(nil);
+						self.ItemFrame.Icon.CancelIcon:Hide();
+						self.ItemFrame.Name:SetText("|cFF808080Drop an Item|r");
+						self.ItemFrame.Misc:SetText("or click to select");
+						self.RequestRollButton:Hide();
+						self.RequestRollButton:SetWidth(0.00001);
+					end
+				end
+				self:SetItem(nil);
+			</OnLoad>
+		</Scripts>
+	</Frame>
+	<Frame name="LootReserveRollHistoryHeader" virtual="true" enableMouse="true">
+		<Size y="16" />
+		<Layers>
+			<Layer>
+				<FontString text="History" inherits="GameFontNormalSmall" setAllPoints="true" />
+			</Layer>
+		</Layers>
+		<Frames>
+			<Frame name="LootReserveRollHistoryMenu" parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
+			<Button parentKey="MenuButton" hidden="true">
+				<Size x="12" y="12" />
+				<Anchors>
+					<Anchor point="RIGHT" />
+				</Anchors>
+				<NormalTexture file="Interface\Buttons\UI-OptionsButton" />
+				<PushedTexture file="Interface\Buttons\UI-OptionsButton" alpha="0.25" />
+				<HighlightTexture file="Interface\Buttons\UI-OptionsButton" alphaMode="ADD" alpha="0.5" />
+				<Scripts>
+					<OnClick>
+						local menu =
+						{
+							{ text = "Clear History", func = function()
+								table.wipe(LootReserve.Server.RollHistory);
+								LootReserve.Server:UpdateRollList();
+							end },
+							{ text = "Cancel" },
+						};
+						for _, menu in ipairs({ menu, menuWhisperPlayers }) do
+							for _, item in ipairs(menu) do
+								item.notCheckable = true;
+							end
+						end
+
+						EasyMenu(menu, self:GetParent().Menu, self, 0, 0, "MENU");
+					</OnClick>
+				</Scripts>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnUpdate>
+				if self:IsProtected() and InCombatLockdown() then return; end
+				self.MenuButton:SetShown(self:IsMouseOver() or UIDROPDOWNMENU_OPEN_MENU == self.Menu);
+			</OnUpdate>
+		</Scripts>
 	</Frame>
 	<Frame name="LootReserveServerWindow" inherits="BasicFrameTemplateWithInset" parent="UIParent" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true" hidden="true">
 		<Size x="230" y="360" />
@@ -384,6 +634,7 @@
 					<OnTextChanged>
 						InputBoxInstructions_OnTextChanged(self);
 						LootReserve.Server:UpdateReserveList();
+						LootReserve.Server:UpdateRollList();
 					</OnTextChanged>
 				</Scripts>
 			</EditBox>
@@ -483,14 +734,19 @@
 				</Scripts>
 			</Button>
 			<Frame name="LootReserveServerMenu" parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
-			<Button parentKey="TabSession" inherits="LootReserveServerWindowTabTemplate" id="1" text="Raid Setup">
+			<Button parentKey="TabSession" inherits="LootReserveServerWindowTabTemplate" id="1" text="Setup">
 				<Anchors>
 					<Anchor point="BOTTOMLEFT" x="11" y="-31" />
 				</Anchors>
 			</Button>
-			<Button parentKey="TabReserves" inherits="LootReserveServerWindowTabTemplate" id="2" text="Loot Reserves">
+			<Button parentKey="TabReserves" inherits="LootReserveServerWindowTabTemplate" id="2" text="Reserves">
 				<Anchors>
 					<Anchor point="LEFT" relativeKey="$parent.TabSession" relativePoint="RIGHT" x="-15" />
+				</Anchors>
+			</Button>
+			<Button parentKey="TabRolls" inherits="LootReserveServerWindowTabTemplate" id="3" text="Rolls">
+				<Anchors>
+					<Anchor point="LEFT" relativeKey="$parent.TabReserves" relativePoint="RIGHT" x="-15" />
 				</Anchors>
 			</Button>
 			<Frame parentKey="PanelSession" parentArray="Panels">
@@ -714,31 +970,43 @@
 					<Anchor point="BOTTOMRIGHT" x="-9" y="6" />
 				</Anchors>
 				<Frames>
-					<ScrollFrame parentKey="Scroll" inherits="UIPanelScrollFrameTemplate">
+					<ScrollFrame parentKey="Scroll" inherits="LootReserveScrollTemplate">
 						<Anchors>
 							<Anchor point="TOPLEFT" x="1" y="-1" />
 							<Anchor point="BOTTOMRIGHT" x="-23" y="1" />
 						</Anchors>
-						<Frames>
-							<Frame parentKey="Container" />
-						</Frames>
-						<Scripts>
-							<OnLoad>
-								self:SetScrollChild(self.Container);
-							</OnLoad>
-							<OnShow>
-								if InCombatLockdown() then return; end
-								self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
-							</OnShow>
-							<OnSizeChanged>
-								if InCombatLockdown() then return; end
-								self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
-							</OnSizeChanged>
-						</Scripts>
 					</ScrollFrame>
 				</Frames>
 			</Frame>
 			<Frame parentKey="PanelReservesLockdown" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.Search" relativePoint="BOTTOMLEFT" x="-3" y="-3" />
+					<Anchor point="BOTTOMRIGHT" x="-9" y="6" />
+				</Anchors>
+				<Frames>
+					<ScrollFrame parentKey="Scroll" inherits="LootReserveScrollTemplate">
+						<Anchors>
+							<Anchor point="TOPLEFT" x="1" y="-1" />
+							<Anchor point="BOTTOMRIGHT" x="-23" y="1" />
+						</Anchors>
+					</ScrollFrame>
+				</Frames>
+			</Frame>
+			<Frame parentKey="PanelRolls" parentArray="Panels" hidden="true">
+				<Anchors>
+					<Anchor point="TOPLEFT" x="7" y="-48" />
+					<Anchor point="BOTTOMRIGHT" x="-9" y="6" />
+				</Anchors>
+				<Frames>
+					<ScrollFrame parentKey="Scroll" inherits="LootReserveScrollTemplate">
+						<Anchors>
+							<Anchor point="TOPLEFT" x="1" y="-1" />
+							<Anchor point="BOTTOMRIGHT" x="-23" y="1" />
+						</Anchors>
+					</ScrollFrame>
+				</Frames>
+			</Frame>
+			<Frame parentKey="PanelRollsLockdown" hidden="true">
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeKey="$parent.Search" relativePoint="BOTTOMLEFT" x="-3" y="-3" />
 					<Anchor point="BOTTOMRIGHT" x="-9" y="6" />
