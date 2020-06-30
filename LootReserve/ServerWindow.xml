@@ -336,9 +336,34 @@
 				</Anchors>
 				<Scripts>
 					<OnClick>
-						LootReserve.Server:RequestCustomRoll(self:GetParent().Item);
-						local frame = self:GetParent();
-						frame:SetItem(nil);
+						local function StartRoll(info)
+							local frame = self:GetParent();
+							local item = frame.Item;
+							frame:SetItem(nil);
+							if info and info.arg1 and LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.ItemReserves[item] then
+								LootReserve.Server:RequestRoll(item);
+							else
+								LootReserve.Server:RequestCustomRoll(item);
+							end
+						end
+						if not LootReserve.Server.CurrentSession or not LootReserve.Server.CurrentSession.ItemReserves[self:GetParent().Item] then
+							StartRoll();
+							return;
+						end
+
+						local menu =
+						{
+							{ text = "Start Roll", isTitle = true },
+							{ text = "Among Reserving Players", func = StartRoll, arg1 = true },
+							{ text = "Among All Players", func = StartRoll },
+							LootReserve:MakeMenuSeparator(),
+							{ text = "Cancel" },
+						};
+						for _, item in ipairs(menu) do
+							item.notCheckable = true;
+						end
+
+						EasyMenu(menu, self:GetParent().Menu, self, 0, 0, "MENU");
 					</OnClick>
 					<OnEnter>
 						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
@@ -351,6 +376,7 @@
 				<HighlightTexture file="Interface\Buttons\UI-GroupLoot-Dice-Highlight" alphaMode="ADD" />
 				<PushedTexture file="Interface\Buttons\UI-GroupLoot-Dice-Down" />
 			</Button>
+			<Frame parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
 			<Button parentKey="ItemFrame">
 				<Size y="32" />
 				<Anchors>
