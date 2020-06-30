@@ -895,6 +895,72 @@ function LootReserve.Server:IsRolling(item)
     return self.RequestedRoll and self.RequestedRoll.Item == item;
 end
 
+function LootReserve.Server:GetWinningRollAndPlayers()
+    if self.RequestedRoll then
+        local highestRoll = 0;
+        local highestPlayers = { };
+        for player, roll in pairs(self.RequestedRoll.Players) do
+            if highestRoll <= roll and LootReserve:IsPlayerOnline(player) then
+                if highestRoll ~= roll then
+                    table.wipe(highestPlayers);
+                end
+                table.insert(highestPlayers, player);
+                highestRoll = roll;
+            end
+        end
+        if highestRoll > 0 then
+            return highestRoll, highestPlayers;
+        end
+    end
+end
+
+function LootReserve.Server:ResolveRollTie(item)
+    if self:IsRolling(item) then
+        local roll, players = self:GetWinningRollAndPlayers();
+        if roll and players and #players > 1 then
+            local function Announce()
+                local name, link = GetItemInfo(item);
+                if not name or not link then
+                    C_Timer.After(0.25, Announce);
+                    return;
+                end
+
+                LootReserve:SendChatMessage(format("Tie for %s between players %s. All rolled %d. Please /roll again.", link, strjoin(", ", unpack(players)), roll), "RAID");
+            end
+            Announce();
+
+            if self.RequestedRoll.Custom then
+                self:CancelRollRequest(item);
+                self:RequestCustomRoll(item, players);
+            else
+                self:CancelRollRequest(item);
+                self:RequestRoll(item, players);
+            end
+        end
+    end
+end
+
+function LootReserve.Server:FinishRollRequest(item)
+    if self:IsRolling(item) then
+        local roll, players = self:GetWinningRollAndPlayers();
+        if roll and players then
+            local function Announce()
+                local name, link = GetItemInfo(item);
+                if not name or not link then
+                    C_Timer.After(0.25, Announce);
+                    return;
+                end
+
+                LootReserve:SendChatMessage(format("%s won %s with a roll of %d.", strjoin(", ", unpack(players)), link, roll), "RAID");
+            end
+            Announce();
+        end
+
+        self:CancelRollRequest(item);
+        return;
+    end
+end
+
 function LootReserve.Server:CancelRollRequest(item)
     if self:IsRolling(item) then
         table.insert(self.RollHistory, self.RequestedRoll);
@@ -916,7 +982,7 @@ function LootReserve.Server:PrepareRequestRoll()
         LootReserve:RegisterEvent("CHAT_MSG_SYSTEM", function(text)
             if self.RequestedRoll then
                 local player, roll, min, max = text:match(rollMatcher);
-                if player and roll and min == "1" and max == "100" and ((self.RequestedRoll.Custom and self.RequestedRoll.Players[player] ~= -2) or (not self.RequestedRoll.Custom and self.RequestedRoll.Players[player] == 0)) and tonumber(roll) and LootReserve:IsPlayerOnline(player) then
+                if player and roll and min == "1" and max == "100" and (not self.RequestedRoll.AllowedPlayers or LootReserve:Contains(self.RequestedRoll.AllowedPlayers, player)) and ((self.RequestedRoll.Custom and self.RequestedRoll.Players[player] ~= -2) or self.RequestedRoll.Players[player] == 0) and tonumber(roll) and LootReserve:IsPlayerOnline(player) then
                     self.RequestedRoll.Players[player] = tonumber(roll);
                     self:UpdateReserveListRolls();
                     self:UpdateRollList();
@@ -926,7 +992,7 @@ function LootReserve.Server:PrepareRequestRoll()
     end
 end
 
-function LootReserve.Server:RequestRoll(item)
+function LootReserve.Server:RequestRoll(item, allowedPlayers)
     local reserve = self.CurrentSession.ItemReserves[item];
     if not reserve then
         LootReserve:ShowError("That item is not reserved by anyone");
@@ -939,16 +1005,17 @@ function LootReserve.Server:RequestRoll(item)
         StartTime = time(),
         Custom = nil,
         Players = { },
+        AllowedPlayers = allowedPlayers,
     };
     LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
 
-    for _, player in ipairs(reserve.Players) do
+    for _, player in ipairs(allowedPlayers or reserve.Players) do
         self.RequestedRoll.Players[player] = 0;
     end
 
     self:PrepareRequestRoll();
 
-    LootReserve.Comm:BroadcastRequestRoll(item, reserve.Players);
+    LootReserve.Comm:BroadcastRequestRoll(item, allowedPlayers or reserve.Players);
 
     if self.CurrentSession.Settings.ChatFallback then
         local function WhisperPlayer()
@@ -971,28 +1038,37 @@ function LootReserve.Server:RequestRoll(item)
     self:UpdateRollList();
 end
 
-function LootReserve.Server:RequestCustomRoll(item)
+function LootReserve.Server:RequestCustomRoll(item, allowedPlayers)
     self.RequestedRoll =
     {
         Item = item,
         StartTime = time(),
         Custom = true,
         Players = { },
+        AllowedPlayers = allowedPlayers,
     };
     LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
 
+    if allowedPlayers then
+        for _, player in ipairs(allowedPlayers) do
+            self.RequestedRoll.Players[player] = 0;
+        end
+    end
+
     self:PrepareRequestRoll();
 
-    local players = { };
-    for i = 1, MAX_RAID_MEMBERS do
-        local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
-        if LootReserve.Comm.SoloDebug and i == 1 then
-            name = UnitName("player");
-            online = true;
-        end
-        if name and online then
-            name = Ambiguate(name, "short");
-            table.insert(players, name);
+    local players = allowedPlayers or { };
+    if not allowedPlayers then
+        for i = 1, MAX_RAID_MEMBERS do
+            local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
+            if LootReserve.Comm.SoloDebug and i == 1 then
+                name = UnitName("player");
+                online = true;
+            end
+            if name and online then
+                name = Ambiguate(name, "short");
+                table.insert(players, name);
+            end
         end
     end
 
@@ -1005,7 +1081,15 @@ function LootReserve.Server:RequestCustomRoll(item)
                 return;
             end
 
-            LootReserve:SendChatMessage(format("Roll on %s", link), (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAIDWARNING" or "RAID");
+            if allowedPlayers then
+                for player, roll in pairs(self.RequestedRoll.Players) do
+                    if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
+                        LootReserve:SendChatMessage(format("Please /roll on %s.", link), "WHISPER", player);
+                    end
+                end
+            else
+                LootReserve:SendChatMessage(format("Roll on %s", link), (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or "RAID");
+            end
         end
         BroadcastRoll();
     end
