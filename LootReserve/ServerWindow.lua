@@ -501,6 +501,7 @@ function LootReserve.Server:OnWindowLoad(window)
         self:UpdateReserveList(true);
         self.Window.PanelReservesLockdown.Scroll:UpdateScrollChildRect();
         self.Window.PanelReservesLockdown.Scroll:SetVerticalScroll(self.Window.PanelReserves.Scroll:GetVerticalScroll());
+        self:UpdateRollList(true);
         self.Window.PanelRollsLockdown.Scroll:UpdateScrollChildRect();
         self.Window.PanelRollsLockdown.Scroll:SetVerticalScroll(self.Window.PanelRolls.Scroll:GetVerticalScroll());
     end);
@@ -518,6 +519,7 @@ function LootReserve.Server:OnWindowLoad(window)
         self:UpdateReserveList();
         self.Window.PanelReserves.Scroll:UpdateScrollChildRect();
         self.Window.PanelReserves.Scroll:SetVerticalScroll(self.Window.PanelReservesLockdown.Scroll:GetVerticalScroll());
+        self:UpdateRollList();
         self.Window.PanelRolls.Scroll:UpdateScrollChildRect();
         self.Window.PanelRolls.Scroll:SetVerticalScroll(self.Window.PanelRollsLockdown.Scroll:GetVerticalScroll());
     end);
