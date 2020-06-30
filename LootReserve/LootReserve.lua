@@ -244,3 +244,34 @@ function LootReserve:Ordered(tbl, sorter)
 
     return orderedNext, tbl, nil;
 end
+
+function LootReserve:MakeMenuSeparator()
+    return
+    {
+        text = "",
+        hasArrow = false,
+        dist = 0,
+        isTitle = true,
+        isUninteractable = true,
+        notCheckable = true,
+        iconOnly = true,
+        icon = "Interface\\Common\\UI-TooltipDivider-Transparent",
+        tCoordLeft = 0,
+        tCoordRight = 1,
+        tCoordTop = 0,
+        tCoordBottom = 1,
+        tSizeX = 0,
+        tSizeY = 8,
+        tFitDropDownSizeX = true,
+        iconInfo =
+        {
+            tCoordLeft = 0,
+            tCoordRight = 1,
+            tCoordTop = 0,
+            tCoordBottom = 1,
+            tSizeX = 0,
+            tSizeY = 8,
+            tFitDropDownSizeX = true
+        },
+    };
+end

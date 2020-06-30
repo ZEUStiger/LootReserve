@@ -496,7 +496,7 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Frame name="LootReserveRollHistoryMenu" parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
+			<Frame parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
 			<Button parentKey="MenuButton" hidden="true">
 				<Size x="12" y="12" />
 				<Anchors>
@@ -515,10 +515,8 @@
 							end },
 							{ text = "Cancel" },
 						};
-						for _, menu in ipairs({ menu, menuWhisperPlayers }) do
-							for _, item in ipairs(menu) do
-								item.notCheckable = true;
-							end
+						for _, item in ipairs(menu) do
+							item.notCheckable = true;
 						end
 
 						EasyMenu(menu, self:GetParent().Menu, self, 0, 0, "MENU");
@@ -582,7 +580,7 @@
 							{ text = "Communications", isTitle = true },
 							MakeMenuItem("Send Reserve Updates", "ChatUpdates", "Send whispers to players without addons if someone else reserves or cancels the reserve of the items that they have reserved as well."),
 							MakeMenuItem("Slow Chat Messages", "ChatThrottle", "Slow down broadcasting of Raid and Whisper messages. Will lead to some messages being delivered late. Enable only if WoW servers are blocking your messages due to spam."),
-							{ text = "", isTitle = true },
+							LootReserve:MakeMenuSeparator(),
 							{ text = "Close" },
 						};
 						for _, menu in ipairs({ menu, menuWhisperPlayers }) do
@@ -707,7 +705,7 @@
 							{ text = "Players Without Reserves", isTitle = true },
 							{ text = "Whisper All", disabled = #menuWhisperPlayers == 0, func = function() LootReserve.Server:WhisperAllWithoutReserves(); end },
 							{ text = "Whisper...", keepShownOnClick = true, hasArrow = true, menuList = menuWhisperPlayers, disabled = #menuWhisperPlayers == 0 },
-							{ text = "", isTitle = true },
+							LootReserve:MakeMenuSeparator(),
 							{ text = "Cancel" },
 						};
 						for _, menu in ipairs({ menu, menuWhisperPlayers }) do
@@ -733,7 +731,7 @@
 					<OnLeave function="GameTooltip_Hide" />
 				</Scripts>
 			</Button>
-			<Frame name="LootReserveServerMenu" parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
+			<Frame parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
 			<Button parentKey="TabSession" inherits="LootReserveServerWindowTabTemplate" id="1" text="Setup">
 				<Anchors>
 					<Anchor point="BOTTOMLEFT" x="11" y="-31" />
