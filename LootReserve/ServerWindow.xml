@@ -224,7 +224,26 @@
 					</OnLoad>
 					<OnClick>
 						if LootReserve.Server:IsRolling(self:GetParent().Item) then
-							LootReserve.Server:CancelRollRequest(self:GetParent().Item);
+							local roll, players = LootReserve.Server:GetWinningRollAndPlayers();
+							if players then
+								for i = 1, #players do
+									players[i] = LootReserve:ColoredPlayer(players[i]);
+								end
+							end
+							local menu =
+							{
+								{ text = "End Roll", isTitle = true },
+								{ text = "Resolve Tie", disabled = not players or #players &lt;= 1, func = function() LootReserve.Server:ResolveRollTie(self:GetParent().Item); end },
+								{ text = players and format("Announce Winner%s (%s)", #players > 1 and "s" or "", strjoin(", ", unpack(players))) or "Announce Winner", disabled = not players or #players == 0, func = function() LootReserve.Server:FinishRollRequest(self:GetParent().Item); end },
+								{ text = "End Silently", func = function() LootReserve.Server:CancelRollRequest(self:GetParent().Item); end },
+								LootReserve:MakeMenuSeparator(),
+								{ text = "Cancel" },
+							};
+							for _, item in ipairs(menu) do
+								item.notCheckable = true;
+							end
+
+							EasyMenu(menu, self:GetParent().Menu, self, 0, 0, "MENU");
 						else
 							LootReserve.Server:RequestRoll(self:GetParent().Item);
 						end
@@ -242,6 +261,7 @@
 				<HighlightTexture file="Interface\Buttons\UI-GroupLoot-Dice-Highlight" alphaMode="ADD" />
 				<PushedTexture file="Interface\Buttons\UI-GroupLoot-Dice-Down" />
 			</Button>
+			<Frame parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
 			<Button parentKey="ItemFrame" inherits="LootReserveItemButtomTemplate">
 				<KeyValues>
 					<KeyValue key="tooltipRight" value="true" type="boolean" />

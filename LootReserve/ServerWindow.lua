@@ -401,6 +401,7 @@ function LootReserve.Server:OnWindowTabClick(tab)
     PanelTemplates_Tab_OnClick(tab, self.Window);
     PanelTemplates_SetTab(self.Window, tab:GetID());
     self:SetWindowTab(tab:GetID());
+    CloseMenus();
     PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB);
 end
 
