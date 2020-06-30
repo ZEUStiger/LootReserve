@@ -409,6 +409,12 @@
 										<Anchor point="CENTER" />
 									</Anchors>
 								</Texture>
+								<Texture parentKey="Arrow" file="Interface\Buttons\Arrow-Down-Up" hidden="true">
+									<Size x="16" y="16" />
+									<Anchors>
+										<Anchor point="BOTTOM" y="-10" />
+									</Anchors>
+								</Texture>
 							</Layer>
 						</Layers>
 						<PushedTexture file="Interface\Buttons\UI-Quickslot-Depress"/>
@@ -422,10 +428,75 @@
 									ClearCursor();
 									if type == "item" and item then
 										frame:SetItem(item);
+										CloseMenus();
 									elseif frame.Item then
 										frame:SetItem(nil);
+										CloseMenus();
 									else
-										-- TODO: Show dropdown with non-soulbound items from bags
+										local function SelectItem(info)
+											frame:SetItem(info.arg1);
+											CloseMenus();
+										end
+										local function MakeItem(count, item, link, texture)
+											if count == 1 then
+												count = nil;
+											end
+											if not link or not texture then
+												_, link, _, _, _, _, _, _, _, texture = GetItemInfo(item);
+											end
+											return
+											{
+												text = format("|T%d:0|t %s%s", texture, (link or "|cFFFF0000Loading...|r"):gsub("[%[%]]", ""), count and format("|cFF808080 x%d|r", count) or "");
+												arg1 = item,
+												func = SelectItem,
+												notCheckable = true,
+											};
+										end
+										local bagMenus = { };
+										for bag = 0, 4 do
+											local slots = GetContainerNumSlots(bag);
+											if slots > 0 then
+												local bagMenu = { };
+												table.insert(bagMenus, bagMenu);
+												for slot = 1, slots do
+													local texture, count, _, _, _, _, link, _, _, item = GetContainerItemInfo(bag, slot);
+													if item and (not C_Item.IsBound(ItemLocation:CreateFromBagAndSlot(bag, slot)) or LootReserve:IsItemSoulboundTradeable(bag, slot)) then
+														table.insert(bagMenu, MakeItem(count, item, link, texture));
+													end
+												end
+											end
+										end
+										local menu =
+										{
+											{ text = "Recent Loot", isTitle = true },
+											LootReserve:MakeMenuSeparator(),
+											{ text = "Bags", isTitle = true },
+											LootReserve:MakeMenuSeparator(),
+											{ text = "Cancel" },
+										};
+										for bag, bagMenu in ipairs(bagMenus) do
+											table.insert(menu, 3 + bag,
+											{
+												text = bag == 1 and "Backpack" or format("Bag %d", bag - 1),
+												keepShownOnClick = true,
+												hasArrow = true,
+												menuList = bagMenu,
+											});
+										end
+										if LootReserve.Server.RecentLoot and #LootReserve.Server.RecentLoot > 0 then
+											for _, item in ipairs(LootReserve.Server.RecentLoot) do
+												table.insert(menu, 2, MakeItem(1, item));
+											end
+										else
+											table.insert(menu, 2, { text = "No Loot", disabled = true });
+										end
+										for _, item in ipairs(menu) do
+											if item.notCheckable == nil then
+												item.notCheckable = true;
+											end
+										end
+
+										EasyMenu(menu, self:GetParent().Menu, self, 0, 0, "MENU");
 									end
 								end
 							</OnLoad>
@@ -445,6 +516,7 @@
 								else
 									self.CancelIcon:Hide();
 								end
+								self.Arrow:SetShown(not frame.Item);
 								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 								GameTooltip:SetText("Drop an item here");
 								GameTooltip:AddLine("Or click to select among relevant items", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
@@ -453,9 +525,11 @@
 							<OnLeave>
 								GameTooltip_Hide(self);
 								self.CancelIcon:Hide();
+								self.Arrow:Hide();
 							</OnLeave>
 						</Scripts>
 					</Button>
+					<Frame parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
 				</Frames>
 				<Layers>
 					<Layer>

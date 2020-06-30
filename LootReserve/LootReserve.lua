@@ -185,6 +185,29 @@ function LootReserve:ColoredPlayer(player)
     return format("|c%s%s|r", self:GetPlayerClassColor(player), player);
 end
 
+function LootReserve:IsItemSoulboundTradeable(bag, slot)
+    if not self.TooltipScanner then
+        self.TooltipScanner = CreateFrame("GameTooltip", "LootReserveTooltipScanner", UIParent);
+        self.TooltipScanner:Hide();
+    end
+
+    if not self.TooltipScanner.SoulboundTradeable then
+        self.TooltipScanner.SoulboundTradeable = BIND_TRADE_TIME_REMAINING:gsub("%%s", "(.+)");
+    end
+
+    self.TooltipScanner:SetOwner(UIParent, "ANCHOR_NONE");
+    self.TooltipScanner:SetBagItem(bag, slot);
+    for i = 50, 1, -1 do
+        local line = _G[self.TooltipScanner:GetName() .. "TextLeft" .. i];
+        if line and text and text:match(self.TooltipScanner.SoulboundTradeable) then
+            self.TooltipScanner:Hide();
+            return true;
+        end
+    end
+    self.TooltipScanner:Hide();
+    return false;
+end
+
 function LootReserve:TransformSearchText(text)
     text = self:StringTrim(text, "[%s%[%]]");
     text = text:upper();
