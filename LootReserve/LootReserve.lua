@@ -18,6 +18,7 @@ LootReserveCharacterSave =
         CurrentSession = nil,
         RequestedRoll = nil,
         RollHistory = nil,
+        RecentLoot = nil,
     },
 };
 LootReserveGlobalSave =

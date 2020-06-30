@@ -16,6 +16,7 @@ LootReserve.Server =
     },
     RequestedRoll = nil,
     RollHistory = { },
+    RecentLoot = { },
     AddonUsers = { },
 
     ReservableItems = { },
@@ -115,6 +116,7 @@ function LootReserve.Server:Load()
     loadInto(self, LootReserveCharacterSave.Server, "CurrentSession");
     loadInto(self, LootReserveCharacterSave.Server, "RequestedRoll");
     loadInto(self, LootReserveCharacterSave.Server, "RollHistory");
+    loadInto(self, LootReserveCharacterSave.Server, "RecentLoot");
     loadInto(self, LootReserveGlobalSave.Server, "NewSessionSettings");
     loadInto(self, LootReserveGlobalSave.Server, "Settings");
     
@@ -302,6 +304,13 @@ function LootReserve.Server:PrepareSession()
                 tracking.Players[looter] = (tracking.Players[looter] or 0) + count;
 
                 self:UpdateReserveList();
+            end
+            if looter and item and count then
+                removeFromTable(self.RecentLoot, item);
+                table.insert(self.RecentLoot, item);
+                while #self.RecentLoot > 10 do
+                    table.remove(self.RecentLoot, 1);
+                end
             end
         end);
 
