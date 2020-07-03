@@ -234,6 +234,10 @@ function LootReserve.Server:UpdateReserveList(lockdown)
     list:SetSize(list:GetParent():GetWidth(), math.max(list.ContentHeight or 0, list:GetParent():GetHeight() - 1));
 
     self:UpdateReserveListRolls(lockdown);
+
+    if missingName then
+        C_Timer.After(0.25, function() self:UpdateReserveList(); end);
+    end
 end
 
 function LootReserve.Server:UpdateRollListRolls(lockdown)
