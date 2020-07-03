@@ -526,6 +526,7 @@ function LootReserve.Server:OnWindowLoad(window)
     LootReserve:RegisterEvent("GROUP_LEFT", updateAuthority);
     LootReserve:RegisterEvent("PARTY_LEADER_CHANGED", updateAuthority);
     LootReserve:RegisterEvent("PARTY_LOOT_METHOD_CHANGED", updateAuthority);
+    LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", updateAuthority);
     LootReserve:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(item, success)
         if item and self.CurrentSession and self.CurrentSession.ItemReserves[item] then
             self:UpdateReserveList();
