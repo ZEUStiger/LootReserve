@@ -96,15 +96,19 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         frame.ItemFrame.Icon:SetTexture(texture);
         frame.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
         local tracking = self.CurrentSession.LootTracking[item];
+        local fade = false;
         if tracking then
             local players = "";
             for player, count in pairs(tracking.Players) do
                 players = players .. (#players > 0 and ", " or "") .. LootReserve:ColoredPlayer(player) .. (count > 1 and format(" (%d)", count) or "");
             end
             frame.ItemFrame.Misc:SetText("Looted by " .. players);
+            fade = false;
         else
             frame.ItemFrame.Misc:SetText("Not looted");
+            fade = self.Settings.ReservesSorting == LootReserve.Constants.ReservesSorting.ByLooter;
         end
+        frame:SetAlpha(fade and 0.25 or 1);
 
         local reservesHeight = 5 + 12 + 2;
         local last = 0;
@@ -162,12 +166,60 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         return false;
     end
 
-    local function sorter(a, b)
-        if a.StartTime ~= b.StartTime then
-            return a.StartTime < b.StartTime;
-        else
-            return a.Item < b.Item;
+    local missingName = false;
+    local function getSortingTime(reserve)
+        return reserve.StartTime;
+    end
+    local function getSortingName(reserve)
+        local name = GetItemInfo(reserve.Item);
+        if not name then
+            missingName = true;
         end
+        return (name or ""):upper();
+    end
+    local function getSortingSource(reserve)
+        for id, category in LootReserve:Ordered(LootReserve.Data.Categories) do
+            if category.Children and (not self.CurrentSession or id == self.CurrentSession.Settings.LootCategory) then
+                for childIndex, child in ipairs(category.Children) do
+                    if child.Loot then
+                        for lootIndex, loot in ipairs(child.Loot) do
+                            if loot == reserve.Item then
+                                return id * 10000 + childIndex * 100 + lootIndex;
+                            end
+                        end
+                    end
+                end
+            end
+        end
+        return 100000000;
+    end
+    local function getSortingLooter(reserve)
+        local tracking = self.CurrentSession.LootTracking[reserve.Item];
+        if tracking then
+            for player, _ in LootReserve:Ordered(tracking.Players) do
+                return player:upper();
+            end
+        else
+            return "ZZZZZZZZZZZZ";
+        end
+    end
+
+    local sorting = self.Settings.ReservesSorting;
+        if sorting == LootReserve.Constants.ReservesSorting.ByTime   then sorting = getSortingTime;
+    elseif sorting == LootReserve.Constants.ReservesSorting.ByName   then sorting = getSortingName;
+    elseif sorting == LootReserve.Constants.ReservesSorting.BySource then sorting = getSortingSource;
+    elseif sorting == LootReserve.Constants.ReservesSorting.ByLooter then sorting = getSortingLooter;
+    else sorting = nil; end
+
+    local function sorter(a, b)
+        if sorting then
+            local aOrder, bOrder = sorting(a), sorting(b);
+            if aOrder ~= bOrder then
+                return aOrder < bOrder;
+            end
+        end
+
+        return a.Item < b.Item;
     end
     
     for item, reserve in LootReserve:Ordered(self.CurrentSession.ItemReserves, sorter) do

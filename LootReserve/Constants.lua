@@ -21,4 +21,11 @@ LootReserve.Constants =
         NotReserved = 5,
         Forced = 6,
     },
+    ReservesSorting =
+    {
+        ByTime = 0,
+        ByName = 1,
+        BySource = 2,
+        ByLooter = 3,
+    },
 };

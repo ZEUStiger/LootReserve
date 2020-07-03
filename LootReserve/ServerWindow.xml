@@ -681,13 +681,15 @@
 					</OnLoad>
 					<OnClick>
 						local root = LootReserve.Server.Settings;
-						local function MakeMenuItem(text, setting, tooltip)
+
+						-- Buttons
+						local function MakeMenuItem(text, setting, tooltip, checked, func)
 							return
 							{
 								text = text,
 								arg1 = setting,
-								func = function(info) root[setting] = not root[setting]; end,
-								checked = function(info) return root[setting]; end,
+								func = func,
+								checked = checked,
 								notCheckable = false,
 								keepShownOnClick = true,
 								tooltipTitle = tooltip and text or nil,
@@ -695,11 +697,48 @@
 								tooltipOnButton = true,
 							};
 						end
+						local function MakeMenuToggle(text, setting, tooltip, callback)
+							return MakeMenuItem(text, setting, tooltip,
+								function(info)
+									return root[setting];
+								end,
+								function(info)
+									root[setting] = not root[setting];
+									if callback then
+										callback(root[setting]);
+									end
+								end);
+						end
+						local function MakeMenuRadio(text, setting, value, tooltip, callback)
+							return MakeMenuItem(text, setting, tooltip,
+								function(info)
+									return root[setting] == value;
+								end,
+								function(info)
+									root[setting] = value;
+									if callback then
+										callback(value);
+									end
+								end);
+						end
+
+						-- Callbacks
+						local function RefreshReserves()
+							LootReserve.Server:UpdateReserveList();
+							self:Click();
+						end
+
 						local menu =
 						{
 							{ text = "Communications", isTitle = true },
-							MakeMenuItem("Send Reserve Updates", "ChatUpdates", "Send whispers to players without addons if someone else reserves or cancels the reserve of the items that they have reserved as well."),
-							MakeMenuItem("Slow Chat Messages", "ChatThrottle", "Slow down broadcasting of Raid and Whisper messages. Will lead to some messages being delivered late. Enable only if WoW servers are blocking your messages due to spam."),
+							MakeMenuToggle("Send Reserve Updates", "ChatUpdates",  "Send whispers to players without addons if someone else reserves or cancels the reserve of the items that they have reserved as well."),
+							MakeMenuToggle("Slow Chat Messages",   "ChatThrottle", "Slow down broadcasting of Raid and Whisper messages. Will lead to some messages being delivered late. Enable only if WoW servers are blocking your messages under suspicion of spam."),
+							LootReserve:MakeMenuSeparator(),
+							{ text = "Reserves Sorting", isTitle = true },
+							MakeMenuRadio("By Time",   "ReservesSorting", LootReserve.Constants.ReservesSorting.ByTime,   "Sort reserves by the time the item was first reserved in the current session.", RefreshReserves),
+							MakeMenuRadio("By Name",   "ReservesSorting", LootReserve.Constants.ReservesSorting.ByName,   "Sort reserves by the name of the item.", RefreshReserves),
+							MakeMenuRadio("By Boss",   "ReservesSorting", LootReserve.Constants.ReservesSorting.BySource, "Sort reserves by the order of the boss the item first drops from.", RefreshReserves),
+							MakeMenuRadio("By Looter", "ReservesSorting", LootReserve.Constants.ReservesSorting.ByLooter, "Sort reserves by the name of one of the players that looted this item in the current session.|n|nFade out items not looted by anyone.", RefreshReserves),
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Close" },
 						};

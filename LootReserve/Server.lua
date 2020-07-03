@@ -13,6 +13,7 @@ LootReserve.Server =
     {
         ChatUpdates = true,
         ChatThrottle = false,
+        ReservesSorting = LootReserve.Constants.ReservesSorting.ByTime,
     },
     RequestedRoll = nil,
     RollHistory = { },
