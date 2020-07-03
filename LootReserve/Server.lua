@@ -956,7 +956,7 @@ function LootReserve.Server:FinishRollRequest(item)
                     return;
                 end
 
-                LootReserve:SendChatMessage(format("%s won %s with a roll of %d.", strjoin(", ", unpack(players)), LootReserve:FixLink(link), roll), IsInRaid() and "RAID" or "PARTY");
+                LootReserve:SendChatMessage(format(self.RequestedRoll.RaidRoll and "%s won %s via raid-roll." or "%s won %s with a roll of %d.", strjoin(", ", unpack(players)), LootReserve:FixLink(link), roll), IsInRaid() and "RAID" or "PARTY");
             end
             Announce();
         end
@@ -970,7 +970,7 @@ function LootReserve.Server:CancelRollRequest(item)
     if self:IsRolling(item) then
         table.insert(self.RollHistory, self.RequestedRoll);
 
-        LootReserve.Comm:BroadcastRequestRoll(0, { }, self.RequestedRoll.Custom);
+        LootReserve.Comm:BroadcastRequestRoll(0, { }, self.RequestedRoll.Custom or self.RequestedRoll.RaidRoll);
         self.RequestedRoll = nil;
         LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
         self:UpdateReserveListRolls();
@@ -987,7 +987,39 @@ function LootReserve.Server:PrepareRequestRoll()
         LootReserve:RegisterEvent("CHAT_MSG_SYSTEM", function(text)
             if self.RequestedRoll then
                 local player, roll, min, max = text:match(rollMatcher);
-                if player and roll and min == "1" and max == "100" and (not self.RequestedRoll.AllowedPlayers or LootReserve:Contains(self.RequestedRoll.AllowedPlayers, player)) and ((self.RequestedRoll.Custom and self.RequestedRoll.Players[player] ~= -2) or self.RequestedRoll.Players[player] == 0) and tonumber(roll) and LootReserve:IsPlayerOnline(player) then
+                if player and roll and min == "1" and (max == "100" or self.RequestedRoll.RaidRoll and tonumber(max) == GetNumGroupMembers()) and tonumber(roll) and LootReserve:IsPlayerOnline(player) then
+                    -- Player who isn't allowed to roll attempted to roll
+                    if self.RequestedRoll.AllowedPlayers and not LootReserve:Contains(self.RequestedRoll.AllowedPlayers, player) then return; end
+                    -- Raid roll creator is allowed to re-roll the raid-roll
+                    if self.RequestedRoll.RaidRoll then
+                        table.wipe(self.RequestedRoll.Players);
+
+                        local subgroups = { };
+                        for i = 1, NUM_RAID_GROUPS do
+                            subgroups[i] = { };
+                        end
+                        for i = 1, MAX_RAID_MEMBERS do
+                            local name, _, subgroup, _, _, _, _, online = GetRaidRosterInfo(i);
+                            if name and subgroup then
+                                table.insert(subgroups[subgroup], Ambiguate(name, "short"));
+                            end
+                        end
+                        local raid = { };
+                        for _, subgroup in ipairs(subgroups) do
+                            for _, player in ipairs(subgroup) do
+                                table.insert(raid, player);
+                            end
+                        end
+
+                        if tonumber(max) ~= #raid or #raid ~= GetNumGroupMembers() then return; end
+
+                        player = raid[tonumber(roll)];
+                    end
+                    -- Player who already rolled attempted to roll again
+                    if self.RequestedRoll.Players[player] and self.RequestedRoll.Players[player] ~= 0 then return; end
+                    -- Player with deleted roll attempted to roll again
+                    if self.RequestedRoll.Players[player] == -2 then return; end
+
                     self.RequestedRoll.Players[player] = tonumber(roll);
                     self:UpdateReserveListRolls();
                     self:UpdateRollList();
@@ -1112,6 +1144,23 @@ function LootReserve.Server:RequestCustomRoll(item, allowedPlayers)
     self:UpdateRollList();
 end
 
+function LootReserve.Server:RaidRoll(item)
+    self.RequestedRoll =
+    {
+        Item = item,
+        StartTime = time(),
+        RaidRoll = true,
+        Players = { },
+        AllowedPlayers = { Ambiguate(UnitName("player"), "short") },
+    };
+    LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
+
+    self:PrepareRequestRoll();
+    RandomRoll(1, GetNumGroupMembers());
+
+    self:UpdateRollList();
+end
+
 function LootReserve.Server:PassRoll(player, item)
     if not self:IsRolling(item) or not self.RequestedRoll.Players[player] or self.RequestedRoll.Players[player] < 0 then
         return;
@@ -1125,6 +1174,11 @@ end
 
 function LootReserve.Server:DeleteRoll(player, item)
     if not self:IsRolling(item) or not self.RequestedRoll.Players[player] or self.RequestedRoll.Players[player] < 0 then
+        return;
+    end
+
+    if self.RequestedRoll.RaidRoll then
+        RandomRoll(1, GetNumGroupMembers());
         return;
     end
 

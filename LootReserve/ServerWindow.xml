@@ -141,6 +141,22 @@
 				<HighlightTexture file="Interface\Buttons\UI-GroupLoot-Pass-Up" alpha="0.5" alphaMode="ADD"/>
 				<PushedTexture file="Interface\Buttons\UI-GroupLoot-Pass-Down" alpha="0.5"/>
 			</Button>
+			<Button parentKey="ButtonReroll" hidden="true">
+				<Size x="12" y="12"/>
+				<Anchors>
+					<Anchor point="TOPLEFT" x="2" y="-2" />
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						if LootReserve.Server.RequestedRoll and LootReserve.Server.RequestedRoll.RaidRoll then
+							LootReserve.Server:DeleteRoll(self:GetParent().Player, self:GetParent():GetParent():GetParent().Item);
+						end
+					</OnClick>
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\UI-RefreshButton" />
+				<HighlightTexture file="Interface\Buttons\UI-RefreshButton" alpha="0.5" alphaMode="ADD" />
+				<PushedTexture file="Interface\Buttons\UI-RefreshButton" alpha="0.5" />
+			</Button>
 		</Frames>
 		<Scripts>
 			<OnUpdate>
@@ -148,11 +164,15 @@
 				local frame = self:GetParent():GetParent();
 				if not self:IsMouseOver() or self:GetParent():GetParent().Historical then
 					self.ButtonDelete:Hide();
+					self.ButtonReroll:Hide();
 				elseif not frame.Roll then
 					self.ButtonDelete:Show();
+					self.ButtonReroll:Hide();
 				else
 					local roll = frame.Roll.Players[self.Player];
-					self.ButtonDelete:SetShown(roll and roll > 0);
+					local isRaidRoll = LootReserve.Server.RequestedRoll and LootReserve.Server.RequestedRoll.RaidRoll;
+					self.ButtonDelete:SetShown(roll and roll > 0 and not isRaidRoll);
+					self.ButtonReroll:SetShown(roll and roll > 0 and     isRaidRoll);
 				end
 			</OnUpdate>
 		</Scripts>
@@ -346,16 +366,25 @@
 								LootReserve.Server:RequestCustomRoll(item);
 							end
 						end
+						local function RaidRoll()
+							local frame = self:GetParent();
+							local item = frame.Item;
+							frame:SetItem(nil);
+							LootReserve.Server:RaidRoll(item);
+						end
+						--[[
 						if not LootReserve.Server.CurrentSession or not LootReserve.Server.CurrentSession.ItemReserves[self:GetParent().Item] then
 							StartRoll();
 							return;
 						end
+						]]
 
 						local menu =
 						{
 							{ text = "Start Roll", isTitle = true },
-							{ text = "Among Reserving Players", func = StartRoll, arg1 = true },
+							{ text = "Among Reserving Players", func = StartRoll, arg1 = true, disabled = not LootReserve.Server.CurrentSession or not LootReserve.Server.CurrentSession.ItemReserves[self:GetParent().Item] },
 							{ text = "Among All Players", func = StartRoll },
+							{ text = "Auto Raid-Roll", func = RaidRoll },
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Cancel" },
 						};
