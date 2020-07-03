@@ -474,7 +474,6 @@ function LootReserve.Server:OnWindowLoad(window)
         if item and self.CurrentSession and self.CurrentSession.ItemReserves[item] then
             self:UpdateReserveList();
         end
-        -- TODO: Test
         if item and self.RequestedRoll and self.RequestedRoll.Item == item then
             self:UpdateRollList();
             return;
@@ -483,6 +482,7 @@ function LootReserve.Server:OnWindowLoad(window)
             for _, roll in ipairs(self.RollHistory) do
                 if roll.Item == item then
                     self:UpdateRollList();
+                    return;
                 end
             end
         end
