@@ -187,8 +187,7 @@
 					<Anchor point="TOPLEFT" relativeKey="$parent.Duration" relativePoint="BOTTOMLEFT" x="3" y="-3" />
 				</Anchors>
 				<Scripts>
-					<OnTextChanged>
-						InputBoxInstructions_OnTextChanged(self);
+					<OnTextChanged inherit="prepend">
 						if #self:GetText() > 0 then
 							for _, frame in ipairs(self:GetParent().Categories.Scroll.Container.Frames) do
 								if frame.Category.Search then

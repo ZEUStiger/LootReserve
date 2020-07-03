@@ -589,6 +589,7 @@
 
 						self.ItemFrame.Icon:SetTexture(texture);
 						--self.ItemFrame.Icon.CancelIcon:SetShown(GameTooltip:IsOwned(self.ItemFrame.Icon)); -- Looks better without it
+						self.ItemFrame.Icon.Arrow:Hide();
 						self.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
 						self.ItemFrame.Misc:SetText(reservers > 0 and format("Reserved by %d |4player:players;", reservers) or "Not reserved");
 						self.RequestRollButton:Show();
@@ -598,6 +599,7 @@
 						self.Link = nil;
 						self.ItemFrame.Icon:SetTexture(nil);
 						self.ItemFrame.Icon.CancelIcon:Hide();
+						self.ItemFrame.Icon.Arrow:SetShown(self.ItemFrame.Icon:IsMouseOver());
 						self.ItemFrame.Name:SetText("|cFF808080Drop an Item|r");
 						self.ItemFrame.Misc:SetText("or click to select");
 						self.RequestRollButton:Hide();
@@ -782,14 +784,12 @@
 					<Anchor point="TOPRIGHT" x="-7" y="-25" />
 				</Anchors>
 				<Scripts>
-					<OnLoad>
-						SearchBoxTemplate_OnLoad(self);
+					<OnLoad inherit="prepend">
 						self.Instructions:SetText("Search items or players");
 						self.Instructions:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -8, 0);
 						self.Instructions:SetWordWrap(false);
 					</OnLoad>
-					<OnTextChanged>
-						InputBoxInstructions_OnTextChanged(self);
+					<OnTextChanged inherit="prepend">
 						LootReserve.Server:UpdateReserveList();
 						LootReserve.Server:UpdateRollList();
 					</OnTextChanged>
@@ -993,9 +993,7 @@
 									self:SetText("");
 								end
 							</OnTextChanged>
-							<OnEnterPressed>
-								self:ClearFocus();
-							</OnEnterPressed>
+							<OnEnterPressed method="ClearFocus" />
 						</Scripts>
 					</EditBox>
 					<Frame name="LootReserveServerDropDownDuration" parentKey="DropDownDuration" inherits="UIDropDownMenuTemplate">
