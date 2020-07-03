@@ -489,7 +489,12 @@
 										end
 										if LootReserve.Server.RecentLoot and #LootReserve.Server.RecentLoot > 0 then
 											for _, item in ipairs(LootReserve.Server.RecentLoot) do
-												table.insert(menu, 2, MakeItem(1, item));
+												local button = MakeItem(1, item);
+												local count = GetItemCount(item, false, false);
+												if count > 0 then
+													button.text = button.text .. format("|cFFC0C0C0 (%d in bags)|r", count);
+												end
+												table.insert(menu, 2, button);
 											end
 										else
 											table.insert(menu, 2, { text = "No Loot", disabled = true });
