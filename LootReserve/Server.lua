@@ -309,11 +309,17 @@ function LootReserve.Server:PrepareSession()
                 end
             end
             self:UpdateReserveList();
+            self:UpdateRollList();
             self:UpdateAddonUsers();
         end
         
         LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", UpdateGroupMembers);
         LootReserve:RegisterEvent("UNIT_NAME_UPDATE", function(unit)
+            if unit and (stringStartsWith(unit, "raid") or stringStartsWith(unit, "party")) then
+                UpdateGroupMembers();
+            end
+        end);
+        LootReserve:RegisterEvent("UNIT_CONNECTION", function(unit)
             if unit and (stringStartsWith(unit, "raid") or stringStartsWith(unit, "party")) then
                 UpdateGroupMembers();
             end
