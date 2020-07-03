@@ -951,7 +951,7 @@ function LootReserve.Server:FinishRollRequest(item)
                     return;
                 end
 
-                LootReserve:SendChatMessage(format("%s won %s with a roll of %d.", strjoin(", ", unpack(players)), link, roll), "RAID");
+                LootReserve:SendChatMessage(format("%s won %s with a roll of %d.", strjoin(", ", unpack(players)), LootReserve:FixLink(link), roll), "RAID");
             end
             Announce();
         end
@@ -1018,12 +1018,14 @@ function LootReserve.Server:RequestRoll(item, allowedPlayers)
     LootReserve.Comm:BroadcastRequestRoll(item, allowedPlayers or reserve.Players);
 
     if self.CurrentSession.Settings.ChatFallback then
-        local function WhisperPlayer()
+        local function BroadcastRoll()
             local name, link = GetItemInfo(item);
             if not name or not link then
-                C_Timer.After(0.25, WhisperPlayer);
+                C_Timer.After(0.25, BroadcastRoll);
                 return;
             end
+
+            LootReserve:SendChatMessage(format("%s - roll on reserved %s", strjoin(", ", unpack(allowedPlayers or reserve.Players)), LootReserve:FixLink(link)), (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or "RAID");
 
             for player, roll in pairs(self.RequestedRoll.Players) do
                 if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
@@ -1031,7 +1033,7 @@ function LootReserve.Server:RequestRoll(item, allowedPlayers)
                 end
             end
         end
-        WhisperPlayer();
+        BroadcastRoll();
     end
 
     self:UpdateReserveListRolls();
@@ -1082,6 +1084,9 @@ function LootReserve.Server:RequestCustomRoll(item, allowedPlayers)
             end
 
             if allowedPlayers then
+                -- Should already be announced in LootReserve.Server:ResolveRollTie
+                --LootReserve:SendChatMessage(format("%s - roll on %s", strjoin(", ", unpack(allowedPlayers)), LootReserve:FixLink(link)), (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or "RAID");
+
                 for player, roll in pairs(self.RequestedRoll.Players) do
                     if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
                         LootReserve:SendChatMessage(format("Please /roll on %s.", link), "WHISPER", player);

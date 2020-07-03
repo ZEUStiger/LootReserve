@@ -115,13 +115,21 @@ function LootReserve:RegisterEvent(event, handler)
     table.insert(LootReserve.EventFrame.RegisteredEvents[event], handler);
 end
 
+-- Used to prevent LootReserve:SendChatMessage from breaking a hyperlink into multiple segments if the message is too long
+-- Use it if a text of undetermined length preceeds the hyperlink
+-- GOOD: format("%s win %s", strjoin(", ", players), LootReserve:FixLink(link)) - players might contain so many names that the message overflows 255 chars limit
+--  BAD: format("%s won by %s", LootReserve:FixLink(link), strjoin(", ", players)) - link is always early in the message and will never overflow the 255 chars limit
+function LootReserve:FixLink(link)
+    return link:gsub(" ", "\1");
+end
+
 function LootReserve:SendChatMessage(text, channel, target)
     local function Send(text)
         if #text > 0 then
             if ChatThrottleLib and LootReserve.Server.Settings.ChatThrottle then
-                ChatThrottleLib:SendChatMessage("NORMAL", self.Comm.Prefix, text, channel, nil, target);
+                ChatThrottleLib:SendChatMessage("NORMAL", self.Comm.Prefix, text:gsub("\1", " "), channel, nil, target);
             else
-                SendChatMessage(text, channel, nil, target);
+                SendChatMessage(text:gsub("\1", " "), channel, nil, target);
             end
         end
     end
