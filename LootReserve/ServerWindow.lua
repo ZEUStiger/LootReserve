@@ -430,9 +430,9 @@ function LootReserve.Server:UpdateRollList(lockdown)
     createFrame();
     if IsInRaid() or IsInGroup() then
         if self.RequestedRoll then
-            if not filter or matchesFilter(self.RequestedRoll.Item, self.RequestedRoll, filter) then
+            --if not filter or matchesFilter(self.RequestedRoll.Item, self.RequestedRoll, filter) then
                 createFrame(self.RequestedRoll.Item, self.RequestedRoll, false);
-            end
+            --end
         end
     else
         list.Frames[1]:Hide();
