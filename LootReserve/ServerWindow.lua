@@ -199,7 +199,7 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
 
             local highest = 0;
             for player, roll in pairs(frame.Roll.Players) do
-                if highest < roll and LootReserve:IsPlayerOnline(player) then
+                if highest < roll and (frame.Historical or LootReserve:IsPlayerOnline(player)) then
                     highest = roll;
                 end
             end
