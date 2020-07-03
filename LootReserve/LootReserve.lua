@@ -39,16 +39,19 @@ StaticPopupDialogs["LOOTRESERVE_GENERIC_ERROR"] =
     hideOnEscape = 1,
 };
 
-SLASH_RESERVE1 = "/reserve";
-SLASH_RESERVE2 = "/res";
-SLASH_RESERVE3 = "/lootreserve";
-function SlashCmdList.RESERVE(command)
+SLASH_LOOTRESERVE1 = "/lootreserve";
+SLASH_LOOTRESERVE2 = "/reserve";
+SLASH_LOOTRESERVE3 = "/res";
+function SlashCmdList.LOOTRESERVE(command)
     command = command:lower();
 
     if command == "" then
         LootReserve.Client.Window:SetShown(not LootReserve.Client.Window:IsShown());
     elseif command == "server" then
         LootReserve.Server.Window:SetShown(not LootReserve.Server.Window:IsShown());
+    elseif command == "roll" or command == "rolls" then
+        LootReserve.Server.Window:Show();
+        LootReserve.Server:OnWindowTabClick(LootReserve.Server.Window.TabRolls);
     end
 end
 
