@@ -229,6 +229,7 @@ function LootReserve:Contains(table, item)
     return false;
 end
 
+local __orderedIndex = { };
 function LootReserve:Ordered(tbl, sorter)
     local function __genOrderedIndex(t)
         local orderedIndex = { };
@@ -248,12 +249,12 @@ function LootReserve:Ordered(tbl, sorter)
     local function orderedNext(t, state)
         local key;
         if state == nil then
-            t.__orderedIndex = __genOrderedIndex(t)
-            key = t.__orderedIndex[1];
+            __orderedIndex[t] = __genOrderedIndex(t)
+            key = __orderedIndex[t][1];
         else
-            for i = 1, table.getn(t.__orderedIndex) do
-                if t.__orderedIndex[i] == state then
-                    key = t.__orderedIndex[i + 1];
+            for i = 1, table.getn(__orderedIndex[t]) do
+                if __orderedIndex[t][i] == state then
+                    key = __orderedIndex[t][i + 1];
                 end
             end
         end
@@ -262,7 +263,7 @@ function LootReserve:Ordered(tbl, sorter)
             return key, t[key];
         end
 
-        t.__orderedIndex = nil;
+        __orderedIndex[t] = nil;
         return
     end
 
