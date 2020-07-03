@@ -126,7 +126,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
             if not lockdown then
                 button:SetAttribute("unit", unit);
             end
-            button.Name:SetText(format("%s%s", LootReserve:ColoredPlayer(player), LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or ""));
+            button.Name:SetText(format("%s%s", LootReserve:ColoredPlayer(player), LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or LootReserve:IsPlayerOnline(player) == false and "|cFF808080 (offline)|r" or ""));
             button.Roll:SetText("");
             button.WinnerHighlight:Hide();
             button:SetPoint("TOPLEFT", frame.ReservesFrame, "TOPLEFT", 0, 5 - reservesHeight);
@@ -369,7 +369,7 @@ function LootReserve.Server:UpdateRollList(lockdown)
                 if not lockdown then
                     button:SetAttribute("unit", unit);
                 end
-                button.Name:SetText(format("%s%s", LootReserve:ColoredPlayer(player), not historical and LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or ""));
+                button.Name:SetText(format("%s%s", LootReserve:ColoredPlayer(player), historical and "" or LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or LootReserve:IsPlayerOnline(player) == false and "|cFF808080 (offline)|r" or ""));
                 button.Roll:SetText("");
                 button.WinnerHighlight:Hide();
                 button:SetPoint("TOPLEFT", frame.ReservesFrame, "TOPLEFT", 0, 5 - reservesHeight);
