@@ -106,7 +106,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
             fade = false;
         else
             frame.ItemFrame.Misc:SetText("Not looted");
-            fade = self.Settings.ReservesSorting == LootReserve.Constants.ReservesSorting.ByLooter;
+            fade = self.Settings.ReservesSorting == LootReserve.Constants.ReservesSorting.ByLooter and next(self.CurrentSession.LootTracking) ~= nil;
         end
         frame:SetAlpha(fade and 0.25 or 1);
 
