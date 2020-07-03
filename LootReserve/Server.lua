@@ -176,6 +176,65 @@ function LootReserve.Server:Startup()
 
     -- Show reserves even if no longer the server, just a failsafe
     self:UpdateReserveList();
+
+    -- Hook events to record recent loot and track looters
+    self:PrepareLootTracking();
+end
+
+function LootReserve.Server:PrepareLootTracking()
+    local loot = formatToRegexp(LOOT_ITEM);
+    local lootMultiple = formatToRegexp(LOOT_ITEM_MULTIPLE);
+    local lootSelf = formatToRegexp(LOOT_ITEM_SELF);
+    local lootSelfMultiple = formatToRegexp(LOOT_ITEM_SELF_MULTIPLE);
+    LootReserve:RegisterEvent("CHAT_MSG_LOOT", function(text)
+        local looter, item, count;
+        item, count = text:match(lootSelfMultiple);
+        if item and count then
+            looter = UnitName("player");
+        else
+            item = text:match(lootSelf);
+            if item then
+                looter = UnitName("player");
+                count = 1;
+            else
+                looter, item, count = text:match(lootMultiple);
+                if looter and item and count then
+                    -- ok
+                else
+                    looter, item = text:match(loot);
+                    if looter and item then
+                        -- ok
+                    else
+                        return;
+                    end
+                end
+            end
+        end
+
+        looter = Ambiguate(looter, "short");
+        item = tonumber(item:match("item:(%d+)"));
+        count = tonumber(count);
+        if looter and item and count then
+            removeFromTable(self.RecentLoot, item);
+            table.insert(self.RecentLoot, item);
+            while #self.RecentLoot > 10 do
+                table.remove(self.RecentLoot, 1);
+            end
+
+            if self.CurrentSession and self.ReservableItems[item] then
+                local tracking = self.CurrentSession.LootTracking[item] or
+                {
+                    TotalCount = 0,
+                    Players = { },
+                };
+                self.CurrentSession.LootTracking[item] = tracking;
+                tracking.TotalCount = tracking.TotalCount + count;
+                tracking.Players[looter] = (tracking.Players[looter] or 0) + count;
+
+                self:UpdateReserveList();
+            end
+        end
+    end);
 end
 
 function LootReserve.Server:PrepareSession()
@@ -257,61 +316,6 @@ function LootReserve.Server:PrepareSession()
         LootReserve:RegisterEvent("UNIT_NAME_UPDATE", function(unit)
             if unit and (stringStartsWith(unit, "raid") or stringStartsWith(unit, "party")) then
                 UpdateGroupMembers();
-            end
-        end);
-
-        local loot = formatToRegexp(LOOT_ITEM);
-        local lootMultiple = formatToRegexp(LOOT_ITEM_MULTIPLE);
-        local lootSelf = formatToRegexp(LOOT_ITEM_SELF);
-        local lootSelfMultiple = formatToRegexp(LOOT_ITEM_SELF_MULTIPLE);
-        LootReserve:RegisterEvent("CHAT_MSG_LOOT", function(text)
-            if not self.CurrentSession then return; end
-
-            local looter, item, count;
-            item, count = text:match(lootSelfMultiple);
-            if item and count then
-                looter = UnitName("player");
-            else
-                item = text:match(lootSelf);
-                if item then
-                    looter = UnitName("player");
-                    count = 1;
-                else
-                    looter, item, count = text:match(lootMultiple);
-                    if looter and item and count then
-                        -- ok
-                    else
-                        looter, item = text:match(loot);
-                        if looter and item then
-                            -- ok
-                        else
-                            return;
-                        end
-                    end
-                end
-            end
-
-            looter = Ambiguate(looter, "short");
-            item = tonumber(item:match("item:(%d+)"));
-            count = tonumber(count);
-            if looter and item and count and self.ReservableItems[item] then
-                local tracking = self.CurrentSession.LootTracking[item] or
-                {
-                    TotalCount = 0,
-                    Players = { },
-                };
-                self.CurrentSession.LootTracking[item] = tracking;
-                tracking.TotalCount = tracking.TotalCount + count;
-                tracking.Players[looter] = (tracking.Players[looter] or 0) + count;
-
-                self:UpdateReserveList();
-            end
-            if looter and item and count then
-                removeFromTable(self.RecentLoot, item);
-                table.insert(self.RecentLoot, item);
-                while #self.RecentLoot > 10 do
-                    table.remove(self.RecentLoot, 1);
-                end
             end
         end);
 
@@ -926,7 +930,7 @@ function LootReserve.Server:ResolveRollTie(item)
                     return;
                 end
 
-                LootReserve:SendChatMessage(format("Tie for %s between players %s. All rolled %d. Please /roll again.", link, strjoin(", ", unpack(players)), roll), "RAID");
+                LootReserve:SendChatMessage(format("Tie for %s between players %s. All rolled %d. Please /roll again.", link, strjoin(", ", unpack(players)), roll), IsInRaid() and "RAID" or "PARTY");
             end
             Announce();
 
@@ -952,7 +956,7 @@ function LootReserve.Server:FinishRollRequest(item)
                     return;
                 end
 
-                LootReserve:SendChatMessage(format("%s won %s with a roll of %d.", strjoin(", ", unpack(players)), LootReserve:FixLink(link), roll), "RAID");
+                LootReserve:SendChatMessage(format("%s won %s with a roll of %d.", strjoin(", ", unpack(players)), LootReserve:FixLink(link), roll), IsInRaid() and "RAID" or "PARTY");
             end
             Announce();
         end
@@ -966,9 +970,9 @@ function LootReserve.Server:CancelRollRequest(item)
     if self:IsRolling(item) then
         table.insert(self.RollHistory, self.RequestedRoll);
 
+        LootReserve.Comm:BroadcastRequestRoll(0, { }, self.RequestedRoll.Custom);
         self.RequestedRoll = nil;
         LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
-        LootReserve.Comm:BroadcastRequestRoll(0, { });
         self:UpdateReserveListRolls();
         self:UpdateRollList();
         return;
@@ -994,6 +998,11 @@ function LootReserve.Server:PrepareRequestRoll()
 end
 
 function LootReserve.Server:RequestRoll(item, allowedPlayers)
+    if not self.CurrentSession then
+        LootReserve:ShowError("Loot reserves haven't been started");
+        return;
+    end
+
     local reserve = self.CurrentSession.ItemReserves[item];
     if not reserve then
         LootReserve:ShowError("That item is not reserved by anyone");
@@ -1026,7 +1035,7 @@ function LootReserve.Server:RequestRoll(item, allowedPlayers)
                 return;
             end
 
-            LootReserve:SendChatMessage(format("%s - roll on reserved %s", strjoin(", ", unpack(allowedPlayers or reserve.Players)), LootReserve:FixLink(link)), (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or "RAID");
+            LootReserve:SendChatMessage(format("%s - roll on reserved %s", strjoin(", ", unpack(allowedPlayers or reserve.Players)), LootReserve:FixLink(link)), IsInRaid() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or IsInRaid() and "RAID" or "PARTY");
 
             for player, roll in pairs(self.RequestedRoll.Players) do
                 if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
@@ -1076,7 +1085,7 @@ function LootReserve.Server:RequestCustomRoll(item, allowedPlayers)
     end
 
     LootReserve.Comm:BroadcastRequestRoll(item, players, true);
-    if self.CurrentSession.Settings.ChatFallback then
+    if not self.CurrentSession or self.CurrentSession.Settings.ChatFallback then
         local function BroadcastRoll()
             local name, link = GetItemInfo(item);
             if not name or not link then
@@ -1086,7 +1095,7 @@ function LootReserve.Server:RequestCustomRoll(item, allowedPlayers)
 
             if allowedPlayers then
                 -- Should already be announced in LootReserve.Server:ResolveRollTie
-                --LootReserve:SendChatMessage(format("%s - roll on %s", strjoin(", ", unpack(allowedPlayers)), LootReserve:FixLink(link)), (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or "RAID");
+                --LootReserve:SendChatMessage(format("%s - roll on %s", strjoin(", ", unpack(allowedPlayers)), LootReserve:FixLink(link)), IsInRaid() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or IsInRaid() and "RAID" or "PARTY");
 
                 for player, roll in pairs(self.RequestedRoll.Players) do
                     if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
@@ -1094,7 +1103,7 @@ function LootReserve.Server:RequestCustomRoll(item, allowedPlayers)
                     end
                 end
             else
-                LootReserve:SendChatMessage(format("Roll on %s", link), (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or "RAID");
+                LootReserve:SendChatMessage(format("Roll on %s", link), IsInRaid() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or IsInRaid() and "RAID" or "PARTY");
             end
         end
         BroadcastRoll();
@@ -1122,7 +1131,7 @@ function LootReserve.Server:DeleteRoll(player, item)
     self.RequestedRoll.Players[player] = -2;
 
     LootReserve.Comm:SendDeletedRoll(player, item);
-    if self.CurrentSession.Settings.ChatFallback then
+    if not self.CurrentSession or self.CurrentSession.Settings.ChatFallback then
         local function WhisperPlayer()
             local name, link = GetItemInfo(item);
             if not name or not link then

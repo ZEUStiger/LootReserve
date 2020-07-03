@@ -47,15 +47,22 @@ function LootReserve.Comm:StartListening()
     end
 end
 
-function LootReserve.Comm:CanBroadcast()
-    return LootReserve.Enabled and (IsInRaid() or self.SoloDebug);
+function LootReserve.Comm:CanBroadcast(opcode)
+    return LootReserve.Enabled and (self.SoloDebug
+        or IsInRaid()
+        or IsInGroup() and opcode == Opcodes.RequestRoll
+    );
 end
-function LootReserve.Comm:CanWhisper(target)
-    return LootReserve.Enabled and ((IsInRaid() and UnitInRaid(target)) or self.SoloDebug);
+function LootReserve.Comm:CanWhisper(target, opcode)
+    return LootReserve.Enabled and (self.SoloDebug
+        or IsInRaid() and UnitInRaid(target)
+        or IsInGroup() and UnitInParty(target) and (opcode == Opcodes.PassRoll and target == LootReserve.Client.RollRequestSender
+                                                 or opcode == Opcodes.DeletedRoll)
+    );
 end
 
 function LootReserve.Comm:Broadcast(opcode, ...)
-    if not self:CanBroadcast() then return; end
+    if not self:CanBroadcast(opcode) then return; end
 
     local message = format("%d|", opcode);
     for _, part in ipairs({ ... }) do
@@ -73,11 +80,11 @@ function LootReserve.Comm:Broadcast(opcode, ...)
     if self.SoloDebug then
         LootReserve:SendCommMessage(self.Prefix, message, "WHISPER", UnitName("player"));
     else
-        LootReserve:SendCommMessage(self.Prefix, message, "RAID");
+        LootReserve:SendCommMessage(self.Prefix, message, IsInRaid() and "RAID" or "PARTY");
     end
 end
 function LootReserve.Comm:Whisper(target, opcode, ...)
-    if not self:CanWhisper(target) then return; end
+    if not self:CanWhisper(target, opcode) then return; end
 
     local message = format("%d|", opcode);
     for _, part in ipairs({ ... }) do
@@ -161,7 +168,7 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
     end
 
     LootReserve.Comm:Whisper(target, Opcodes.SessionInfo,
-        starting and 1 or 0,
+        starting == true,
         session.AcceptingReserves,
         member.ReservesLeft,
         session.Settings.LootCategory,
@@ -358,13 +365,13 @@ function LootReserve.Comm:BroadcastRequestRoll(item, players, custom)
     LootReserve.Comm:Broadcast(Opcodes.RequestRoll,
         item,
         strjoin(",", unpack(players)),
-        custom and 1 or 0);
+        custom == true);
 end
 LootReserve.Comm.Handlers[Opcodes.RequestRoll] = function(sender, item, players, custom)
     item = tonumber(item);
     custom = tonumber(custom) == 1;
 
-    if LootReserve.Client.SessionServer == sender then
+    if LootReserve.Client.SessionServer == sender or custom then
         if #players > 0 then
             players = { strsplit(",", players) };
         else
@@ -376,13 +383,13 @@ end
 
 -- PassRoll
 function LootReserve.Comm:SendPassRoll(item)
-    LootReserve.Comm:WhisperServer(Opcodes.PassRoll,
+    LootReserve.Comm:Whisper(LootReserve.Client.RollRequestSender, Opcodes.PassRoll,
         item);
 end
 LootReserve.Comm.Handlers[Opcodes.PassRoll] = function(sender, item)
     item = tonumber(item);
 
-    if LootReserve.Server.CurrentSession then
+    if true--[[LootReserve.Server.CurrentSession]] then
         LootReserve.Server:PassRoll(sender, item);
     end
 end
@@ -395,7 +402,7 @@ end
 LootReserve.Comm.Handlers[Opcodes.DeletedRoll] = function(sender, item)
     item = tonumber(item);
 
-    if LootReserve.Client.SessionServer == sender then
+    if true--[[LootReserve.Client.SessionServer == sender]] then
         local function ShowDeleted()
             local name, link = GetItemInfo(item);
             if name and link then

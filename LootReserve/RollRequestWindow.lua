@@ -9,8 +9,11 @@ function LootReserve.Client:RollRequested(sender, item, players, custom)
     frame:Hide();
 
     if not LootReserve:Contains(players, Ambiguate(UnitName("player"), "short")) then
+        self.RollRequestSender = nil;
         return;
     end
+
+    self.RollRequestSender = sender;
 
     local name, link, _, _, _, type, subtype, _, _, texture = GetItemInfo(item);
     if subtype and type ~= subtype then
@@ -53,10 +56,13 @@ function LootReserve.Client:RespondToRollRequest(response)
     if LibCustomGlow then
         LibCustomGlow.ButtonGlow_Stop(LootReserveRollRequestWindow.ItemFrame.IconGlow);
     end
+    LootReserveRollRequestWindow:Hide();
+
+    if not self.RollRequestSender then return; end
+
     if response then
         RandomRoll(1, 100);
     else
         LootReserve.Comm:SendPassRoll(LootReserveRollRequestWindow.Item);
     end
-    LootReserveRollRequestWindow:Hide();
 end

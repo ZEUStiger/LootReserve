@@ -428,7 +428,7 @@ function LootReserve.Server:UpdateRollList(lockdown)
     end
 
     createFrame();
-    if self.CurrentSession then
+    if IsInRaid() or IsInGroup() then
         if self.RequestedRoll then
             if not filter or matchesFilter(self.RequestedRoll.Item, self.RequestedRoll, filter) then
                 createFrame(self.RequestedRoll.Item, self.RequestedRoll, false);

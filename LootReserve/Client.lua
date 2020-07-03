@@ -11,6 +11,7 @@ LootReserve.Client =
     Duration = nil,
     MaxDuration = nil,
     ItemReserves = { }, -- { [ItemID] = { "Playername", "Playername", ... }, ... }
+    RollRequestSender = nil,
 
     PendingItems = { },
     DurationUpdateRegistered = false,
