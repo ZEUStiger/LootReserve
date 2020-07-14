@@ -118,6 +118,26 @@ function LootReserve:RegisterEvent(event, handler)
     table.insert(LootReserve.EventFrame.RegisteredEvents[event], handler);
 end
 
+function LootReserve:OpenMenu(menu, menuContainer, anchor)
+    if UIDROPDOWNMENU_OPEN_MENU == menuContainer then
+        CloseMenus();
+        return;
+    end
+
+    local function FixMenu(menu)
+        for _, item in ipairs(menu) do
+            if item.notCheckable == nil then
+                item.notCheckable = true;
+            end
+            if item.menuList then
+                FixMenu(item.menuList);
+            end
+        end
+    end
+    FixMenu(menu);
+    EasyMenu(menu, menuContainer, anchor, 0, 0, "MENU");
+end
+
 -- Used to prevent LootReserve:SendChatMessage from breaking a hyperlink into multiple segments if the message is too long
 -- Use it if a text of undetermined length preceeds the hyperlink
 -- GOOD: format("%s win %s", strjoin(", ", players), LootReserve:FixLink(link)) - players might contain so many names that the message overflows 255 chars limit

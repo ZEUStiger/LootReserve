@@ -28,4 +28,14 @@ LootReserve.Constants =
         BySource = 2,
         ByLooter = 3,
     },
+    ChatAnnouncement =
+    {
+        SessionStart = 1,
+        SessionResume = 2,
+        SessionStop = 3,
+        LootRollStartReserved = 4,
+        LootRollStartCustom = 5,
+        LootRollWinner = 6,
+        LootRollTie = 7,
+    },
 };

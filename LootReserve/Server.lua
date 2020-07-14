@@ -11,6 +11,16 @@ LootReserve.Server =
     },
     Settings =
     {
+        ChatAsRaidWarning =
+        {
+            [LootReserve.Constants.ChatAnnouncement.SessionStart] = true,
+            [LootReserve.Constants.ChatAnnouncement.SessionResume] = true,
+            [LootReserve.Constants.ChatAnnouncement.SessionStop] = true,
+            [LootReserve.Constants.ChatAnnouncement.LootRollStartReserved] = true,
+            [LootReserve.Constants.ChatAnnouncement.LootRollStartCustom] = true,
+            [LootReserve.Constants.ChatAnnouncement.LootRollWinner] = true,
+            [LootReserve.Constants.ChatAnnouncement.LootRollTie] = true,
+        },
         ChatUpdates = true,
         ChatThrottle = false,
         ReservesSorting = LootReserve.Constants.ReservesSorting.ByTime,
@@ -86,6 +96,14 @@ end
 
 function LootReserve.Server:CanBeServer()
     return IsInRaid() and (UnitIsGroupLeader("player") or IsMasterLooter()) or LootReserve.Comm.SoloDebug;
+end
+
+function LootReserve.Server:GetChatChannel(announcement)
+    if IsInRaid() then
+        return self.Settings.ChatAsRaidWarning[announcement] and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or "RAID";
+    else
+        return "PARTY";
+    end
 end
 
 function LootReserve.Server:IsAddonUser(player)
@@ -597,7 +615,7 @@ function LootReserve.Server:StartSession()
             duration ~= 0 and format(" and will last for %d:%02d minutes", math.floor(duration / 60), duration % 60) or "",
             count,
             count == 1 and "item" or "items"
-        ), "RAID");
+        ), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionStart));
     end
 
     self:UpdateReserveList();
@@ -625,7 +643,7 @@ function LootReserve.Server:ResumeSession()
     self:BroadcastSessionInfo();
 
     if self.CurrentSession.Settings.ChatFallback then
-        LootReserve:SendChatMessage("Accepting loot reserves again. Whisper !reserve ItemLinkOrName", "RAID");
+        LootReserve:SendChatMessage("Accepting loot reserves again. Whisper !reserve ItemLinkOrName", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionResume));
     end
 
     self:UpdateReserveList();
@@ -645,7 +663,7 @@ function LootReserve.Server:StopSession()
     LootReserve.Comm:SendSessionStop();
 
     if self.CurrentSession.Settings.ChatFallback then
-        LootReserve:SendChatMessage("No longer accepting loot reserves.", "RAID");
+        LootReserve:SendChatMessage("No longer accepting loot reserves.", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionStop));
     end
 
     self:UpdateReserveList();
@@ -936,7 +954,7 @@ function LootReserve.Server:ResolveRollTie(item)
                     return;
                 end
 
-                LootReserve:SendChatMessage(format("Tie for %s between players %s. All rolled %d. Please /roll again.", link, strjoin(", ", unpack(players)), roll), IsInRaid() and "RAID" or "PARTY");
+                LootReserve:SendChatMessage(format("Tie for %s between players %s. All rolled %d. Please /roll again.", link, strjoin(", ", unpack(players)), roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.LootRollTie));
             end
             Announce();
 
@@ -962,7 +980,7 @@ function LootReserve.Server:FinishRollRequest(item)
                     return;
                 end
 
-                LootReserve:SendChatMessage(format(self.RequestedRoll.RaidRoll and "%s won %s via raid-roll." or "%s won %s with a roll of %d.", strjoin(", ", unpack(players)), LootReserve:FixLink(link), roll), IsInRaid() and "RAID" or "PARTY");
+                LootReserve:SendChatMessage(format(self.RequestedRoll.RaidRoll and "%s won %s via raid-roll." or "%s won %s with a roll of %d.", strjoin(", ", unpack(players)), LootReserve:FixLink(link), roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.LootRollWinner));
             end
             Announce();
         end
@@ -1075,7 +1093,7 @@ function LootReserve.Server:RequestRoll(item, allowedPlayers)
                 return;
             end
 
-            LootReserve:SendChatMessage(format("%s - roll on reserved %s", strjoin(", ", unpack(allowedPlayers or reserve.Players)), LootReserve:FixLink(link)), IsInRaid() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or IsInRaid() and "RAID" or "PARTY");
+            LootReserve:SendChatMessage(format("%s - roll on reserved %s", strjoin(", ", unpack(allowedPlayers or reserve.Players)), LootReserve:FixLink(link)), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.LootRollStartReserved));
 
             for player, roll in pairs(self.RequestedRoll.Players) do
                 if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
@@ -1135,7 +1153,7 @@ function LootReserve.Server:RequestCustomRoll(item, allowedPlayers)
 
             if allowedPlayers then
                 -- Should already be announced in LootReserve.Server:ResolveRollTie
-                --LootReserve:SendChatMessage(format("%s - roll on %s", strjoin(", ", unpack(allowedPlayers)), LootReserve:FixLink(link)), IsInRaid() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or IsInRaid() and "RAID" or "PARTY");
+                --LootReserve:SendChatMessage(format("%s - roll on %s", strjoin(", ", unpack(allowedPlayers)), LootReserve:FixLink(link)), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.LootRollStartCustom));
 
                 for player, roll in pairs(self.RequestedRoll.Players) do
                     if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
@@ -1143,7 +1161,7 @@ function LootReserve.Server:RequestCustomRoll(item, allowedPlayers)
                     end
                 end
             else
-                LootReserve:SendChatMessage(format("Roll on %s", link), IsInRaid() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or IsInRaid() and "RAID" or "PARTY");
+                LootReserve:SendChatMessage(format("Roll on %s", link), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.LootRollStartCustom));
             end
         end
         BroadcastRoll();

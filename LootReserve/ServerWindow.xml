@@ -259,11 +259,7 @@
 								LootReserve:MakeMenuSeparator(),
 								{ text = "Cancel" },
 							};
-							for _, item in ipairs(menu) do
-								item.notCheckable = true;
-							end
-
-							EasyMenu(menu, self:GetParent().Menu, self, 0, 0, "MENU");
+							LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
 						else
 							LootReserve.Server:RequestRoll(self:GetParent().Item);
 						end
@@ -388,11 +384,7 @@
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Cancel" },
 						};
-						for _, item in ipairs(menu) do
-							item.notCheckable = true;
-						end
-
-						EasyMenu(menu, self:GetParent().Menu, self, 0, 0, "MENU");
+						LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
 					</OnClick>
 					<OnEnter>
 						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
@@ -528,13 +520,7 @@
 										else
 											table.insert(menu, 2, { text = "No Loot", disabled = true });
 										end
-										for _, item in ipairs(menu) do
-											if item.notCheckable == nil then
-												item.notCheckable = true;
-											end
-										end
-
-										EasyMenu(menu, self:GetParent().Menu, self, 0, 0, "MENU");
+										LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
 
 										if missing then
 											C_Timer.After(0.25, function()
@@ -683,11 +669,7 @@
 							end },
 							{ text = "Cancel" },
 						};
-						for _, item in ipairs(menu) do
-							item.notCheckable = true;
-						end
-
-						EasyMenu(menu, self:GetParent().Menu, self, 0, 0, "MENU");
+						LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
 					</OnClick>
 				</Scripts>
 			</Button>
@@ -728,7 +710,29 @@
 						self:SetPushedTextOffset(1, -1);
 					</OnLoad>
 					<OnClick>
-						local root = LootReserve.Server.Settings;
+						local function GetSettingContainerAndKey(setting)
+							if type(setting) == "table" then
+								local container = LootReserve.Server.Settings;
+								for i, key in ipairs(setting) do
+									if i == #setting then
+										return container, key;
+									else
+										container = container[key];
+									end
+								end
+							else
+								return LootReserve.Server.Settings, setting;
+							end
+						end
+						local function GetValue(setting)
+							local container, key = GetSettingContainerAndKey(setting);
+							return container[key];
+						end
+						local function SetValue(setting, value)
+							local container, key = GetSettingContainerAndKey(setting);
+							container[key] = value;
+							return value;
+						end
 
 						-- Buttons
 						local function MakeMenuItem(text, setting, tooltip, checked, func)
@@ -748,22 +752,22 @@
 						local function MakeMenuToggle(text, setting, tooltip, callback)
 							return MakeMenuItem(text, setting, tooltip,
 								function(info)
-									return root[setting];
+									return GetValue(setting);
 								end,
 								function(info)
-									root[setting] = not root[setting];
+									local value = SetValue(setting, not GetValue(setting));
 									if callback then
-										callback(root[setting]);
+										callback(value);
 									end
 								end);
 						end
 						local function MakeMenuRadio(text, setting, value, tooltip, callback)
 							return MakeMenuItem(text, setting, tooltip,
 								function(info)
-									return root[setting] == value;
+									return GetValue(setting) == value;
 								end,
 								function(info)
-									root[setting] = value;
+									value = SetValue(setting, value);
 									if callback then
 										callback(value);
 									end
@@ -773,12 +777,35 @@
 						-- Callbacks
 						local function RefreshReserves()
 							LootReserve.Server:UpdateReserveList();
+							CloseMenus();
 							self:Click();
+						end
+
+						local function MakeChatColoredText(text, chatType)
+							local info = ChatTypeInfo[chatType or "RAID_WARNING"];
+							return format("|cff%02x%02x%02x%s|r", info.r * 255, info.g * 255, info.b * 255, text);
+						end
+						local function MakeRaidWarningTooltip(when)
+							return format("Announce to %s %s.|n|nWill still be announced to %s if you have no permissions to speak in %s, or to %s if not in a raid group.",
+								MakeChatColoredText("/rw", "RAID_WARNING"),
+								when,
+								MakeChatColoredText("/raid", "RAID"),
+								MakeChatColoredText("/rw", "RAID_WARNING"),
+								MakeChatColoredText("/party", "PARTY"));
 						end
 
 						local menu =
 						{
 							{ text = "Communications", isTitle = true },
+							{ text = format("Announce to %s...", MakeChatColoredText("/rw", "RAID_WARNING")), keepShownOnClick = true, hasArrow = true, menuList = {
+								MakeMenuToggle("Reserves Started",              { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.SessionStart              }, MakeRaidWarningTooltip("when starting to accept reserves")),
+								MakeMenuToggle("Reserves Resumed",              { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.SessionResume             }, MakeRaidWarningTooltip("when resuming reserves")),
+								MakeMenuToggle("Reserves Stopped",              { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.SessionStop               }, MakeRaidWarningTooltip("when stopping reserves")),
+								MakeMenuToggle("Roll on an Item",               { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.LootRollStartCustom       }, MakeRaidWarningTooltip("when starting an item roll")),
+								MakeMenuToggle("Roll on a Reserved Item",       { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.LootRollStartReserved     }, MakeRaidWarningTooltip("when starting a roll on a reserved item")),
+								MakeMenuToggle("Roll Winner",                   { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.LootRollWinner            }, MakeRaidWarningTooltip("when the rolled item is won by a player")),
+								MakeMenuToggle("Roll Tie",                      { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.LootRollTie               }, MakeRaidWarningTooltip("when a roll ended in a tie and tied players need to roll again")),
+							} },
 							MakeMenuToggle("Send Reserve Updates", "ChatUpdates",  "Send whispers to players without addons if someone else reserves or cancels the reserve of the items that they have reserved as well."),
 							MakeMenuToggle("Slow Chat Messages",   "ChatThrottle", "Slow down broadcasting of Raid and Whisper messages. Will lead to some messages being delivered late. Enable only if WoW servers are blocking your messages under suspicion of spam."),
 							LootReserve:MakeMenuSeparator(),
@@ -790,15 +817,7 @@
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Close" },
 						};
-						for _, menu in ipairs({ menu, menuWhisperPlayers }) do
-							for _, item in ipairs(menu) do
-								if item.notCheckable == nil then
-									item.notCheckable = true;
-								end
-							end
-						end
-						
-						EasyMenu(menu, self:GetParent().Menu, self, 0, 0, "MENU");
+						LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
 					</OnClick>
 					<OnMouseDown>
 						self.Icon:SetPoint("CENTER", self, "CENTER", self:GetPushedTextOffset());
@@ -913,13 +932,7 @@
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Cancel" },
 						};
-						for _, menu in ipairs({ menu, menuWhisperPlayers }) do
-							for _, item in ipairs(menu) do
-								item.notCheckable = true;
-							end
-						end
-						
-						EasyMenu(menu, self:GetParent().Menu, self, 0, 0, "MENU");
+						LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
 					</OnClick>
 					<OnMouseDown>
 						local x, y = self:GetPushedTextOffset();
