@@ -1021,8 +1021,10 @@ function LootReserve.Server:PrepareRequestRoll()
 
                         player = raid[tonumber(roll)];
                     end
+                    -- Player who didn't reserve an item attempted to roll
+                    if not self.RequestedRoll.Custom and not self.RequestedRoll.Players[player] then return; end
                     -- Player who already rolled attempted to roll again
-                    if self.RequestedRoll.Players[player] and self.RequestedRoll.Players[player] ~= 0 then return; end
+                    if self.RequestedRoll.Players[player] and self.RequestedRoll.Players[player] ~= 0 and self.RequestedRoll.Players[player] ~= -1 then return; end
                     -- Player with deleted roll attempted to roll again
                     if self.RequestedRoll.Players[player] == -2 then return; end
 
