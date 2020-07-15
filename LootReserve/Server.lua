@@ -138,6 +138,11 @@ function LootReserve.Server:Load()
     loadInto(self, LootReserveCharacterSave.Server, "RecentLoot");
     loadInto(self, LootReserveGlobalSave.Server, "NewSessionSettings");
     loadInto(self, LootReserveGlobalSave.Server, "Settings");
+
+    -- Expire session if more than 1 hour has passed since the player was last online
+    if self.CurrentSession and self.CurrentSession.LogoutTime and time() > self.CurrentSession.LogoutTime + 3600 then
+        self.CurrentSession = nil;
+    end
     
     -- Verify that all the required fields are present in the session
     if self.CurrentSession then
@@ -281,6 +286,12 @@ function LootReserve.Server:PrepareSession()
             end
         end);
         ]]
+
+        LootReserve:RegisterEvent("PLAYER_LOGOUT", function()
+            if self.CurrentSession then
+                self.CurrentSession.LogoutTime = time();
+            end
+        end);
 
         LootReserve:RegisterEvent("GROUP_LEFT", function()
             if self.CurrentSession then
