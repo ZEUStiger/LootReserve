@@ -16,10 +16,10 @@ LootReserve.Server =
             [LootReserve.Constants.ChatAnnouncement.SessionStart] = true,
             [LootReserve.Constants.ChatAnnouncement.SessionResume] = true,
             [LootReserve.Constants.ChatAnnouncement.SessionStop] = true,
-            [LootReserve.Constants.ChatAnnouncement.LootRollStartReserved] = true,
-            [LootReserve.Constants.ChatAnnouncement.LootRollStartCustom] = true,
-            [LootReserve.Constants.ChatAnnouncement.LootRollWinner] = true,
-            [LootReserve.Constants.ChatAnnouncement.LootRollTie] = true,
+            [LootReserve.Constants.ChatAnnouncement.RollStartReserved] = true,
+            [LootReserve.Constants.ChatAnnouncement.RollStartCustom] = true,
+            [LootReserve.Constants.ChatAnnouncement.RollWinner] = true,
+            [LootReserve.Constants.ChatAnnouncement.RollTie] = true,
         },
         ChatUpdates = true,
         ChatThrottle = false,
@@ -965,7 +965,7 @@ function LootReserve.Server:ResolveRollTie(item)
                     return;
                 end
 
-                LootReserve:SendChatMessage(format("Tie for %s between players %s. All rolled %d. Please /roll again.", link, strjoin(", ", unpack(players)), roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.LootRollTie));
+                LootReserve:SendChatMessage(format("Tie for %s between players %s. All rolled %d. Please /roll again.", link, strjoin(", ", unpack(players)), roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollTie));
             end
             Announce();
 
@@ -991,7 +991,7 @@ function LootReserve.Server:FinishRollRequest(item)
                     return;
                 end
 
-                LootReserve:SendChatMessage(format(self.RequestedRoll.RaidRoll and "%s won %s via raid-roll." or "%s won %s with a roll of %d.", strjoin(", ", unpack(players)), LootReserve:FixLink(link), roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.LootRollWinner));
+                LootReserve:SendChatMessage(format(self.RequestedRoll.RaidRoll and "%s won %s via raid-roll." or "%s won %s with a roll of %d.", strjoin(", ", unpack(players)), LootReserve:FixLink(link), roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollWinner));
             end
             Announce();
         end
@@ -1104,7 +1104,7 @@ function LootReserve.Server:RequestRoll(item, allowedPlayers)
                 return;
             end
 
-            LootReserve:SendChatMessage(format("%s - roll on reserved %s", strjoin(", ", unpack(allowedPlayers or reserve.Players)), LootReserve:FixLink(link)), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.LootRollStartReserved));
+            LootReserve:SendChatMessage(format("%s - roll on reserved %s", strjoin(", ", unpack(allowedPlayers or reserve.Players)), LootReserve:FixLink(link)), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartReserved));
 
             for player, roll in pairs(self.RequestedRoll.Players) do
                 if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
@@ -1164,7 +1164,7 @@ function LootReserve.Server:RequestCustomRoll(item, allowedPlayers)
 
             if allowedPlayers then
                 -- Should already be announced in LootReserve.Server:ResolveRollTie
-                --LootReserve:SendChatMessage(format("%s - roll on %s", strjoin(", ", unpack(allowedPlayers)), LootReserve:FixLink(link)), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.LootRollStartCustom));
+                --LootReserve:SendChatMessage(format("%s - roll on %s", strjoin(", ", unpack(allowedPlayers)), LootReserve:FixLink(link)), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartCustom));
 
                 for player, roll in pairs(self.RequestedRoll.Players) do
                     if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
@@ -1172,7 +1172,7 @@ function LootReserve.Server:RequestCustomRoll(item, allowedPlayers)
                     end
                 end
             else
-                LootReserve:SendChatMessage(format("Roll on %s", link), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.LootRollStartCustom));
+                LootReserve:SendChatMessage(format("Roll on %s", link), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartCustom));
             end
         end
         BroadcastRoll();

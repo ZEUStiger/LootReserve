@@ -33,9 +33,9 @@ LootReserve.Constants =
         SessionStart = 1,
         SessionResume = 2,
         SessionStop = 3,
-        LootRollStartReserved = 4,
-        LootRollStartCustom = 5,
-        LootRollWinner = 6,
-        LootRollTie = 7,
+        RollStartReserved = 4,
+        RollStartCustom = 5,
+        RollWinner = 6,
+        RollTie = 7,
     },
 };
