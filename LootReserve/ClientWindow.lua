@@ -293,6 +293,7 @@ end
 function LootReserve.Client:OnWindowLoad(window)
     self.Window = window;
     self.Window.TopLeftCorner:SetSize(32, 32); -- Blizzard UI bug?
+    self.Window.TitleText:SetPoint("TOP", self.Window, "TOP", 0, -4);
     self.Window.TitleText:SetText("Loot Reserve");
     self.Window:SetMinResize(550, 250);
     self:UpdateCategories();

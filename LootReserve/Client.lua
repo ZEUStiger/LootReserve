@@ -14,11 +14,19 @@ LootReserve.Client =
     RollRequestSender = nil,
 
     PendingItems = { },
+    ServerSearchTimeoutTime = nil,
     DurationUpdateRegistered = false,
     SessionEventsRegistered = false,
 
     SelectedCategory = nil,
 };
+
+function LootReserve.Client:SearchForServer(startup)
+    if not startup and self.ServerSearchTimeoutTime and time() < self.ServerSearchTimeoutTime then return; end
+    self.ServerSearchTimeoutTime = time() + 10;
+
+    LootReserve.Comm:BroadcastHello();
+end
 
 function LootReserve.Client:StartSession(server, starting, acceptingReserves, remainingReserves, lootCategory, duration, maxDuration)
     self:ResetSession();

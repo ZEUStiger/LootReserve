@@ -64,7 +64,7 @@ function LootReserve:OnInitialize()
         if IsInRaid() or LootReserve.Comm.SoloDebug then
             LootReserve.Server:Startup();
             -- Query other group members about their addon versions and request server session info if any
-            LootReserve.Comm:BroadcastHello();
+            LootReserve.Client:SearchForServer(true);
         end
     end
 
