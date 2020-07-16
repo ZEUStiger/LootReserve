@@ -110,6 +110,10 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         end
         frame:SetAlpha(fade and 0.25 or 1);
 
+        frame.DurationFrame:SetShown(self:IsRolling(frame.Item) and self.RequestedRoll.MaxDuration);
+        local durationHeight = frame.DurationFrame:IsShown() and 12 or 0;
+        frame.DurationFrame:SetHeight(math.max(durationHeight, 0.00001));
+
         local reservesHeight = 5 + 12 + 2;
         local last = 0;
         frame.ReservesFrame.Players = frame.ReservesFrame.Players or { };
@@ -138,7 +142,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
             frame.ReservesFrame.Players[i]:Hide();
         end
 
-        frame:SetHeight(44 + reservesHeight);
+        frame:SetHeight(44 + durationHeight + reservesHeight);
         frame:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -list.ContentHeight);
         frame:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, -list.ContentHeight);
         list.ContentHeight = list.ContentHeight + frame:GetHeight();
@@ -346,6 +350,10 @@ function LootReserve.Server:UpdateRollList(lockdown)
                 frame.ItemFrame.Misc:SetText(reservers > 0 and format("Reserved by %d |4player:players;", reservers) or "Not reserved");
             end
 
+            frame.DurationFrame:SetShown(not historical and self:IsRolling(frame.Item) and self.RequestedRoll.MaxDuration);
+            local durationHeight = frame.DurationFrame:IsShown() and 12 or 0;
+            frame.DurationFrame:SetHeight(math.max(durationHeight, 0.00001));
+
             local reservesHeight = 5 + 12 + 2;
             local last = 0;
             frame.ReservesFrame.Players = frame.ReservesFrame.Players or { };
@@ -386,7 +394,7 @@ function LootReserve.Server:UpdateRollList(lockdown)
                 reservesHeight = reservesHeight + 16;
             end
 
-            frame:SetHeight(44 + reservesHeight);
+            frame:SetHeight(44 + durationHeight + reservesHeight);
         else
             frame:SetShown(not self.RequestedRoll);
             frame:SetHeight(frame:IsShown() and 45 or 0.00001);
@@ -428,7 +436,7 @@ function LootReserve.Server:UpdateRollList(lockdown)
     end
 
     createFrame();
-    if IsInRaid() or IsInGroup() then
+    if IsInRaid() or IsInGroup() or LootReserve.Comm.SoloDebug then
         if self.RequestedRoll then
             --if not filter or matchesFilter(self.RequestedRoll.Item, self.RequestedRoll, filter) then
                 createFrame(self.RequestedRoll.Item, self.RequestedRoll, false);
@@ -653,6 +661,17 @@ function LootReserve.Server:SessionReset()
     self.Window.PanelSession.ButtonResetSession:Hide();
     self:UpdateServerAuthority();
     self:UpdateRollList();
+end
+
+function LootReserve.Server:RollExpired()
+    local list = self.Window.PanelRolls.Scroll.Container.Frames;
+    if list and list[2] and UIDROPDOWNMENU_OPEN_MENU == list[2].Menu then
+        CloseMenus();
+    end
+    list = self.Window.PanelRollsLockdown.Scroll.Container.Frames;
+    if list and list[2] and UIDROPDOWNMENU_OPEN_MENU == list[2].Menu then
+        CloseMenus();
+    end
 end
 
 function LootReserve.Server:UpdateServerAuthority()

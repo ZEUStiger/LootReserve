@@ -9,13 +9,35 @@
 			<BackgroundInsets left="4" right="4" top="4" bottom="4" />
 			<EdgeSize val="16" />
 		</Backdrop>
+		<Frames>
+			<Frame parentKey="DurationFrame">
+				<Size y="20" />
+				<Anchors>
+					<Anchor point="BOTTOMLEFT" y="1" />
+					<Anchor point="BOTTOMRIGHT" y="1" />
+				</Anchors>
+				<Frames>
+					<StatusBar parentKey="Duration" inherits="LootReserveDurationStatusBar">
+						<KeyValues>
+							<KeyValue key="server" value="false" type="boolean" />
+							<KeyValue key="roll" value="true" type="boolean" />
+						</KeyValues>
+						<Anchors>
+							<Anchor point="LEFT" x="16" />
+							<Anchor point="RIGHT" x="-16" />
+							<Anchor point="BOTTOM" y="15" />
+						</Anchors>
+					</StatusBar>
+				</Frames>
+			</Frame>
+		</Frames>
 		<Layers>
 			<Layer level="BACKGROUND">
 				<Texture alpha="0.25" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD">
 					<Size y="32" />
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" x="4" y="4" />
-						<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOM" y="4" />
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.DurationFrame" relativePoint="TOPLEFT" x="4" y="4" />
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.DurationFrame" relativePoint="TOP" y="4" />
 					</Anchors>
 					<TexCoords left="0" right="0.25" top="0" bottom="1" />
 					<Color r="1" g="0.82" b="0" />
@@ -23,8 +45,8 @@
 				<Texture alpha="0.25" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD">
 					<Size y="32" />
 					<Anchors>
-						<Anchor point="BOTTOMLEFT" relativePoint="BOTTOM" y="4" />
-						<Anchor point="BOTTOMRIGHT" x="-4" y="4" />
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent.DurationFrame" relativePoint="TOP" y="4" />
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.DurationFrame" relativePoint="TOPRIGHT" x="-4" y="4" />
 					</Anchors>
 					<TexCoords left="0.75" right="1" top="0" bottom="1" />
 					<Color r="1" g="0.82" b="0" />
@@ -91,10 +113,19 @@
 		</Frames>
 		<Scripts>
 			<OnLoad>
-				self:SetMinResize(300, 90);
-				self:SetMaxResize(1000, 90);
 				self.ItemFrame.Name:SetPoint("TOPLEFT", self.ItemFrame.Icon, "TOPRIGHT", 10, 0);
 			</OnLoad>
+			<OnUpdate>
+				local roll = LootReserve.Client.RollRequest;
+				if roll and roll.Duration and roll.Duration > 0 then
+					if roll.Duration > elapsed then
+						roll.Duration = roll.Duration - elapsed;
+					else
+						LootReserve.Client.RollRequest = nil;
+						self:Hide();
+					end
+				end
+			</OnUpdate>
 		</Scripts>
 	</Frame>
 </Ui>

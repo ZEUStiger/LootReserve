@@ -259,6 +259,22 @@
 								LootReserve:MakeMenuSeparator(),
 								{ text = "Cancel" },
 							};
+							local separator = false;
+							if LootReserve.Server.RequestedRoll.Duration and LootReserve.Server.RequestedRoll.Duration ~= 0 then
+								if not separator then
+									table.insert(menu, #menu - 1, LootReserve:MakeMenuSeparator());
+									separator = true;
+								end
+								table.insert(menu, #menu - 1,
+								{
+									text = "End Automatically",
+									checked = LootReserve.Server.Settings.RollFinishOnExpire,
+									notCheckable = false,
+									keepShownOnClick = true,
+									func = function() LootReserve.Server.Settings.RollFinishOnExpire = not LootReserve.Server.Settings.RollFinishOnExpire; end,
+								});
+							end
+							
 							LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
 						else
 							LootReserve.Server:RequestRoll(self:GetParent().Item);
@@ -287,9 +303,29 @@
 					<Anchor point="TOPRIGHT" relativeKey="$parent.RequestRollButton" relativePoint="TOPLEFT" x="-5" />
 				</Anchors>
 			</Button>
+			<Frame parentKey="DurationFrame">
+				<Size y="12" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.ItemFrame" relativePoint="BOTTOMLEFT" />
+					<Anchor point="RIGHT" x="-6" />
+				</Anchors>
+				<Frames>
+					<StatusBar parentKey="Duration" inherits="LootReserveDurationStatusBar">
+						<KeyValues>
+							<KeyValue key="server" value="true" type="boolean" />
+							<KeyValue key="roll" value="true" type="boolean" />
+						</KeyValues>
+						<Anchors>
+							<Anchor point="LEFT" x="1" />
+							<Anchor point="RIGHT" x="-1" />
+							<Anchor point="BOTTOM" y="-1" />
+						</Anchors>
+					</StatusBar>
+				</Frames>
+			</Frame>
 			<Frame parentKey="ReservesFrame">
 				<Anchors>
-					<Anchor point="TOPLEFT" relativeKey="$parent.ItemFrame" relativePoint="BOTTOMLEFT" y="-5" />
+					<Anchor point="TOPLEFT" relativeKey="$parent.DurationFrame" relativePoint="BOTTOMLEFT" y="-5" />
 					<Anchor point="BOTTOMRIGHT" x="-6" y="6" />
 				</Anchors>
 				<Layers>
@@ -359,7 +395,7 @@
 							if info and info.arg1 and LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.ItemReserves[item] then
 								LootReserve.Server:RequestRoll(item);
 							else
-								LootReserve.Server:RequestCustomRoll(item);
+								LootReserve.Server:RequestCustomRoll(item, LootReserve.Server.Settings.RollLimitDuration and LootReserve.Server.Settings.RollDuration or nil);
 							end
 						end
 						local function RaidRoll()
@@ -375,12 +411,47 @@
 						end
 						]]
 
+						-- Roll Duration
+						local function FormatTime(time)
+							return format("%d:%02d", math.floor(time / 60), time % 60);
+						end
+						local durationMenu = { };
+						for _, time in ipairs({ 10, 30, 60, 90, 120, 180, 240, 300, 600 }) do
+							table.insert(durationMenu,
+							{
+								text = FormatTime(time),
+								arg1 = time,
+								func = function(info) LootReserve.Server.Settings.RollDuration = time; CloseMenus(); self:Click(); end,
+								checked = LootReserve.Server.Settings.RollDuration == time,
+								notCheckable = false,
+							});
+						end
+
 						local menu =
 						{
 							{ text = "Start Roll", isTitle = true },
 							{ text = "Among Reserving Players", func = StartRoll, arg1 = true, disabled = not LootReserve.Server.CurrentSession or not LootReserve.Server.CurrentSession.ItemReserves[self:GetParent().Item] },
 							{ text = "Among All Players", func = StartRoll },
 							{ text = "Auto Raid-Roll", func = RaidRoll },
+							LootReserve:MakeMenuSeparator(),
+							{ text = "Settings for \"All Players\"", isTitle = true },
+							{
+								text = format(LootReserve.Server.Settings.RollLimitDuration and "Limit Duration: |cFF00FF00%s|r" or "Limit Duration", FormatTime(LootReserve.Server.Settings.RollDuration)),
+								checked = LootReserve.Server.Settings.RollLimitDuration,
+								notCheckable = false,
+								keepShownOnClick = true,
+								func = function() LootReserve.Server.Settings.RollLimitDuration = not LootReserve.Server.Settings.RollLimitDuration; CloseMenus(); self:Click(); end,
+								hasArrow = LootReserve.Server.Settings.RollLimitDuration,
+								menuList = durationMenu,
+							},
+							{
+								text = "End Automatically",
+								disabled = not LootReserve.Server.Settings.RollLimitDuration,
+								checked = LootReserve.Server.Settings.RollFinishOnExpire,
+								notCheckable = false,
+								keepShownOnClick = true,
+								func = function() LootReserve.Server.Settings.RollFinishOnExpire = not LootReserve.Server.Settings.RollFinishOnExpire; end,
+							},
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Cancel" },
 						};
@@ -1071,8 +1142,7 @@
 										LootReserve.Server.NewSessionSettings.Duration = info.value;
 										UIDropDownMenu_SetSelectedValue(self, info.value);
 									end
-									local times = { 0, 10, 30, 60, 90, 120, 180, 240, 300, 600, 900, 1200, 1800, 2700, 3600 };
-									for _, time in ipairs(times) do
+									for _, time in ipairs({ 0, 10, 30, 60, 90, 120, 180, 240, 300, 600, 900, 1200, 1800, 2700, 3600 }) do
 										info.text = time == 0 and "Manual" or format("%d:%02d", math.floor(time / 60), time % 60);
 										info.value = time;
 										UIDropDownMenu_AddButton(info);

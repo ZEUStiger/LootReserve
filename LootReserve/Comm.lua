@@ -56,7 +56,7 @@ end
 function LootReserve.Comm:CanWhisper(target, opcode)
     return LootReserve.Enabled and (self.SoloDebug
         or IsInRaid() and UnitInRaid(target)
-        or IsInGroup() and UnitInParty(target) and (opcode == Opcodes.PassRoll and target == LootReserve.Client.RollRequestSender
+        or IsInGroup() and UnitInParty(target) and (opcode == Opcodes.PassRoll and LootReserve.Client.RollRequest and target == LootReserve.Client.RollRequest.Sender
                                                  or opcode == Opcodes.DeletedRoll)
     );
 end
@@ -101,6 +101,13 @@ function LootReserve.Comm:Whisper(target, opcode, ...)
 
     LootReserve:SendCommMessage(self.Prefix, message, "WHISPER", target);
 end
+function LootReserve.Comm:Send(target, opcode, ...)
+    if target then
+        self:Whisper(target, opcode, ...);
+    else
+        self:Broadcast(opcode, ...);
+    end
+end
 function LootReserve.Comm:WhisperServer(opcode, ...)
     if LootReserve.Client.SessionServer then
         self:Whisper(LootReserve.Client.SessionServer, opcode, ...);
@@ -110,13 +117,11 @@ function LootReserve.Comm:WhisperServer(opcode, ...)
 end
 
 -- Version
-function LootReserve.Comm:SendVersion(target)
-    LootReserve.Comm:Whisper(target, Opcodes.Version,
-        LootReserve.Version,
-        LootReserve.MinAllowedVersion);
-end
 function LootReserve.Comm:BroadcastVersion()
-    LootReserve.Comm:Broadcast(Opcodes.Version,
+    LootReserve.Comm:SendVersion();
+end
+function LootReserve.Comm:SendVersion(target)
+    LootReserve.Comm:Send(target, Opcodes.Version,
         LootReserve.Version,
         LootReserve.MinAllowedVersion);
 end
@@ -151,6 +156,9 @@ LootReserve.Comm.Handlers[Opcodes.Hello] = function(sender)
 
     if LootReserve.Server.CurrentSession then
         LootReserve.Comm:SendSessionInfo(sender);
+    end
+    if LootReserve.Server.RequestedRoll and not LootReserve.Server.RequestedRoll.RaidRoll and LootReserve.Server:CanRoll(sender) then
+        LootReserve.Comm:SendRequestRoll(sender, LootReserve.Server.RequestedRoll.Item, { sender }, LootReserve.Server.RequestedRoll.Custom, LootReserve.Server.RequestedRoll.Duration, LootReserve.Server.RequestedRoll.MaxDuration);
     end
 end
 
@@ -361,15 +369,22 @@ LootReserve.Comm.Handlers[Opcodes.CancelReserveResult] = function(sender, item, 
 end
 
 -- RequestRoll
-function LootReserve.Comm:BroadcastRequestRoll(item, players, custom)
-    LootReserve.Comm:Broadcast(Opcodes.RequestRoll,
+function LootReserve.Comm:BroadcastRequestRoll(item, players, custom, duration, maxDuration)
+    LootReserve.Comm:SendRequestRoll(nil, item, players, custom, duration, maxDuration);
+end
+function LootReserve.Comm:SendRequestRoll(target, item, players, custom, duration, maxDuration)
+    LootReserve.Comm:Send(target, Opcodes.RequestRoll,
         item,
         strjoin(",", unpack(players)),
-        custom == true);
+        custom == true,
+        format("%.2f", duration or 0),
+        maxDuration or 0);
 end
-LootReserve.Comm.Handlers[Opcodes.RequestRoll] = function(sender, item, players, custom)
+LootReserve.Comm.Handlers[Opcodes.RequestRoll] = function(sender, item, players, custom, duration, maxDuration)
     item = tonumber(item);
     custom = tonumber(custom) == 1;
+    duration = tonumber(duration);
+    maxDuration = tonumber(maxDuration);
 
     if LootReserve.Client.SessionServer == sender or custom then
         if #players > 0 then
@@ -377,13 +392,13 @@ LootReserve.Comm.Handlers[Opcodes.RequestRoll] = function(sender, item, players,
         else
             players = { };
         end
-        LootReserve.Client:RollRequested(sender, item, players, custom);
+        LootReserve.Client:RollRequested(sender, item, players, custom, duration, maxDuration);
     end
 end
 
 -- PassRoll
 function LootReserve.Comm:SendPassRoll(item)
-    LootReserve.Comm:Whisper(LootReserve.Client.RollRequestSender, Opcodes.PassRoll,
+    LootReserve.Comm:Whisper(LootReserve.Client.RollRequest.Sender, Opcodes.PassRoll,
         item);
 end
 LootReserve.Comm.Handlers[Opcodes.PassRoll] = function(sender, item)

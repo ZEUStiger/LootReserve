@@ -164,6 +164,7 @@
 		<KeyValues>
 			<!--
 			<KeyValue key="server" value="false" type="boolean" />
+			<KeyValue key="roll" value="false" type="boolean" />
 			-->
 		</KeyValues>
 		<Size y="8" />
@@ -218,7 +219,23 @@
 				local active = false;
 				local min, value, max, pct = 0, 1, 1, 1;
 
-				if self.server then
+				if self.roll and self.server then
+					local roll = LootReserve.Server.RequestedRoll;
+					if roll and roll.MaxDuration ~= 0 then
+						hasDuration = true;
+						active = true;
+						value = roll.Duration;
+						max = roll.MaxDuration;
+					end
+				elseif self.roll then
+					local roll = LootReserve.Client.RollRequest;
+					if roll.Sender and roll.MaxDuration and roll.MaxDuration ~= 0 then
+						hasDuration = true;
+						active = true;
+						value = roll.Duration;
+						max = roll.MaxDuration;
+					end
+				elseif self.server then
 					local session = LootReserve.Server.CurrentSession;
 					if session and session.Settings.Duration ~= 0 then
 						hasDuration = true;

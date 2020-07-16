@@ -1,6 +1,6 @@
 local LibCustomGlow = LibStub("LibCustomGlow-1.0");
 
-function LootReserve.Client:RollRequested(sender, item, players, custom)
+function LootReserve.Client:RollRequested(sender, item, players, custom, duration, maxDuration)
     local frame = LootReserveRollRequestWindow;
 
     if LibCustomGlow then
@@ -9,11 +9,18 @@ function LootReserve.Client:RollRequested(sender, item, players, custom)
     frame:Hide();
 
     if not LootReserve:Contains(players, Ambiguate(UnitName("player"), "short")) then
-        self.RollRequestSender = nil;
+        self.RollRequest = nil;
         return;
     end
 
-    self.RollRequestSender = sender;
+    self.RollRequest =
+    {
+        Sender = sender,
+        Item = item,
+        Custom = custom or nil,
+        Duration = duration and duration > 0 and duration or nil,
+        MaxDuration = maxDuration and maxDuration > 0 and maxDuration or nil,
+    };
 
     local name, link, _, _, _, type, subtype, _, _, texture = GetItemInfo(item);
     if subtype and type ~= subtype then
@@ -31,6 +38,15 @@ function LootReserve.Client:RollRequested(sender, item, players, custom)
     frame.ButtonRoll:SetAlpha(0.25);
     frame.ButtonPass:Disable();
     frame.ButtonPass:SetAlpha(0.25);
+
+    frame.DurationFrame:SetShown(self.RollRequest.MaxDuration);
+    local durationHeight = frame.DurationFrame:IsShown() and 20 or 0;
+    frame.DurationFrame:SetHeight(math.max(durationHeight, 0.00001));
+
+    frame:SetHeight(90 + durationHeight);
+    frame:SetMinResize(300, 90 + durationHeight);
+    frame:SetMaxResize(1000, 90 + durationHeight);
+
     frame:Show();
 
     C_Timer.After(1, function()
@@ -47,7 +63,7 @@ function LootReserve.Client:RollRequested(sender, item, players, custom)
 
     if not name or not link then
         C_Timer.After(0.25, function()
-            self:RollRequested(sender, item, players);
+            self:RollRequested(sender, item, players, custom, duration, maxDuration);
         end);
     end
 end
@@ -58,11 +74,12 @@ function LootReserve.Client:RespondToRollRequest(response)
     end
     LootReserveRollRequestWindow:Hide();
 
-    if not self.RollRequestSender then return; end
+    if not self.RollRequest then return; end
 
     if response then
         RandomRoll(1, 100);
     else
-        LootReserve.Comm:SendPassRoll(LootReserveRollRequestWindow.Item);
+        LootReserve.Comm:SendPassRoll(self.RollRequest.Item);
     end
+    self.RollRequest = nil;
 end

@@ -24,6 +24,9 @@ LootReserve.Server =
         ChatUpdates = true,
         ChatThrottle = false,
         ReservesSorting = LootReserve.Constants.ReservesSorting.ByTime,
+        RollLimitDuration = false,
+        RollDuration = 60,
+        RollFinishOnExpire = true,
     },
     RequestedRoll = nil,
     RollHistory = { },
@@ -32,6 +35,7 @@ LootReserve.Server =
 
     ReservableItems = { },
     DurationUpdateRegistered = false,
+    RollDurationUpdateRegistered = false,
     RollMatcherRegistered = false,
     ChatFallbackRegistered = false,
     SessionEventsRegistered = false,
@@ -101,6 +105,10 @@ end
 function LootReserve.Server:GetChatChannel(announcement)
     if IsInRaid() then
         return self.Settings.ChatAsRaidWarning[announcement] and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or "RAID";
+    elseif IsInGroup() then
+        return "PARTY";
+    elseif LootReserve.Comm.SoloDebug then
+        return "WHISPER", UnitName("player");
     else
         return "PARTY";
     end
@@ -162,6 +170,11 @@ function LootReserve.Server:Load()
     -- Unless the timer would've expired during that time, in which case set it to a dummy 1 second to allow the code to finish reserves properly upon expiration
     if self.CurrentSession and self.CurrentSession.AcceptingReserves and self.CurrentSession.Duration ~= 0 then
         self.CurrentSession.Duration = math.max(1, self.CurrentSession.DurationEndTimestamp - time());
+    end
+
+    -- Same for current roll
+    if self.RequestedRoll and self.RequestedRoll.MaxDuration and self.RequestedRoll.Duration ~= 0 then
+        self.RequestedRoll.Duration = math.max(1, self.RequestedRoll.StartTime + self.RequestedRoll.MaxDuration - time());
     end
 
     -- Update the UI according to loaded settings
@@ -935,6 +948,16 @@ function LootReserve.Server:IsRolling(item)
     return self.RequestedRoll and self.RequestedRoll.Item == item;
 end
 
+function LootReserve.Server:ExpireRollRequest()
+    if self.RequestedRoll then
+        if self.Settings.RollFinishOnExpire then
+            self:FinishRollRequest(self.RequestedRoll.Item);
+        end
+
+        self:RollExpired();
+    end
+end
+
 function LootReserve.Server:GetWinningRollAndPlayers()
     if self.RequestedRoll then
         local highestRoll = 0;
@@ -971,10 +994,10 @@ function LootReserve.Server:ResolveRollTie(item)
 
             if self.RequestedRoll.Custom then
                 self:CancelRollRequest(item);
-                self:RequestCustomRoll(item, players);
+                self:RequestCustomRoll(item, self.Settings.LimitDuration and self.Settings.RollDuration or nil, players);
             else
                 self:CancelRollRequest(item);
-                self:RequestRoll(item, players);
+                self:RequestRoll(item, nil, players);
             end
         end
     end
@@ -1005,7 +1028,7 @@ function LootReserve.Server:CancelRollRequest(item)
     if self:IsRolling(item) then
         table.insert(self.RollHistory, self.RequestedRoll);
 
-        LootReserve.Comm:BroadcastRequestRoll(0, { }, self.RequestedRoll.Custom or self.RequestedRoll.RaidRoll);
+        LootReserve.Comm:BroadcastRequestRoll(0, { }, self.RequestedRoll.Custom or self.RequestedRoll.RaidRoll, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration);
         self.RequestedRoll = nil;
         LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
         self:UpdateReserveListRolls();
@@ -1014,18 +1037,50 @@ function LootReserve.Server:CancelRollRequest(item)
     end
 end
 
+function LootReserve.Server:CanRoll(player)
+    local roll = self.RequestedRoll;
+    -- Roll must exist
+    if not roll then return false; end
+    -- Roll must not have expired yet
+    if roll.MaxDuration and roll.Duration == 0 then return false; end
+    -- Player must be online and in raid
+    if not LootReserve:IsPlayerOnline(player) then return false; end
+    -- Player must be allowed to roll if the roll is limited to specific players
+    if roll.AllowedPlayers and not LootReserve:Contains(roll.AllowedPlayers, player) then return false; end
+    -- Only raid roll creator is allowed to re-roll the raid-roll
+    if roll.RaidRoll then return player == Ambiguate(UnitName("player"), "short"); end
+    -- Player must have reserved the item if the roll is for a reserved item
+    if not self.RequestedRoll.Custom and not self.RequestedRoll.Players[player] then return false; end
+    -- Player cannot roll if they had rolled previously, but are allowed to roll if they passed on the item
+    if self.RequestedRoll.Players[player] and self.RequestedRoll.Players[player] ~= 0 and self.RequestedRoll.Players[player] ~= -1 then return false; end
+    -- Player cannot roll if their previous roll was deleted
+    if self.RequestedRoll.Players[player] == -2 then return false; end
+
+    return true;
+end
+
 function LootReserve.Server:PrepareRequestRoll()
+    if not self.RollDurationUpdateRegistered then
+        self.RollDurationUpdateRegistered = true;
+        LootReserve:RegisterUpdate(function(elapsed)
+            if self.RequestedRoll and self.RequestedRoll.Duration and self.RequestedRoll.Duration ~= 0 then
+                if self.RequestedRoll.Duration > elapsed then
+                    self.RequestedRoll.Duration = self.RequestedRoll.Duration - elapsed;
+                else
+                    self.RequestedRoll.Duration = 0;
+                    self:ExpireRollRequest();
+                end
+            end
+        end);
+    end
     if not self.RollMatcherRegistered then
         self.RollMatcherRegistered = true;
-
         local rollMatcher = formatToRegexp(RANDOM_ROLL_RESULT);
         LootReserve:RegisterEvent("CHAT_MSG_SYSTEM", function(text)
             if self.RequestedRoll then
                 local player, roll, min, max = text:match(rollMatcher);
-                if player and roll and min == "1" and (max == "100" or self.RequestedRoll.RaidRoll and tonumber(max) == GetNumGroupMembers()) and tonumber(roll) and LootReserve:IsPlayerOnline(player) then
-                    -- Player who isn't allowed to roll attempted to roll
-                    if self.RequestedRoll.AllowedPlayers and not LootReserve:Contains(self.RequestedRoll.AllowedPlayers, player) then return; end
-                    -- Raid roll creator is allowed to re-roll the raid-roll
+                if player and roll and min == "1" and (max == "100" or self.RequestedRoll.RaidRoll and tonumber(max) == GetNumGroupMembers()) and tonumber(roll) and self:CanRoll(player) then
+                    -- Re-roll the raid-roll
                     if self.RequestedRoll.RaidRoll then
                         table.wipe(self.RequestedRoll.Players);
 
@@ -1050,12 +1105,6 @@ function LootReserve.Server:PrepareRequestRoll()
 
                         player = raid[tonumber(roll)];
                     end
-                    -- Player who didn't reserve an item attempted to roll
-                    if not self.RequestedRoll.Custom and not self.RequestedRoll.Players[player] then return; end
-                    -- Player who already rolled attempted to roll again
-                    if self.RequestedRoll.Players[player] and self.RequestedRoll.Players[player] ~= 0 and self.RequestedRoll.Players[player] ~= -1 then return; end
-                    -- Player with deleted roll attempted to roll again
-                    if self.RequestedRoll.Players[player] == -2 then return; end
 
                     self.RequestedRoll.Players[player] = tonumber(roll);
                     self:UpdateReserveListRolls();
@@ -1066,7 +1115,7 @@ function LootReserve.Server:PrepareRequestRoll()
     end
 end
 
-function LootReserve.Server:RequestRoll(item, allowedPlayers)
+function LootReserve.Server:RequestRoll(item, duration, allowedPlayers)
     if not self.CurrentSession then
         LootReserve:ShowError("Loot reserves haven't been started");
         return;
@@ -1082,6 +1131,8 @@ function LootReserve.Server:RequestRoll(item, allowedPlayers)
     {
         Item = item,
         StartTime = time(),
+        MaxDuration = duration and duration > 0 and duration or nil,
+        Duration = duration and duration > 0 and duration or nil,
         Custom = nil,
         Players = { },
         AllowedPlayers = allowedPlayers,
@@ -1094,7 +1145,7 @@ function LootReserve.Server:RequestRoll(item, allowedPlayers)
 
     self:PrepareRequestRoll();
 
-    LootReserve.Comm:BroadcastRequestRoll(item, allowedPlayers or reserve.Players);
+    LootReserve.Comm:BroadcastRequestRoll(item, allowedPlayers or reserve.Players, self.RequestedRoll.Custom, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration);
 
     if self.CurrentSession.Settings.ChatFallback then
         local function BroadcastRoll()
@@ -1119,11 +1170,13 @@ function LootReserve.Server:RequestRoll(item, allowedPlayers)
     self:UpdateRollList();
 end
 
-function LootReserve.Server:RequestCustomRoll(item, allowedPlayers)
+function LootReserve.Server:RequestCustomRoll(item, duration, allowedPlayers)
     self.RequestedRoll =
     {
         Item = item,
         StartTime = time(),
+        MaxDuration = duration and duration > 0 and duration or nil,
+        Duration = duration and duration > 0 and duration or nil,
         Custom = true,
         Players = { },
         AllowedPlayers = allowedPlayers,
@@ -1153,7 +1206,8 @@ function LootReserve.Server:RequestCustomRoll(item, allowedPlayers)
         end
     end
 
-    LootReserve.Comm:BroadcastRequestRoll(item, players, true);
+    LootReserve.Comm:BroadcastRequestRoll(item, players, true, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration);
+
     if not self.CurrentSession or self.CurrentSession.Settings.ChatFallback then
         local function BroadcastRoll()
             local name, link = GetItemInfo(item);
