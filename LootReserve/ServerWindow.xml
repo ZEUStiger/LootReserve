@@ -676,6 +676,24 @@
 										else
 											table.insert(menu, 2, { text = "No Loot", disabled = true });
 										end
+										if GetNumLootItems() > 0 then
+											local index = 0;
+											for i = 1, GetNumLootItems() do
+												local link = GetLootSlotLink(i);
+												if link then
+													local item = tonumber(link:match("item:(%d+)"));
+													if item then
+														if index == 0 then
+															table.insert(menu, 1, { text = "Current Loot", isTitle = true });
+															table.insert(menu, 2, LootReserve:MakeMenuSeparator());
+														end
+														local texture, name, count = GetLootSlotInfo(i);
+														table.insert(menu, 2 + index, MakeItem(count, item, link, texture));
+														index = index + 1;
+													end
+												end
+											end
+										end
 										LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
 
 										if missing then
