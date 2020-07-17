@@ -369,22 +369,24 @@ LootReserve.Comm.Handlers[Opcodes.CancelReserveResult] = function(sender, item, 
 end
 
 -- RequestRoll
-function LootReserve.Comm:BroadcastRequestRoll(item, players, custom, duration, maxDuration)
-    LootReserve.Comm:SendRequestRoll(nil, item, players, custom, duration, maxDuration);
+function LootReserve.Comm:BroadcastRequestRoll(item, players, custom, duration, maxDuration, phase)
+    LootReserve.Comm:SendRequestRoll(nil, item, players, custom, duration, maxDuration, phase);
 end
-function LootReserve.Comm:SendRequestRoll(target, item, players, custom, duration, maxDuration)
+function LootReserve.Comm:SendRequestRoll(target, item, players, custom, duration, maxDuration, phase)
     LootReserve.Comm:Send(target, Opcodes.RequestRoll,
         item,
         strjoin(",", unpack(players)),
         custom == true,
         format("%.2f", duration or 0),
-        maxDuration or 0);
+        maxDuration or 0,
+        phase or "");
 end
-LootReserve.Comm.Handlers[Opcodes.RequestRoll] = function(sender, item, players, custom, duration, maxDuration)
+LootReserve.Comm.Handlers[Opcodes.RequestRoll] = function(sender, item, players, custom, duration, maxDuration, phase)
     item = tonumber(item);
     custom = tonumber(custom) == 1;
     duration = tonumber(duration);
     maxDuration = tonumber(maxDuration);
+    phase = phase and #phase > 0 and phase or nil;
 
     if LootReserve.Client.SessionServer == sender or custom then
         if #players > 0 then
@@ -392,7 +394,7 @@ LootReserve.Comm.Handlers[Opcodes.RequestRoll] = function(sender, item, players,
         else
             players = { };
         end
-        LootReserve.Client:RollRequested(sender, item, players, custom, duration, maxDuration);
+        LootReserve.Client:RollRequested(sender, item, players, custom, duration, maxDuration, phase);
     end
 end
 

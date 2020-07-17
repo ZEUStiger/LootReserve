@@ -24,6 +24,9 @@ LootReserve.Server =
         ChatUpdates = true,
         ChatThrottle = false,
         ReservesSorting = LootReserve.Constants.ReservesSorting.ByTime,
+        RollUsePhases = false,
+        RollPhases = { },
+        RollAdvanceOnExpire = true,
         RollLimitDuration = false,
         RollDuration = 60,
         RollFinishOnExpire = true,
@@ -950,8 +953,26 @@ end
 
 function LootReserve.Server:ExpireRollRequest()
     if self.RequestedRoll then
-        if self.Settings.RollFinishOnExpire then
-            self:FinishRollRequest(self.RequestedRoll.Item);
+        if self:GetWinningRollAndPlayers() then
+            -- If someone rolled on this phase - end the roll
+            if self.Settings.RollFinishOnExpire then
+                self:FinishRollRequest(self.RequestedRoll.Item);
+            end
+        else
+            -- If nobody rolled on this phase - advance to the next
+            if self.Settings.RollAdvanceOnExpire then
+                if not self:AdvanceRollPhase(self.RequestedRoll.Item) then
+                    -- If the phase cannot advance (i.e. because we ran out of phases) - end the roll
+                    if self.Settings.RollFinishOnExpire then
+                        self:FinishRollRequest(self.RequestedRoll.Item);
+                    end
+                end
+            elseif not self.RequestedRoll.Phases or #self.RequestedRoll.Phases <= 1 then
+                -- If no more phases remaining - end the roll
+                if self.Settings.RollFinishOnExpire then
+                    self:FinishRollRequest(self.RequestedRoll.Item);
+                end
+            end
         end
 
         self:RollExpired();
@@ -994,10 +1015,10 @@ function LootReserve.Server:ResolveRollTie(item)
 
             if self.RequestedRoll.Custom then
                 self:CancelRollRequest(item);
-                self:RequestCustomRoll(item, self.Settings.LimitDuration and self.Settings.RollDuration or nil, players);
+                self:RequestCustomRoll(item, self.Settings.RollLimitDuration and self.Settings.RollDuration or nil, nil, players);
             else
                 self:CancelRollRequest(item);
-                self:RequestRoll(item, nil, players);
+                self:RequestRoll(item, nil, nil, players);
             end
         end
     end
@@ -1014,13 +1035,27 @@ function LootReserve.Server:FinishRollRequest(item)
                     return;
                 end
 
-                LootReserve:SendChatMessage(format(self.RequestedRoll.RaidRoll and "%s won %s via raid-roll." or "%s won %s with a roll of %d.", strjoin(", ", unpack(players)), LootReserve:FixLink(link), roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollWinner));
+                LootReserve:SendChatMessage(format(self.RequestedRoll.RaidRoll and "%s won %s%s via raid-roll." or "%s won %s%s with a roll of %d.", strjoin(", ", unpack(players)), LootReserve:FixLink(link), self.RequestedRoll.Phases and format(" for %s", self.RequestedRoll.Phases[1] or "") or "", roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollWinner));
             end
             Announce();
         end
 
         self:CancelRollRequest(item);
-        return;
+    end
+end
+
+function LootReserve.Server:AdvanceRollPhase(item)
+    if self:IsRolling(item) then
+        if self:GetWinningRollAndPlayers() then return; end
+        if not self.RequestedRoll.Custom then return; end
+
+        local phases = deepcopy(self.RequestedRoll.Phases);
+        if not phases or #phases <= 1 then return; end
+        table.remove(phases, 1);
+
+        self:CancelRollRequest(item);
+        self:RequestCustomRoll(item, self.Settings.RollLimitDuration and self.Settings.RollDuration or nil, phases);
+        return true;
     end
 end
 
@@ -1028,12 +1063,11 @@ function LootReserve.Server:CancelRollRequest(item)
     if self:IsRolling(item) then
         table.insert(self.RollHistory, self.RequestedRoll);
 
-        LootReserve.Comm:BroadcastRequestRoll(0, { }, self.RequestedRoll.Custom or self.RequestedRoll.RaidRoll, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration);
+        LootReserve.Comm:BroadcastRequestRoll(0, { }, self.RequestedRoll.Custom or self.RequestedRoll.RaidRoll);
         self.RequestedRoll = nil;
         LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
         self:UpdateReserveListRolls();
         self:UpdateRollList();
-        return;
     end
 end
 
@@ -1115,7 +1149,7 @@ function LootReserve.Server:PrepareRequestRoll()
     end
 end
 
-function LootReserve.Server:RequestRoll(item, duration, allowedPlayers)
+function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
     if not self.CurrentSession then
         LootReserve:ShowError("Loot reserves haven't been started");
         return;
@@ -1133,6 +1167,7 @@ function LootReserve.Server:RequestRoll(item, duration, allowedPlayers)
         StartTime = time(),
         MaxDuration = duration and duration > 0 and duration or nil,
         Duration = duration and duration > 0 and duration or nil,
+        Phases = phases and #phases > 0 and phases or nil,
         Custom = nil,
         Players = { },
         AllowedPlayers = allowedPlayers,
@@ -1145,7 +1180,7 @@ function LootReserve.Server:RequestRoll(item, duration, allowedPlayers)
 
     self:PrepareRequestRoll();
 
-    LootReserve.Comm:BroadcastRequestRoll(item, allowedPlayers or reserve.Players, self.RequestedRoll.Custom, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration);
+    LootReserve.Comm:BroadcastRequestRoll(item, allowedPlayers or reserve.Players, self.RequestedRoll.Custom, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration, self.RequestedRoll.Phases and self.RequestedRoll.Phases[1] or "");
 
     if self.CurrentSession.Settings.ChatFallback then
         local function BroadcastRoll()
@@ -1170,13 +1205,14 @@ function LootReserve.Server:RequestRoll(item, duration, allowedPlayers)
     self:UpdateRollList();
 end
 
-function LootReserve.Server:RequestCustomRoll(item, duration, allowedPlayers)
+function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPlayers)
     self.RequestedRoll =
     {
         Item = item,
         StartTime = time(),
         MaxDuration = duration and duration > 0 and duration or nil,
         Duration = duration and duration > 0 and duration or nil,
+        Phases = phases and #phases > 0 and phases or nil,
         Custom = true,
         Players = { },
         AllowedPlayers = allowedPlayers,
@@ -1206,7 +1242,7 @@ function LootReserve.Server:RequestCustomRoll(item, duration, allowedPlayers)
         end
     end
 
-    LootReserve.Comm:BroadcastRequestRoll(item, players, true, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration);
+    LootReserve.Comm:BroadcastRequestRoll(item, players, true, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration, self.RequestedRoll.Phases and self.RequestedRoll.Phases[1] or "");
 
     if not self.CurrentSession or self.CurrentSession.Settings.ChatFallback then
         local function BroadcastRoll()
@@ -1226,7 +1262,7 @@ function LootReserve.Server:RequestCustomRoll(item, duration, allowedPlayers)
                     end
                 end
             else
-                LootReserve:SendChatMessage(format("Roll on %s", link), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartCustom));
+                LootReserve:SendChatMessage(format("Roll%s on %s", self.RequestedRoll.Phases and format(" for %s", self.RequestedRoll.Phases[1] or "") or "", link), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartCustom));
             end
         end
         BroadcastRoll();

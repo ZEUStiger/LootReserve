@@ -388,7 +388,7 @@ function LootReserve.Server:UpdateRollList(lockdown)
                 frame.ReservesFrame.Players[i]:Hide();
             end
 
-            frame.ReservesFrame.HeaderPlayer:SetText(roll.RaidRoll and "Raid-rolled to" or roll.Custom and "Rolled by" or "Reserved by");
+            frame.ReservesFrame.HeaderPlayer:SetText(roll.RaidRoll and "Raid-rolled to" or roll.Custom and format("Rolled%s by", roll.Phases and format(" for |cFF00FF00%s|r", roll.Phases[1] or "") or "") or "Reserved by");
             frame.ReservesFrame.NoRollsPlaceholder:SetShown(last == 0);
             if frame.ReservesFrame.NoRollsPlaceholder:IsShown() then
                 reservesHeight = reservesHeight + 16;
