@@ -1183,6 +1183,14 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
     LootReserve.Comm:BroadcastRequestRoll(item, allowedPlayers or reserve.Players, self.RequestedRoll.Custom, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration, self.RequestedRoll.Phases and self.RequestedRoll.Phases[1] or "");
 
     if self.CurrentSession.Settings.ChatFallback then
+        local durationStr = "";
+        if self.RequestedRoll.MaxDuration then
+            local time = self.RequestedRoll.MaxDuration;
+            durationStr = time < 60      and format(" (%d %s)", time,      time ==  1 and "sec" or "secs")
+                       or time % 60 == 0 and format(" (%d %s)", time / 60, time == 60 and "min" or "mins")
+                       or                    format(" (%d:%02d mins)", math.floor(time / 60), time % 60);
+        end
+
         local function BroadcastRoll()
             local name, link = GetItemInfo(item);
             if not name or not link then
@@ -1190,11 +1198,11 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
                 return;
             end
 
-            LootReserve:SendChatMessage(format("%s - roll on reserved %s", strjoin(", ", unpack(allowedPlayers or reserve.Players)), LootReserve:FixLink(link)), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartReserved));
+            LootReserve:SendChatMessage(format("%s - roll on reserved %s%s", strjoin(", ", unpack(allowedPlayers or reserve.Players)), LootReserve:FixLink(link), durationStr), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartReserved));
 
             for player, roll in pairs(self.RequestedRoll.Players) do
                 if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
-                    LootReserve:SendChatMessage(format("Please /roll on %s you reserved.", link), "WHISPER", player);
+                    LootReserve:SendChatMessage(format("Please /roll on %s you reserved.%s", link, durationStr), "WHISPER", player);
                 end
             end
         end
@@ -1245,6 +1253,14 @@ function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPla
     LootReserve.Comm:BroadcastRequestRoll(item, players, true, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration, self.RequestedRoll.Phases and self.RequestedRoll.Phases[1] or "");
 
     if not self.CurrentSession or self.CurrentSession.Settings.ChatFallback then
+        local durationStr = "";
+        if self.RequestedRoll.MaxDuration then
+            local time = self.RequestedRoll.MaxDuration;
+            durationStr = time < 60      and format(" (%d %s)", time,      time ==  1 and "sec" or "secs")
+                       or time % 60 == 0 and format(" (%d %s)", time / 60, time == 60 and "min" or "mins")
+                       or                    format(" (%d:%02d mins)", math.floor(time / 60), time % 60);
+        end
+
         local function BroadcastRoll()
             local name, link = GetItemInfo(item);
             if not name or not link then
@@ -1254,15 +1270,15 @@ function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPla
 
             if allowedPlayers then
                 -- Should already be announced in LootReserve.Server:ResolveRollTie
-                --LootReserve:SendChatMessage(format("%s - roll on %s", strjoin(", ", unpack(allowedPlayers)), LootReserve:FixLink(link)), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartCustom));
+                --LootReserve:SendChatMessage(format("%s - roll on %s%s", strjoin(", ", unpack(allowedPlayers)), LootReserve:FixLink(link), durationStr), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartCustom));
 
                 for player, roll in pairs(self.RequestedRoll.Players) do
                     if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) then
-                        LootReserve:SendChatMessage(format("Please /roll on %s.", link), "WHISPER", player);
+                        LootReserve:SendChatMessage(format("Please /roll on %s.%s", link, durationStr), "WHISPER", player);
                     end
                 end
             else
-                LootReserve:SendChatMessage(format("Roll%s on %s", self.RequestedRoll.Phases and format(" for %s", self.RequestedRoll.Phases[1] or "") or "", link), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartCustom));
+                LootReserve:SendChatMessage(format("Roll%s on %s%s", self.RequestedRoll.Phases and format(" for %s", self.RequestedRoll.Phases[1] or "") or "", link, durationStr), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartCustom));
             end
         end
         BroadcastRoll();
