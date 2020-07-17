@@ -185,6 +185,11 @@ function LootReserve.Server:Load()
 end
 
 function LootReserve.Server:Startup()
+    -- Hook roll handlers if needed
+    if self.RequestedRoll then
+        self:PrepareRequestRoll();
+    end
+
     if self.CurrentSession and self:CanBeServer() then
         -- Hook handlers
         self:PrepareSession();
@@ -198,11 +203,6 @@ function LootReserve.Server:Startup()
         end
         self:UpdateReserveList();
 
-        -- Hook roll handlers if needed
-        if self.RequestedRoll then
-            self:PrepareRequestRoll();
-        end
-
         self.Window:Show();
 
         -- Immediately after logging in retrieving raid member names might not work (names not yet cached?)
@@ -210,6 +210,7 @@ function LootReserve.Server:Startup()
         -- until the next group roster change
         C_Timer.After(5, function()
             self:UpdateReserveList();
+            self:UpdateRollList();
         end);
     end
 
@@ -1094,7 +1095,7 @@ function LootReserve.Server:CanRoll(player)
 end
 
 function LootReserve.Server:PrepareRequestRoll()
-    if not self.RollDurationUpdateRegistered then
+    if self.RequestedRoll and self.RequestedRoll.Duration and not self.RollDurationUpdateRegistered then
         self.RollDurationUpdateRegistered = true;
         LootReserve:RegisterUpdate(function(elapsed)
             if self.RequestedRoll and self.RequestedRoll.Duration and self.RequestedRoll.Duration ~= 0 then
