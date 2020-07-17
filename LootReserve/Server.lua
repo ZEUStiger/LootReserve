@@ -37,6 +37,7 @@ LootReserve.Server =
     AddonUsers = { },
 
     ReservableItems = { },
+    LootTrackingRegistered = false,
     DurationUpdateRegistered = false,
     RollDurationUpdateRegistered = false,
     RollMatcherRegistered = false,
@@ -222,6 +223,9 @@ function LootReserve.Server:Startup()
 end
 
 function LootReserve.Server:PrepareLootTracking()
+    if self.LootTrackingRegistered then return; end
+    self.LootTrackingRegistered = true;
+
     local loot = formatToRegexp(LOOT_ITEM);
     local lootMultiple = formatToRegexp(LOOT_ITEM_MULTIPLE);
     local lootSelf = formatToRegexp(LOOT_ITEM_SELF);

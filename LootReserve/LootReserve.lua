@@ -61,8 +61,8 @@ function LootReserve:OnInitialize()
     LootReserve.Comm:StartListening();
 
     local function Startup()
+        LootReserve.Server:Startup();
         if IsInRaid() or LootReserve.Comm.SoloDebug then
-            LootReserve.Server:Startup();
             -- Query other group members about their addon versions and request server session info if any
             LootReserve.Client:SearchForServer(true);
         end
@@ -208,6 +208,19 @@ function LootReserve:GetRaidUnitID(player)
     end
 
     if self.Comm.SoloDebug and Ambiguate(UnitName("player"), "short") == player then
+        return "player";
+    end
+end
+
+function LootReserve:GetPartyUnitID(player)
+    for i = 1, MAX_PARTY_MEMBERS do
+        local unit = UnitName("party" .. i);
+        if unit and Ambiguate(unit, "short") == player then
+            return "party" .. i;
+        end
+    end
+
+    if Ambiguate(UnitName("player"), "short") == player then
         return "player";
     end
 end

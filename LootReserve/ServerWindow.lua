@@ -122,7 +122,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
                 local button = CreateFrame("Button", nil, frame.ReservesFrame, lockdown and "LootReserveReserveListPlayerTemplate" or "LootReserveReserveListPlayerSecureTemplate");
                 table.insert(frame.ReservesFrame.Players, button);
             end
-            local unit = LootReserve:GetRaidUnitID(player);
+            local unit = LootReserve:GetRaidUnitID(player) or LootReserve:GetPartyUnitID(player);
             local button = frame.ReservesFrame.Players[i];
             button:Show();
             button.Player = player;
@@ -369,7 +369,7 @@ function LootReserve.Server:UpdateRollList(lockdown)
                     local button = CreateFrame("Button", nil, frame.ReservesFrame, lockdown and "LootReserveReserveListPlayerTemplate" or "LootReserveReserveListPlayerSecureTemplate");
                     table.insert(frame.ReservesFrame.Players, button);
                 end
-                local unit = LootReserve:GetRaidUnitID(player);
+                local unit = LootReserve:GetRaidUnitID(player) or LootReserve:GetPartyUnitID(player);
                 local button = frame.ReservesFrame.Players[last];
                 button:Show();
                 button.Player = player;
