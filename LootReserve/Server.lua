@@ -690,7 +690,7 @@ function LootReserve.Server:StopSession()
     LootReserve.Comm:SendSessionStop();
 
     if self.CurrentSession.Settings.ChatFallback then
-        LootReserve:SendChatMessage("No longer accepting loot reserves.", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionStop));
+        LootReserve:SendChatMessage("No longer accepting loot reserves", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionStop));
     end
 
     self:UpdateReserveList();
@@ -1009,7 +1009,7 @@ function LootReserve.Server:ResolveRollTie(item)
                     return;
                 end
 
-                LootReserve:SendChatMessage(format("Tie for %s between players %s. All rolled %d. Please /roll again.", link, strjoin(", ", unpack(players)), roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollTie));
+                LootReserve:SendChatMessage(format("Tie for %s between players %s. All rolled %d. Please /roll again", link, strjoin(", ", unpack(players)), roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollTie));
             end
             Announce();
 
@@ -1035,7 +1035,7 @@ function LootReserve.Server:FinishRollRequest(item)
                     return;
                 end
 
-                LootReserve:SendChatMessage(format(self.RequestedRoll.RaidRoll and "%s won %s%s via raid-roll." or "%s won %s%s with a roll of %d.", strjoin(", ", unpack(players)), LootReserve:FixLink(link), self.RequestedRoll.Phases and format(" for %s", self.RequestedRoll.Phases[1] or "") or "", roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollWinner));
+                LootReserve:SendChatMessage(format(self.RequestedRoll.RaidRoll and "%s won %s%s via raid-roll" or "%s won %s%s with a roll of %d", strjoin(", ", unpack(players)), LootReserve:FixLink(link), self.RequestedRoll.Phases and format(" for %s", self.RequestedRoll.Phases[1] or "") or "", roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollWinner));
             end
             Announce();
         end
@@ -1320,7 +1320,7 @@ function LootReserve.Server:DeleteRoll(player, item)
                 return;
             end
 
-            LootReserve:SendChatMessage(format("Your roll on item %s was deleted", link), "WHISPER", player);
+            LootReserve:SendChatMessage(format("Your roll on item %s was deleted.", link), "WHISPER", player);
         end
         if not self:IsAddonUser(player) then
             WhisperPlayer();
