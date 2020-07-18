@@ -11,16 +11,7 @@ LootReserve.Server =
     },
     Settings =
     {
-        ChatAsRaidWarning =
-        {
-            [LootReserve.Constants.ChatAnnouncement.SessionStart] = true,
-            [LootReserve.Constants.ChatAnnouncement.SessionResume] = true,
-            [LootReserve.Constants.ChatAnnouncement.SessionStop] = true,
-            [LootReserve.Constants.ChatAnnouncement.RollStartReserved] = true,
-            [LootReserve.Constants.ChatAnnouncement.RollStartCustom] = true,
-            [LootReserve.Constants.ChatAnnouncement.RollWinner] = true,
-            [LootReserve.Constants.ChatAnnouncement.RollTie] = true,
-        },
+        ChatAsRaidWarning = { },
         ChatUpdates = true,
         ChatThrottle = false,
         ReservesSorting = LootReserve.Constants.ReservesSorting.ByTime,
@@ -130,6 +121,9 @@ function LootReserve.Server:SetAddonUser(player, isUser)
 end
 
 function LootReserve.Server:Load()
+    LootReserveCharacterSave.Server = LootReserveCharacterSave.Server or { };
+    LootReserveGlobalSave.Server = LootReserveGlobalSave.Server or { };
+
     -- Copy data from saved variables into runtime tables
     -- Don't outright replace tables, as new versions of the addon could've added more fields that would be missing in the saved data
     local function loadInto(to, from, field)
@@ -150,6 +144,12 @@ function LootReserve.Server:Load()
     loadInto(self, LootReserveCharacterSave.Server, "RecentLoot");
     loadInto(self, LootReserveGlobalSave.Server, "NewSessionSettings");
     loadInto(self, LootReserveGlobalSave.Server, "Settings");
+
+    for name, key in pairs(LootReserve.Constants.ChatAnnouncement) do
+        if self.Settings.ChatAsRaidWarning[key] == nil then
+            self.Settings.ChatAsRaidWarning[key] = true;
+        end
+    end
 
     -- Expire session if more than 1 hour has passed since the player was last online
     if self.CurrentSession and self.CurrentSession.LogoutTime and time() > self.CurrentSession.LogoutTime + 3600 then
@@ -1354,13 +1354,21 @@ end
 
 function LootReserve.Server:WhisperAllWithoutReserves()
     if not self.CurrentSession then return; end
+    if not self.CurrentSession.AcceptingReserves then return; end
 
     for player, member in pairs(self.CurrentSession.Members) do
         if #member.ReservedItems == 0 and member.ReservesLeft > 0 and LootReserve:IsPlayerOnline(player) then
-            LootReserve:SendChatMessage(format("Don't forget to reserve your items. You have %d %s left.",
+            LootReserve:SendChatMessage(format("Don't forget to reserve your items. You have %d %s left. Whisper !reserve ItemLinkOrName",
                 member.ReservesLeft,
                 member.ReservesLeft == 1 and "reserve" or "reserves"
             ), "WHISPER", player);
         end
     end
+end
+
+function LootReserve.Server:BroadcastInstructions()
+    if not self.CurrentSession then return; end
+    if not self.CurrentSession.AcceptingReserves then return; end
+
+    LootReserve:SendChatMessage("Loot reserves are currently ongoing. Whisper !reserve ItemLinkOrName", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionInstructions));
 end
