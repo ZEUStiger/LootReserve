@@ -13,6 +13,13 @@ LootReserve.Client =
     ItemReserves = { }, -- { [ItemID] = { "Playername", "Playername", ... }, ... }
     RollRequest = nil,
 
+    Settings =
+    {
+        RollRequestShow = true,
+        RollRequestShowUnusable = false,
+        RollRequestGlowOnlyReserved = false,
+    },
+
     PendingItems = { },
     ServerSearchTimeoutTime = nil,
     DurationUpdateRegistered = false,
@@ -20,6 +27,26 @@ LootReserve.Client =
 
     SelectedCategory = nil,
 };
+
+function LootReserve.Client:Load()
+    LootReserveGlobalSave.Client = LootReserveGlobalSave.Client or { };
+
+    -- Copy data from saved variables into runtime tables
+    -- Don't outright replace tables, as new versions of the addon could've added more fields that would be missing in the saved data
+    local function loadInto(to, from, field)
+        if from and to and field then
+            if from[field] then
+                for k, v in pairs(from[field]) do
+                    to[field] = to[field] or { };
+                    to[field][k] = v;
+                    empty = false;
+                end
+            end
+            from[field] = to[field];
+        end
+    end
+    loadInto(self, LootReserveGlobalSave.Client, "Settings");
+end
 
 function LootReserve.Client:SearchForServer(startup)
     if not startup and self.ServerSearchTimeoutTime and time() < self.ServerSearchTimeoutTime then return; end

@@ -6,12 +6,13 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
     if LibCustomGlow then
         LibCustomGlow.ButtonGlow_Stop(frame.ItemFrame.IconGlow);
     end
+
+    self.RollRequest = nil;
     frame:Hide();
 
-    if not LootReserve:Contains(players, Ambiguate(UnitName("player"), "short")) then
-        self.RollRequest = nil;
-        return;
-    end
+    if not self.Settings.RollRequestShow then return; end
+    if not LootReserve:Contains(players, Ambiguate(UnitName("player"), "short")) then return; end
+    if not self.Settings.RollRequestShowUnusable and LootReserve:IsItemUsable(item) == false then return; end -- Need to check for false, returns nil if item not loaded
 
     self.RollRequest =
     {
@@ -22,6 +23,7 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
         MaxDuration = maxDuration and maxDuration > 0 and maxDuration or nil,
         Phase = phase,
     };
+    local roll = self.RollRequest;
 
     local name, link, _, _, _, type, subtype, _, _, texture = GetItemInfo(item);
     if subtype and type ~= subtype then
@@ -31,6 +33,7 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
 
     frame.Sender = sender;
     frame.Item = item;
+    frame.Roll = roll;
     frame.LabelSender:SetText(format(custom and "%s offers you to roll%s on this item:" or "%s asks you to roll%s on the item you reserved:", LootReserve:ColoredPlayer(sender), phase and format(" for |cFF00FF00%s|r", phase) or ""));
     frame.ItemFrame.Icon:SetTexture(texture);
     frame.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
@@ -51,12 +54,12 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
     frame:Show();
 
     C_Timer.After(1, function()
-        if frame.Item == item then
+        if frame.Roll == roll then
             frame.ButtonRoll:Enable();
             frame.ButtonRoll:SetAlpha(1);
             frame.ButtonPass:Enable();
             frame.ButtonPass:SetAlpha(1);
-            if LibCustomGlow then
+            if LibCustomGlow and (not self.Settings.RollRequestGlowOnlyReserved or not roll.Custom) then
                 LibCustomGlow.ButtonGlow_Start(frame.ItemFrame.IconGlow);
             end
         end

@@ -198,6 +198,11 @@
 							{ text = format("Current Server: %s", LootReserve.Client.SessionServer and LootReserve:ColoredPlayer(LootReserve.Client.SessionServer) or "|cFF808080Not Connected|r"), isTitle = true },
 							{ text = format("Search For Server%s", cooldown > 0 and format(" (%d |4sec:secs; cooldown)", cooldown) or ""), disabled = cooldown > 0, func = function() LootReserve.Client:SearchForServer(); end },
 							LootReserve:MakeMenuSeparator(),
+							{ text = "Roll Request Popup", isTitle = true },
+							{ text = "Show Popup", checked = LootReserve.Client.Settings.RollRequestShow, notCheckable = false, keepShownOnClick = true, func = function() LootReserve.Client.Settings.RollRequestShow = not LootReserve.Client.Settings.RollRequestShow; end },
+							{ text = "Show For Unusable Items", checked = LootReserve.Client.Settings.RollRequestShowUnusable, notCheckable = false, keepShownOnClick = true, func = function() LootReserve.Client.Settings.RollRequestShowUnusable = not LootReserve.Client.Settings.RollRequestShowUnusable; end },
+							{ text = "Glow Only For Reserved Items", checked = LootReserve.Client.Settings.RollRequestGlowOnlyReserved, notCheckable = false, keepShownOnClick = true, func = function() LootReserve.Client.Settings.RollRequestGlowOnlyReserved = not LootReserve.Client.Settings.RollRequestGlowOnlyReserved; end },
+							LootReserve:MakeMenuSeparator(),
 							{ text = "Close" },
 						};
 						LootReserve:OpenMenu(menu, self:GetParent().Menu, self);

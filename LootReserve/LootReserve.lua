@@ -23,6 +23,10 @@ LootReserveCharacterSave =
 };
 LootReserveGlobalSave =
 {
+    Client =
+    {
+        Settings = nil,
+    },
     Server =
     {
         NewSessionSettings = nil,
@@ -56,6 +60,7 @@ function SlashCmdList.LOOTRESERVE(command)
 end
 
 function LootReserve:OnInitialize()
+    LootReserve.Client:Load();
     LootReserve.Server:Load();
 
     LootReserve.Comm:StartListening();
@@ -250,6 +255,39 @@ function LootReserve:IsItemSoulboundTradeable(bag, slot)
     end
     self.TooltipScanner:Hide();
     return false;
+end
+
+function LootReserve:IsItemUsable(item)
+    local name, _, _, _, _, _, _, _, _, _, _, _, _, bindType = GetItemInfo(item);
+    if not name or not bindType then return; end
+
+    -- Non BoP items are considered usable by everyone
+    if bindType ~= 1 then
+        return true;
+    end
+
+    if not self.TooltipScanner then
+        self.TooltipScanner = CreateFrame("GameTooltip", "LootReserveTooltipScanner", UIParent, "GameTooltipTemplate");
+        self.TooltipScanner:Hide();
+    end
+
+    self.TooltipScanner:SetOwner(UIParent, "ANCHOR_NONE");
+    self.TooltipScanner:SetHyperlink("item:" .. item);
+    local columns = { "Left", "Right" };
+    for i = 1, 50 do
+        for _, column in ipairs(columns) do
+            local line = _G[self.TooltipScanner:GetName() .. "Text" .. column .. i];
+            if line and line:GetText() and line:IsShown() then
+                local r, g, b, a = line:GetTextColor();
+                if r >= 0.95 and g <= 0.15 and b <= 0.15 and a >= 0.5 then
+                    self.TooltipScanner:Hide();
+                    return false;
+                end
+            end
+        end
+    end
+    self.TooltipScanner:Hide();
+    return true;
 end
 
 function LootReserve:TransformSearchText(text)
