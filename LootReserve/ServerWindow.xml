@@ -388,6 +388,106 @@
 						</Texture>
 					</Layer>
 				</Layers>
+				<Frames>
+					<Button parentKey="ReportRolls">
+						<Size x="12" y="12" />
+						<Anchors>
+							<Anchor point="RIGHT" relativeKey="$parent.HeaderPlayer" relativePoint="LEFT" x="-2" />
+						</Anchors>
+						<NormalTexture file="Interface\Buttons\UI-GuildButton-MOTD-Up" alpha="0.25" />
+						<PushedTexture file="Interface\Buttons\UI-GuildButton-MOTD-Up" alpha="0" />
+						<HighlightTexture file="Interface\Buttons\UI-GuildButton-MOTD-Up" alphaMode="ADD" alpha="0.75" />
+						<Scripts>
+							<OnClick>
+								local function MakeChatColoredText(text, chatType)
+									local info = ChatTypeInfo[chatType or "RAID_WARNING"];
+									return format("|cff%02x%02x%02x%s|r", info.r * 255, info.g * 255, info.b * 255, text);
+								end
+								local function MakeReportButton(text, chatType, condition)
+									return
+									{
+										text = condition and MakeChatColoredText(text, chatType) or text,
+										arg1 = chatType,
+										disabled = not condition,
+										func = function(info)
+											local frame = self:GetParent():GetParent();
+
+											local totalRolls = 0;
+											for player, roll in pairs(frame.Roll.Players) do
+												if roll > 0 then
+													totalRolls = totalRolls + 1;
+												end
+											end
+											if self.Lines and self.Lines >= totalRolls then
+												self.Lines = nil;
+											end
+
+											LootReserve:SendChatMessage(format("%s for %s%s%s:",
+												(not self.Lines or self.Lines == 0) and "Rolls" or format("Top %d out of %d %s", self.Lines, totalRolls, totalRolls == 1 and "roll" or "rolls"),
+												frame.Link,
+												frame.Roll.Phases and format(" for %s", frame.Roll.Phases[1] or "") or "",
+												frame.Historical and format(" on %s", (frame.ItemFrame.Misc:GetText() or ""):gsub("%s%s", " at ")) or ""
+											), info.arg1);
+											local i = 1;
+											for player, roll in LootReserve:Ordered(frame.Roll.Players, function(aRoll, bRoll, aPlayer, bPlayer)
+												if aRoll ~= bRoll then
+													return aRoll > bRoll;
+												else
+													return aPlayer &lt; bPlayer;
+												end
+											end) do
+												if roll > 0 and (not self.Lines or self.Lines == 0 or self.Lines >= i) then
+													LootReserve:SendChatMessage(format("- %d by %s", roll, player), info.arg1);
+													i = i + 1;
+												end
+											end
+											if i == 1 then
+												LootReserve:SendChatMessage("- No Rolls -", info.arg1);
+											end
+										end,
+									};
+								end
+
+								local menu =
+								{
+									{ text = "Report", isTitle = true },
+									{ text = "To Chat", isTitle = true },
+									MakeReportButton("/rw", "RAID_WARNING", IsInRaid() and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player"))),
+									MakeReportButton("/raid", "RAID", IsInRaid()),
+									MakeReportButton("/party", "PARTY", IsInGroup()),
+									MakeReportButton("/guild", "GUILD", IsInGuild()),
+									LootReserve:MakeMenuSeparator(),
+									{ text = "Cancel" },
+								};
+
+								local roll = self:GetParent():GetParent().Roll;
+								local totalRolls = 0;
+								for player, roll in pairs(roll.Players) do
+									if roll > 0 then
+										totalRolls = totalRolls + 1;
+									end
+								end
+								local i = 0;
+								for _, lines in ipairs({ 1, 2, 3, 4, 5, 10, 0 }) do
+									if totalRolls > lines or lines == 0 then
+										i = i + 1;
+										table.insert(menu, 1 + i,
+										{
+											text = format(lines == 0 and "All Rolls" or "Top %d %s", lines, lines == 1 and "Roll" or "Rolls"),
+											arg1 = lines,
+											checked = not self.Lines or self.Lines == 0 or lines > 0 and (self.Lines or 0) >= lines,
+											notCheckable = false,
+											func = function(info) self.Lines = info.arg1; CloseMenus(); self:Click(); end
+										});
+									end
+								end
+
+								LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
+							</OnClick>
+						</Scripts>
+					</Button>
+					<Frame parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
+				</Frames>
 			</Frame>
 		</Frames>
 	</Frame>
