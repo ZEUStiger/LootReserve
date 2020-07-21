@@ -165,7 +165,7 @@ function LootReserve.Server:Load()
             end
         end
 
-        local fields = { "AcceptingReserves", "Settings", "Duration", "DurationEndTimestamp", "Members", "ItemReserves" };
+        local fields = { "AcceptingReserves", "Settings", "StartTime", "Duration", "DurationEndTimestamp", "Members", "ItemReserves" };
         for _, field in ipairs(fields) do
             verifySessionField(field);
         end
@@ -581,6 +581,7 @@ function LootReserve.Server:StartSession()
     {
         AcceptingReserves = true,
         Settings = deepcopy(self.NewSessionSettings),
+        StartTime = time(),
         Duration = self.NewSessionSettings.Duration,
         DurationEndTimestamp = time() + self.NewSessionSettings.Duration, -- Used to resume the session after relog or UI reload
         Members = { },

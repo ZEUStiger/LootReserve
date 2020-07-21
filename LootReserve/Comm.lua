@@ -187,6 +187,7 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
 
     LootReserve.Comm:Send(target, Opcodes.SessionInfo,
         starting == true,
+        session.StartTime or 0,
         session.AcceptingReserves,
         membersInfo,
         session.Settings.LootCategory,
@@ -194,14 +195,20 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
         session.Settings.Duration,
         itemReserves);
 end
-LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, acceptingReserves, membersInfo, lootCategory, duration, maxDuration, itemReserves)
+LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, startTime, acceptingReserves, membersInfo, lootCategory, duration, maxDuration, itemReserves)
     starting = tonumber(starting) == 1;
+    startTime = tonumber(startTime);
     acceptingReserves = tonumber(acceptingReserves) == 1;
     lootCategory = tonumber(lootCategory);
     duration = tonumber(duration);
     maxDuration = tonumber(maxDuration);
 
-    LootReserve.Client:StartSession(sender, starting, acceptingReserves, lootCategory, duration, maxDuration);
+    if LootReserve.Client.SessionServer and LootReserve.Client.SessionServer ~= sender and LootReserve.Client.StartTime > startTime then
+        LootReserve:ShowError("%s is attempting to broadcast their older loot reserve session, but you're already connected to %s.|n|nPlease tell %s that they need to reset their session.", LootReserve:ColoredPlayer(sender), LootReserve:ColoredPlayer(LootReserve.Client.SessionServer), LootReserve:ColoredPlayer(sender));
+        return;
+    end
+
+    LootReserve.Client:StartSession(sender, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration);
 
     LootReserve.Client.RemainingReserves = 0;
     if #membersInfo > 0 then

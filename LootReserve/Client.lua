@@ -5,6 +5,7 @@ LootReserve.Client =
     SessionServer = nil,
 
     -- Server Session Info
+    StartTime = 0,
     AcceptingReserves = false,
     RemainingReserves = 0,
     LootCategory = nil,
@@ -55,9 +56,10 @@ function LootReserve.Client:SearchForServer(startup)
     LootReserve.Comm:BroadcastHello();
 end
 
-function LootReserve.Client:StartSession(server, starting, acceptingReserves, lootCategory, duration, maxDuration)
+function LootReserve.Client:StartSession(server, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration)
     self:ResetSession();
     self.SessionServer = server;
+    self.StartTime = startTime;
     self.AcceptingReserves = acceptingReserves;
     self.LootCategory = lootCategory;
     self.Duration = duration;
