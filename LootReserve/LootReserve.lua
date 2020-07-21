@@ -2,7 +2,7 @@
 
 LootReserve = LibStub("AceAddon-3.0"):NewAddon("LootReserve", "AceComm-3.0");
 LootReserve.Version = GetAddOnMetadata(addon, "Version");
-LootReserve.MinAllowedVersion = "2020-06-25";
+LootReserve.MinAllowedVersion = "2020-07-21";
 LootReserve.LatestKnownVersion = LootReserve.Version;
 LootReserve.Enabled = true;
 
