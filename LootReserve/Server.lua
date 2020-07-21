@@ -32,6 +32,7 @@ LootReserve.Server =
     DurationUpdateRegistered = false,
     RollDurationUpdateRegistered = false,
     RollMatcherRegistered = false,
+    ChatTrackingRegistered = false,
     ChatFallbackRegistered = false,
     SessionEventsRegistered = false,
     AllItemNamesCached = false,
@@ -1066,6 +1067,19 @@ end
 
 function LootReserve.Server:CancelRollRequest(item)
     if self:IsRolling(item) then
+        -- Cleanup chat from players who didn't roll to reduce memory and storage space usage
+        if self.RequestedRoll.Chat then
+            local toRemove = { };
+            for player in pairs(self.RequestedRoll.Chat) do
+                if not self.RequestedRoll.Players[player] then
+                    table.insert(toRemove, player);
+                end
+            end
+            for _, player in ipairs(toRemove) do
+                self.RequestedRoll.Chat[player] = nil;
+            end
+        end
+
         table.insert(self.RollHistory, self.RequestedRoll);
 
         LootReserve.Comm:BroadcastRequestRoll(0, { }, self.RequestedRoll.Custom or self.RequestedRoll.RaidRoll);
@@ -1112,6 +1126,7 @@ function LootReserve.Server:PrepareRequestRoll()
             end
         end);
     end
+
     if not self.RollMatcherRegistered then
         self.RollMatcherRegistered = true;
         local rollMatcher = formatToRegexp(RANDOM_ROLL_RESULT);
@@ -1143,6 +1158,10 @@ function LootReserve.Server:PrepareRequestRoll()
                         if tonumber(max) ~= #raid or #raid ~= GetNumGroupMembers() then return; end
 
                         player = raid[tonumber(roll)];
+                    else
+                        self.RequestedRoll.Chat = self.RequestedRoll.Chat or { };
+                        self.RequestedRoll.Chat[player] = self.RequestedRoll.Chat[player] or { };
+                        table.insert(self.RequestedRoll.Chat[player], format("%d|%s|%s", time(), "SYSTEM", text));
                     end
 
                     self.RequestedRoll.Players[player] = tonumber(roll);
@@ -1151,6 +1170,34 @@ function LootReserve.Server:PrepareRequestRoll()
                 end
             end
         end);
+
+        local chatTypes =
+        {
+            "CHAT_MSG_WHISPER",
+            "CHAT_MSG_SAY",
+            "CHAT_MSG_YELL",
+            "CHAT_MSG_PARTY",
+            "CHAT_MSG_PARTY_LEADER",
+            "CHAT_MSG_RAID",
+            "CHAT_MSG_RAID_LEADER",
+            "CHAT_MSG_RAID_WARNING",
+            "CHAT_MSG_EMOTE",
+            "CHAT_MSG_GUILD",
+            "CHAT_MSG_OFFICER",
+        };
+        for _, type in ipairs(chatTypes) do
+            local savedType = type:gsub("CHAT_MSG_", "");
+            LootReserve:RegisterEvent(type, function(text, sender)
+                if self.RequestedRoll then
+                    local player = Ambiguate(sender, "short");
+                    self.RequestedRoll.Chat = self.RequestedRoll.Chat or { };
+                    self.RequestedRoll.Chat[player] = self.RequestedRoll.Chat[player] or { };
+                    table.insert(self.RequestedRoll.Chat[player], format("%d|%s|%s", time(), savedType, text));
+                    self:UpdateReserveListChat();
+                    self:UpdateRollListChat();
+                end
+            end);
+        end
     end
 end
 

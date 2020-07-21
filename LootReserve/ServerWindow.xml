@@ -157,6 +157,43 @@
 				<HighlightTexture file="Interface\Buttons\UI-RefreshButton" alpha="0.5" alphaMode="ADD" />
 				<PushedTexture file="Interface\Buttons\UI-RefreshButton" alpha="0.5" />
 			</Button>
+			<Button parentKey="RecentChat" hidden="true">
+				<Size x="12" y="12" />
+				<Scripts>
+					<OnEnter>
+						local player = self:GetParent().Player;
+						local frame = self:GetParent():GetParent():GetParent();
+						local roll = frame.Roll or LootReserve.Server.RequestedRoll;
+						if roll and roll.Chat and roll.Chat[player] then
+							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+							GameTooltip:SetText("Recent Chat");
+							local width = 0;
+							for i, data in ipairs(roll.Chat[player]) do
+								local time, type, text = strsplit("|", data, 3);
+								time = format("|cFF808080[%s]|r", date("%X", tonumber(time)));
+								local info = ChatTypeInfo[type or ""] or ChatTypeInfo["SYSTEM"];
+								if type == "SYSTEM" then
+									text = format("%s %s", time, text);
+								elseif type == "EMOTE" then
+									text = format("%s %s %s", time, player, text);
+								else
+									text = format("%s [%s]: %s", time, LootReserve:ColoredPlayer(player), text);
+								end
+								GameTooltip:AddLine(text, info.r, info.g, info.b, 1, 1);
+								local line = _G[GameTooltip:GetName() .. "TextLeft" .. (i + 1)];
+								if line and line:GetText() == text then
+									width = math.max(width, line:GetUnboundedStringWidth());
+								end
+							end
+							GameTooltip:SetMinimumWidth(math.min(width, 400));
+							GameTooltip:Show();
+						end
+					</OnEnter>
+					<OnLeave function="GameTooltip_Hide" />
+				</Scripts>
+				<NormalTexture file="Interface\ChatFrame\UI-ChatWhisperIcon" alpha="0.25" />
+				<HighlightTexture file="Interface\ChatFrame\UI-ChatWhisperIcon" alpha="0.5" alphaMode="ADD" />
+			</Button>
 		</Frames>
 		<Scripts>
 			<OnUpdate>

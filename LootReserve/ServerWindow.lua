@@ -40,6 +40,32 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
             end
         end
     end
+
+    self:UpdateReserveListChat(lockdown);
+end
+
+function LootReserve.Server:UpdateReserveListChat(lockdown)
+    lockdown = lockdown or InCombatLockdown();
+
+    local list = (lockdown and self.Window.PanelReservesLockdown or self.Window.PanelReserves).Scroll.Container;
+    list.Frames = list.Frames or { };
+
+    for _, frame in ipairs(list.Frames) do
+        if frame:IsShown() then
+            local rollingThisItem = self:IsRolling(frame.Item);
+
+            for _, button in ipairs(frame.ReservesFrame.Players) do
+                if button:IsShown() then
+                    if rollingThisItem and self.RequestedRoll and self.RequestedRoll.Chat and self.RequestedRoll.Chat[button.Player] and #self.RequestedRoll.Chat[button.Player] > 1 then
+                        button.RecentChat:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth() + 2, 0);
+                        button.RecentChat:Show();
+                    else
+                        button.RecentChat:Hide();
+                    end
+                end
+            end
+        end
+    end
 end
 
 function LootReserve.Server:UpdateReserveList(lockdown)
@@ -284,6 +310,30 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
             end
         end
     end
+
+    self:UpdateRollListChat(lockdown);
+end
+
+function LootReserve.Server:UpdateRollListChat(lockdown)
+    lockdown = lockdown or InCombatLockdown();
+
+    local list = (lockdown and self.Window.PanelRollsLockdown or self.Window.PanelRolls).Scroll.Container;
+    list.Frames = list.Frames or { };
+
+    for _, frame in ipairs(list.Frames) do
+        if frame:IsShown() and frame.Roll then
+            for _, button in ipairs(frame.ReservesFrame.Players) do
+                if button:IsShown() then
+                    if frame.Roll.Chat and frame.Roll.Chat[button.Player] and #frame.Roll.Chat[button.Player] > 1 then
+                        button.RecentChat:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth() + 2, 0);
+                        button.RecentChat:Show();
+                    else
+                        button.RecentChat:Hide();
+                    end
+                end
+            end
+        end
+    end
 end
 
 function LootReserve.Server:UpdateRollList(lockdown)
@@ -380,6 +430,12 @@ function LootReserve.Server:UpdateRollList(lockdown)
                 button.Name:SetText(format("%s%s", LootReserve:ColoredPlayer(player), historical and "" or LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or LootReserve:IsPlayerOnline(player) == false and "|cFF808080 (offline)|r" or ""));
                 button.Roll:SetText("");
                 button.WinnerHighlight:Hide();
+                if not historical and self.RecentChat and self.RecentChat[player] and #self.RecentChat[player] > 1 then
+                    button.RecentChat:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth(), 0);
+                    button.RecentChat:Show();
+                else
+                    button.RecentChat:Hide();
+                end
                 button:SetPoint("TOPLEFT", frame.ReservesFrame, "TOPLEFT", 0, 5 - reservesHeight);
                 button:SetPoint("TOPRIGHT", frame.ReservesFrame, "TOPRIGHT", 0, 5 - reservesHeight);
                 reservesHeight = reservesHeight + button:GetHeight();
