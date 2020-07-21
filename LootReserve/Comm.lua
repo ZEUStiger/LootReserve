@@ -163,36 +163,58 @@ LootReserve.Comm.Handlers[Opcodes.Hello] = function(sender)
 end
 
 -- SessionInfo
+function LootReserve.Comm:BroadcastSessionInfo(starting)
+    LootReserve.Comm:SendSessionInfo(nil, starting);
+end
 function LootReserve.Comm:SendSessionInfo(target, starting)
     local session = LootReserve.Server.CurrentSession;
     if not session then return; end
 
-    local member = session.Members[Ambiguate(target, "short")];
-    if not member then return; end
+    target = target and Ambiguate(target, "short");
+    if target and not session.Members[target] then return; end
+
+    local membersInfo = "";
+    for player, member in pairs(session.Members) do
+        if not target or player == target then
+            membersInfo = membersInfo .. (#membersInfo > 0 and ";" or "") .. format("%s=%s", player, strjoin(",", member.ReservesLeft));
+        end
+    end
 
     local itemReserves = "";
     for item, reserve in pairs(session.ItemReserves) do
         itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, strjoin(",", unpack(reserve.Players)));
     end
 
-    LootReserve.Comm:Whisper(target, Opcodes.SessionInfo,
+    LootReserve.Comm:Send(target, Opcodes.SessionInfo,
         starting == true,
         session.AcceptingReserves,
-        member.ReservesLeft,
+        membersInfo,
         session.Settings.LootCategory,
         format("%.2f", session.Duration),
         session.Settings.Duration,
         itemReserves);
 end
-LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, acceptingReserves, remainingReserves, lootCategory, duration, maxDuration, itemReserves)
+LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, acceptingReserves, membersInfo, lootCategory, duration, maxDuration, itemReserves)
     starting = tonumber(starting) == 1;
     acceptingReserves = tonumber(acceptingReserves) == 1;
-    remainingReserves = tonumber(remainingReserves);
     lootCategory = tonumber(lootCategory);
     duration = tonumber(duration);
     maxDuration = tonumber(maxDuration);
 
-    LootReserve.Client:StartSession(sender, starting, acceptingReserves, remainingReserves, lootCategory, duration, maxDuration);
+    LootReserve.Client:StartSession(sender, starting, acceptingReserves, lootCategory, duration, maxDuration);
+
+    LootReserve.Client.RemainingReserves = 0;
+    if #membersInfo > 0 then
+        membersInfo = { strsplit(";", membersInfo) };
+        for _, infoStr in ipairs(membersInfo) do
+            local player, info = strsplit("=", infoStr, 2);
+            if player == Ambiguate(UnitName("player"), "short") then
+                local remainingReserves = strsplit(",", info);
+                LootReserve.Client.RemainingReserves = tonumber(remainingReserves) or 0;
+            end
+        end
+    end
+
     LootReserve.Client.ItemReserves = { };
     if #itemReserves > 0 then
         itemReserves = { strsplit(";", itemReserves) };

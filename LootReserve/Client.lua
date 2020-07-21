@@ -55,11 +55,10 @@ function LootReserve.Client:SearchForServer(startup)
     LootReserve.Comm:BroadcastHello();
 end
 
-function LootReserve.Client:StartSession(server, starting, acceptingReserves, remainingReserves, lootCategory, duration, maxDuration)
+function LootReserve.Client:StartSession(server, starting, acceptingReserves, lootCategory, duration, maxDuration)
     self:ResetSession();
     self.SessionServer = server;
     self.AcceptingReserves = acceptingReserves;
-    self.RemainingReserves = remainingReserves;
     self.LootCategory = lootCategory;
     self.Duration = duration;
     self.MaxDuration = maxDuration;

@@ -196,7 +196,7 @@ function LootReserve.Server:Startup()
         -- Hook handlers
         self:PrepareSession();
         -- Inform other players about ongoing session
-        self:BroadcastSessionInfo();
+        LootReserve.Comm:BroadcastSessionInfo();
         -- Update UI
         if self.CurrentSession.AcceptingReserves then
             self:SessionStarted();
@@ -638,7 +638,7 @@ function LootReserve.Server:StartSession()
     self:PrepareSession();
 
     LootReserve.Comm:BroadcastVersion();
-    self:BroadcastSessionInfo(true);
+    LootReserve.Comm:BroadcastSessionInfo(true);
     if self.CurrentSession.Settings.ChatFallback then
         local category = LootReserve.Data.Categories[self.CurrentSession.Settings.LootCategory];
         local duration = self.CurrentSession.Settings.Duration
@@ -657,14 +657,6 @@ function LootReserve.Server:StartSession()
     return true;
 end
 
-function LootReserve.Server:BroadcastSessionInfo(starting)
-    for player in pairs(self.CurrentSession.Members) do
-        if LootReserve:IsPlayerOnline(player) then
-            LootReserve.Comm:SendSessionInfo(player, starting);
-        end
-    end
-end
-
 function LootReserve.Server:ResumeSession()
     if not self.CurrentSession then
         LootReserve:ShowError("Loot reserves haven't been started");
@@ -673,7 +665,7 @@ function LootReserve.Server:ResumeSession()
 
     self.CurrentSession.AcceptingReserves = true;
     self.CurrentSession.DurationEndTimestamp = time() + math.floor(self.CurrentSession.Duration);
-    self:BroadcastSessionInfo();
+    LootReserve.Comm:BroadcastSessionInfo();
 
     if self.CurrentSession.Settings.ChatFallback then
         LootReserve:SendChatMessage("Accepting loot reserves again. Whisper !reserve ItemLinkOrName", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionResume));
@@ -692,7 +684,7 @@ function LootReserve.Server:StopSession()
     end
 
     self.CurrentSession.AcceptingReserves = false;
-    self:BroadcastSessionInfo();
+    LootReserve.Comm:BroadcastSessionInfo();
     LootReserve.Comm:SendSessionStop();
 
     if self.CurrentSession.Settings.ChatFallback then
