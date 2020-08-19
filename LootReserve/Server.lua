@@ -110,6 +110,13 @@ function LootReserve.Server:GetChatChannel(announcement)
     end
 end
 
+function LootReserve.Server:HasRelevantRecentChat(chat, player)
+    if not chat or not chat[player] then return false; end
+    if #chat[player] > 1 then return true; end
+    local time, type, text = strsplit("|", chat[player][1], 3);
+    return type ~= "SYSTEM";
+end
+
 function LootReserve.Server:IsAddonUser(player)
     return player == UnitName("player") or self.AddonUsers[player] or false;
 end
@@ -708,7 +715,7 @@ function LootReserve.Server:ResetSession()
         return;
     end
 
-    if self.RequestedRoll then
+    if self.RequestedRoll and not self.RequestedRoll.Custom then
         self:CancelRollRequest(self.RequestedRoll.Item);
     end
 
@@ -876,7 +883,7 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
     removeFromTable(member.ReservedItems, item);
     LootReserve.Comm:SendCancelReserveResult(player, item, forced and LootReserve.Constants.CancelReserveResult.Forced or LootReserve.Constants.CancelReserveResult.OK, member.ReservesLeft);
 
-    if self:IsRolling(item) then
+    if self:IsRolling(item) and not self.RequestedRoll.Custom then
         self.RequestedRoll.Players[player] = nil;
     end
 

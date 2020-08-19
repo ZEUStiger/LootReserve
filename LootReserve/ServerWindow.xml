@@ -131,7 +131,7 @@
 						local frame = self:GetParent():GetParent():GetParent();
 						local data = { Player = player, Item = frame.Item };
 						local popup = "LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE";
-						if frame.Roll then
+						if frame.Roll and frame.Roll.Custom then
 							popup = "LOOTRESERVE_CONFIRM_FORCED_CANCEL_ROLL";
 						end
 						StaticPopup_Show(popup, LootReserve:ColoredPlayer(player), frame.Link, data);
@@ -163,12 +163,11 @@
 					<OnEnter>
 						local player = self:GetParent().Player;
 						local frame = self:GetParent():GetParent():GetParent();
-						local roll = frame.Roll or LootReserve.Server.RequestedRoll;
-						if roll and roll.Chat and roll.Chat[player] then
+						if frame.Roll and frame.Roll.Chat and frame.Roll.Chat[player] then
 							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 							GameTooltip:SetText("Recent Chat");
 							local width = 0;
-							for i, data in ipairs(roll.Chat[player]) do
+							for i, data in ipairs(frame.Roll.Chat[player]) do
 								local time, type, text = strsplit("|", data, 3);
 								time = format("|cFF808080[%s]|r", date("%X", tonumber(time)));
 								local info = ChatTypeInfo[type or ""] or ChatTypeInfo["SYSTEM"];
@@ -207,7 +206,7 @@
 					self.ButtonReroll:Hide();
 				else
 					local roll = frame.Roll.Players[self.Player];
-					local isRaidRoll = LootReserve.Server.RequestedRoll and LootReserve.Server.RequestedRoll.RaidRoll;
+					local isRaidRoll = frame.Roll.RaidRoll;
 					self.ButtonDelete:SetShown(roll and roll > 0 and not isRaidRoll);
 					self.ButtonReroll:SetShown(roll and roll > 0 and     isRaidRoll);
 				end
@@ -448,6 +447,7 @@
 										disabled = not condition,
 										func = function(info)
 											local frame = self:GetParent():GetParent();
+											if not frame.Roll then return; end
 
 											local totalRolls = 0;
 											for player, roll in pairs(frame.Roll.Players) do
@@ -498,6 +498,8 @@
 								};
 
 								local roll = self:GetParent():GetParent().Roll;
+								if not roll then return; end
+
 								local totalRolls = 0;
 								for player, roll in pairs(roll.Players) do
 									if roll > 0 then

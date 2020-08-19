@@ -5,16 +5,17 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
     list.Frames = list.Frames or { };
 
     for _, frame in ipairs(list.Frames) do
-        if frame:IsShown() then
-            local rollingThisItem = self:IsRolling(frame.Item);
+        if frame:IsShown() and frame.ReservesFrame then
+            frame.Roll = self:IsRolling(frame.Item) and not self.RequestedRoll.Custom and self.RequestedRoll or nil;
 
-            frame.ReservesFrame.HeaderRoll:SetShown(rollingThisItem);
-            frame.RequestRollButton.CancelIcon:SetShown(rollingThisItem);
+            frame.ReservesFrame.HeaderRoll:SetShown(frame.Roll);
+            frame.ReservesFrame.ReportRolls:SetShown(frame.Roll);
+            frame.RequestRollButton.CancelIcon:SetShown(frame.Roll and not frame.Historical and self:IsRolling(frame.Item));
 
             local highest = 0;
-            if self.RequestedRoll then
-                for player, roll in pairs(self.RequestedRoll.Players) do
-                    if highest < roll and LootReserve:IsPlayerOnline(player) then
+            if frame.Roll then
+                for player, roll in pairs(frame.Roll.Players) do
+                    if highest < roll and (frame.Historical or LootReserve:IsPlayerOnline(player)) then
                         highest = roll;
                     end
                 end
@@ -22,8 +23,8 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
 
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    if rollingThisItem and self.RequestedRoll.Players[button.Player] then
-                        local roll = self.RequestedRoll.Players[button.Player];
+                    if frame.Roll and frame.Roll.Players[button.Player] then
+                        local roll = frame.Roll.Players[button.Player];
                         local winner = roll > 0 and highest > 0 and roll == highest;
                         local pass = roll == -1;
                         local deleted = roll == -2;
@@ -51,12 +52,12 @@ function LootReserve.Server:UpdateReserveListChat(lockdown)
     list.Frames = list.Frames or { };
 
     for _, frame in ipairs(list.Frames) do
-        if frame:IsShown() then
-            local rollingThisItem = self:IsRolling(frame.Item);
+        frame.Roll = self:IsRolling(frame.Item) and not self.RequestedRoll.Custom and self.RequestedRoll or nil;
 
+        if frame:IsShown() and frame.ReservesFrame then
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    if rollingThisItem and self.RequestedRoll and self.RequestedRoll.Chat and self.RequestedRoll.Chat[button.Player] and #self.RequestedRoll.Chat[button.Player] > 1 then
+                    if frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player) then
                         button.RecentChat:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth() + 2, 0);
                         button.RecentChat:Show();
                     else
@@ -118,6 +119,8 @@ function LootReserve.Server:UpdateReserveList(lockdown)
 
         local name, link, _, _, _, _, _, _, _, texture = GetItemInfo(item);
         frame.Link = link;
+        frame.Historical = false;
+        frame.Roll = self:IsRolling(frame.Item) and not self.RequestedRoll.Custom and self.RequestedRoll or nil;
 
         frame.ItemFrame.Icon:SetTexture(texture);
         frame.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
@@ -136,7 +139,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         end
         frame:SetAlpha(fade and 0.25 or 1);
 
-        frame.DurationFrame:SetShown(self:IsRolling(frame.Item) and self.RequestedRoll.MaxDuration);
+        frame.DurationFrame:SetShown(self:IsRolling(frame.Item) and self.RequestedRoll.MaxDuration and not self.RequestedRoll.Custom);
         local durationHeight = frame.DurationFrame:IsShown() and 12 or 0;
         frame.DurationFrame:SetHeight(math.max(durationHeight, 0.00001));
 
@@ -277,22 +280,23 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
     list.Frames = list.Frames or { };
 
     for i, frame in ipairs(list.Frames) do
-        if frame:IsShown() and frame.Roll then
-            local rollingThisItem = self:IsRolling(frame.Item);
-
-            frame.ReservesFrame.HeaderRoll:Show();
-            frame.RequestRollButton.CancelIcon:SetShown(not frame.Historical and rollingThisItem);
+        if frame:IsShown() and frame.ReservesFrame then
+            frame.ReservesFrame.HeaderRoll:SetShown(frame.Roll);
+            frame.ReservesFrame.ReportRolls:SetShown(frame.Roll);
+            frame.RequestRollButton.CancelIcon:SetShown(frame.Roll and not frame.Historical and self:IsRolling(frame.Item));
 
             local highest = 0;
-            for player, roll in pairs(frame.Roll.Players) do
-                if highest < roll and (frame.Historical or LootReserve:IsPlayerOnline(player)) then
-                    highest = roll;
+            if frame.Roll then
+                for player, roll in pairs(frame.Roll.Players) do
+                    if highest < roll and (frame.Historical or LootReserve:IsPlayerOnline(player)) then
+                        highest = roll;
+                    end
                 end
             end
 
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    if frame.Roll.Players[button.Player] then
+                    if frame.Roll and frame.Roll.Players[button.Player] then
                         local roll = frame.Roll.Players[button.Player];
                         local winner = roll > 0 and highest > 0 and roll == highest;
                         local pass = roll == -1;
@@ -321,10 +325,10 @@ function LootReserve.Server:UpdateRollListChat(lockdown)
     list.Frames = list.Frames or { };
 
     for _, frame in ipairs(list.Frames) do
-        if frame:IsShown() and frame.Roll then
+        if frame:IsShown() and frame.ReservesFrame then
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    if frame.Roll.Chat and frame.Roll.Chat[button.Player] and #frame.Roll.Chat[button.Player] > 1 then
+                    if frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player) then
                         button.RecentChat:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth() + 2, 0);
                         button.RecentChat:Show();
                     else
