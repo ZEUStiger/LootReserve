@@ -495,7 +495,7 @@ function LootReserve.Server:PrepareSession()
                                     if child.Loot then
                                         for _, item in ipairs(child.Loot) do
                                             if item ~= 0 and self.ReservableItems[item] then
-                                                if string.find(GetItemInfo(item):upper(), text) then
+                                                if string.find(GetItemInfo(item):upper(), text) and not LootReserve:Contains(matches, item) then
                                                     match = match and 0 or item;
                                                     table.insert(matches, item);
                                                 end
