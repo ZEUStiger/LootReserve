@@ -1556,6 +1556,7 @@
 				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN);
 			</OnShow>
 			<OnHide>
+				CloseMenus();
 				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE);
 				DEFAULT_CHAT_FRAME:AddMessage("Loot Reserve Server window can be reopened by typing |cFFFFD200/reserve server|r", 1, 1, 1);
 			</OnHide>
