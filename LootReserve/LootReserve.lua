@@ -52,10 +52,36 @@ function SlashCmdList.LOOTRESERVE(command)
     if command == "" then
         LootReserve.Client.Window:SetShown(not LootReserve.Client.Window:IsShown());
     elseif command == "server" then
-        LootReserve.Server.Window:SetShown(not LootReserve.Server.Window:IsShown());
+        LootReserve:OpenServerWindow();
     elseif command == "roll" or command == "rolls" then
+        LootReserve:OpenServerWindow(true);
+    end
+end
+
+local pendingOpenServerWindow = nil;
+local pendingLockdownHooked = nil;
+function LootReserve:OpenServerWindow(rolls)
+    if InCombatLockdown() and LootReserve.Server.Window:IsProtected() then
+        pendingOpenServerWindow = { rolls };
+        if not pendingLockdownHooked then
+            pendingLockdownHooked = true;
+            LootReserve:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+                if pendingOpenServerWindow then
+                    local params = pendingOpenServerWindow;
+                    pendingOpenServerWindow = nil;
+                    LootReserve:OpenServerWindow(unpack(params));
+                end
+            end);
+        end
+        DEFAULT_CHAT_FRAME:AddMessage("Loot Reserve Server window will open once you're out of combat", 1, 1, 1);
+        return;
+    end
+
+    if rolls then
         LootReserve.Server.Window:Show();
         LootReserve.Server:OnWindowTabClick(LootReserve.Server.Window.TabRolls);
+    else
+        LootReserve.Server.Window:SetShown(not LootReserve.Server.Window:IsShown());
     end
 end
 
