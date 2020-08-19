@@ -52,9 +52,9 @@ function LootReserve.Server:UpdateReserveListChat(lockdown)
     list.Frames = list.Frames or { };
 
     for _, frame in ipairs(list.Frames) do
-        frame.Roll = self:IsRolling(frame.Item) and not self.RequestedRoll.Custom and self.RequestedRoll or nil;
-
         if frame:IsShown() and frame.ReservesFrame then
+            frame.Roll = self:IsRolling(frame.Item) and not self.RequestedRoll.Custom and self.RequestedRoll or nil;
+
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
                     if frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player) then
