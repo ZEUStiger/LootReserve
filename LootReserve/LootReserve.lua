@@ -31,6 +31,7 @@ LootReserveGlobalSave =
     {
         NewSessionSettings = nil,
         Settings = nil,
+        GlobalProfile = nil,
     },
 };
 

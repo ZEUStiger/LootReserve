@@ -613,7 +613,7 @@ function LootReserve.Server:OnWindowLoad(window)
         end
     end);
     LootReserve:RegisterEvent("PLAYER_REGEN_DISABLED", function()
-        -- Swap out the real (tained) reserves and rolls panels for slightly less functional ones, but ones that don't have taint
+        -- Swap out the real (tainted) reserves and rolls panels for slightly less functional ones, but ones that don't have taint
         if self.Window.PanelReserves:IsShown() then
             self.Window.PanelReserves:Hide();
             self.Window.PanelReservesLockdown:Show();

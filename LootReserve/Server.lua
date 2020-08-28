@@ -15,6 +15,7 @@ LootReserve.Server =
         ChatUpdates = true,
         ChatThrottle = false,
         ReservesSorting = LootReserve.Constants.ReservesSorting.ByTime,
+        UseGlobalProfile = false,
         RollUsePhases = false,
         RollPhases = { },
         RollAdvanceOnExpire = true,
@@ -78,6 +79,41 @@ local function deepcopy(orig)
     end
     return copy
 end
+
+StaticPopupDialogs["LOOTRESERVE_CONFIRM_GLOBAL_PROFILE_ENABLE"] =
+{
+    text = "By enabling global profile you acknowledge that all the mess you can create by e.g. swapping between characters who are in different raid groups will be on your conscience.|n|nDo you want to enable global profile?",
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function(self)
+        LootReserveGlobalSave.Server.GlobalProfile = LootReserveCharacterSave.Server;
+        LootReserve.Server.Settings.UseGlobalProfile = true;
+        LootReserve.Server:Load();
+    end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+};
+
+StaticPopupDialogs["LOOTRESERVE_CONFIRM_GLOBAL_PROFILE_DISABLE"] =
+{
+    text = "Disabling global profile will revert you back to using sessions stored on your other characters before you turned global profile on. Your current character will adopt the current session.|n|nDo you want to disable global profile?",
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function(self)
+        LootReserveCharacterSave.Server = LootReserveGlobalSave.Server.GlobalProfile;
+        LootReserveGlobalSave.Server.GlobalProfile = nil;
+        LootReserve.Server.Settings.UseGlobalProfile = false;
+        LootReserve.Server:Load();
+        LootReserve.Server:Startup();
+        LootReserve.Server:UpdateReserveList();
+        LootReserve.Server:UpdateRollList();
+    end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+};
+
 local function removeFromTable(tbl, item)
     for index, i in ipairs(tbl) do
         if i == item then
@@ -146,12 +182,20 @@ function LootReserve.Server:Load()
             from[field] = to[field];
         end
     end
-    loadInto(self, LootReserveCharacterSave.Server, "CurrentSession");
-    loadInto(self, LootReserveCharacterSave.Server, "RequestedRoll");
-    loadInto(self, LootReserveCharacterSave.Server, "RollHistory");
-    loadInto(self, LootReserveCharacterSave.Server, "RecentLoot");
+
     loadInto(self, LootReserveGlobalSave.Server, "NewSessionSettings");
     loadInto(self, LootReserveGlobalSave.Server, "Settings");
+
+    if self.Settings.UseGlobalProfile then
+        LootReserveGlobalSave.Server.GlobalProfile = LootReserveGlobalSave.Server.GlobalProfile or { };
+        self.SaveProfile = LootReserveGlobalSave.Server.GlobalProfile;
+    else
+        self.SaveProfile = LootReserveCharacterSave.Server;
+    end
+    loadInto(self, self.SaveProfile, "CurrentSession");
+    loadInto(self, self.SaveProfile, "RequestedRoll");
+    loadInto(self, self.SaveProfile, "RollHistory");
+    loadInto(self, self.SaveProfile, "RecentLoot");
 
     for name, key in pairs(LootReserve.Constants.ChatAnnouncement) do
         if self.Settings.ChatAsRaidWarning[key] == nil then
@@ -626,7 +670,7 @@ function LootReserve.Server:StartSession()
         },
         ]]
     };
-    LootReserveCharacterSave.Server.CurrentSession = self.CurrentSession;
+    self.SaveProfile.CurrentSession = self.CurrentSession;
 
     for i = 1, MAX_RAID_MEMBERS do
         local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
@@ -722,7 +766,7 @@ function LootReserve.Server:ResetSession()
     LootReserve.Comm:SendSessionReset();
 
     self.CurrentSession = nil;
-    LootReserveCharacterSave.Server.CurrentSession = self.CurrentSession;
+    self.SaveProfile.CurrentSession = self.CurrentSession;
 
     self:UpdateReserveList();
 
@@ -1084,7 +1128,7 @@ function LootReserve.Server:CancelRollRequest(item)
 
         LootReserve.Comm:BroadcastRequestRoll(0, { }, self.RequestedRoll.Custom or self.RequestedRoll.RaidRoll);
         self.RequestedRoll = nil;
-        LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
+        self.SaveProfile.RequestedRoll = self.RequestedRoll;
         self:UpdateReserveListRolls();
         self:UpdateRollList();
     end
@@ -1224,7 +1268,7 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
         Players = { },
         AllowedPlayers = allowedPlayers,
     };
-    LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
+    self.SaveProfile.RequestedRoll = self.RequestedRoll;
 
     for _, player in ipairs(allowedPlayers or reserve.Players) do
         self.RequestedRoll.Players[player] = 0;
@@ -1277,7 +1321,7 @@ function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPla
         Players = { },
         AllowedPlayers = allowedPlayers,
     };
-    LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
+    self.SaveProfile.RequestedRoll = self.RequestedRoll;
 
     if allowedPlayers then
         for _, player in ipairs(allowedPlayers) do
@@ -1348,7 +1392,7 @@ function LootReserve.Server:RaidRoll(item)
         Players = { },
         AllowedPlayers = { Ambiguate(UnitName("player"), "short") },
     };
-    LootReserveCharacterSave.Server.RequestedRoll = self.RequestedRoll;
+    self.SaveProfile.RequestedRoll = self.RequestedRoll;
 
     self:PrepareRequestRoll();
     RandomRoll(1, GetNumGroupMembers());

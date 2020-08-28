@@ -1089,6 +1089,19 @@
 							CloseMenus();
 							self:Click();
 						end
+						local function ToggleGlobalProfile(enabled)
+							if enabled then
+								LootReserve.Server.Settings.UseGlobalProfile = false;
+								CloseMenus();
+								self:Click();
+								StaticPopup_Show("LOOTRESERVE_CONFIRM_GLOBAL_PROFILE_ENABLE");
+							else
+								LootReserve.Server.Settings.UseGlobalProfile = true;
+								CloseMenus();
+								self:Click();
+								StaticPopup_Show("LOOTRESERVE_CONFIRM_GLOBAL_PROFILE_DISABLE");
+							end
+						end
 
 						local function MakeChatColoredText(text, chatType)
 							local info = ChatTypeInfo[chatType or "RAID_WARNING"];
@@ -1125,6 +1138,9 @@
 							MakeMenuRadio("By Name",   "ReservesSorting", LootReserve.Constants.ReservesSorting.ByName,   "Sort reserves by the name of the item.", RefreshReserves),
 							MakeMenuRadio("By Boss",   "ReservesSorting", LootReserve.Constants.ReservesSorting.BySource, "Sort reserves by the order of the boss the item first drops from.", RefreshReserves),
 							MakeMenuRadio("By Looter", "ReservesSorting", LootReserve.Constants.ReservesSorting.ByLooter, "Sort reserves by the name of one of the players that looted this item in the current session.|n|nFade out items not looted by anyone.|cFF808080 (applies only after some items have been looted in the raid)|r", RefreshReserves),
+							LootReserve:MakeMenuSeparator(),
+							{ text = "Storage", isTitle = true },
+							MakeMenuToggle("Use Global Profile", "UseGlobalProfile", "By default all the data about the active reserves session is stored per-character. Enable this to share the same session between all characters on your account.|n|nThe session from your current character will be the one propagated to others.", ToggleGlobalProfile),
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Close" },
 						};
