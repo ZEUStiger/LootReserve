@@ -84,8 +84,13 @@ function LootReserve.Client:UpdateLootList()
         frame.Item = item;
 
         if item == 0 then
-            frame:SetHeight(16);
-            frame:Hide();
+            if list.LastIndex > 1 and not list.Frames[list.LastIndex - 1]:IsShown() then
+                frame:SetHeight(0.00001);
+                frame:Hide();
+            else
+                frame:SetHeight(16);
+                frame:Hide();
+            end
         else
             frame:SetHeight(44);
             frame:Show();
@@ -268,6 +273,7 @@ function LootReserve.Client:UpdateCategories()
 end
 
 function LootReserve.Client:OnCategoryClick(button)
+    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
     if not button.Category.Search then
         self.Window.Search:ClearFocus();
     end
