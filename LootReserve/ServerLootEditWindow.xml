@@ -1,0 +1,115 @@
+<Ui xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns="http://www.blizzard.com/wow/ui/">
+	<Script file="ServerLootEditWindow.lua" />
+	<Frame name="LootReserveLootEditListTemplate" virtual="true" enableMouse="true">
+		<Size y="44" />
+		<Backdrop edgeFile="Interface\Tooltips\UI-Tooltip-Border">
+			<EdgeSize val="16" />
+			<BorderColor r="1" g="0.82" b="0" a="0" />
+		</Backdrop>
+		<Frames>
+			<Frame parentKey="ReserveFrame">
+				<Size x="112" y="32" />
+				<Anchors>
+					<Anchor point="RIGHT" x="-6" y="0" />
+				</Anchors>
+				<Frames>
+				</Frames>
+			</Frame>
+			<Button parentKey="ItemFrame" inherits="LootReserveItemButtomTemplate">
+				<KeyValues>
+					<KeyValue key="tooltipRight" value="true" type="boolean" />
+				</KeyValues>
+				<Anchors>
+					<Anchor point="LEFT" x="6" />
+					<Anchor point="RIGHT" relativeKey="$parent.ReserveFrame" relativePoint="LEFT" x="-5" />
+				</Anchors>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnUpdate>
+				local hovered = self:IsMouseOver() and self:GetParent():GetParent():IsMouseOver();
+				if self.hovered ~= hovered then
+					self.hovered = hovered;
+					local r, g, b = self:GetBackdropBorderColor();
+					self:SetBackdropBorderColor(r, g, b, hovered and 1 or 0);
+				end
+			</OnUpdate>
+		</Scripts>
+	</Frame>
+	<Frame name="LootReserveServerLootEditWindow" parent="UIParent" inherits="BasicFrameTemplateWithInset" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true" hidden="false">
+		<Size x="650" y="450" />
+		<Anchors>
+			<Anchor point="CENTER" />
+		</Anchors>
+		<Frames>
+			<Button inherits="LootReserveCommonFrameMovingHeaderTemplate" />
+			<Button inherits="LootReserveCommonFrameSizeGrabberTemplate" />
+			<EditBox parentKey="Search" inherits="SearchBoxTemplate">
+				<Size x="193" y="20" />
+				<Anchors>
+					<Anchor point="TOPLEFT" x="22" y="-37" />
+				</Anchors>
+				<Scripts>
+					<OnTextChanged inherit="prepend">
+						if #self:GetText() &gt; 0 then
+							for _, frame in ipairs(self:GetParent().Categories.Scroll.Container.Frames) do
+								if frame.Category.Search then
+									frame:Click();
+								end
+							end
+						end
+						LootReserve.Server.LootEdit:UpdateLootList();
+					</OnTextChanged>
+				</Scripts>
+			</EditBox>
+			<Frame parentKey="Categories">
+				<Anchors>
+					<Anchor point="TOPRIGHT" relativeKey="$parent.Search" relativePoint="BOTTOMRIGHT" x="1" />
+					<Anchor point="BOTTOMLEFT" x="16" y="16" />
+				</Anchors>
+				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border">
+					<BackgroundInsets left="5" right="5" top="5" bottom="5" />
+					<EdgeSize val="16" />
+				</Backdrop>
+				<Frames>
+					<ScrollFrame parentKey="Scroll" inherits="LootReserveScrollTemplate">
+						<Anchors>
+							<Anchor point="TOPLEFT" x="5" y="-5" />
+							<Anchor point="BOTTOMRIGHT" x="-27" y="5" />
+						</Anchors>
+					</ScrollFrame>
+				</Frames>
+			</Frame>
+			<Frame parentKey="Loot">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.Search" relativePoint="TOPRIGHT" />
+					<Anchor point="BOTTOMRIGHT" x="-16" y="16" />
+				</Anchors>
+				<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border">
+					<BackgroundInsets left="5" right="5" top="5" bottom="5" />
+					<EdgeSize val="16" />
+				</Backdrop>
+				<Frames>
+					<ScrollFrame parentKey="Scroll" inherits="LootReserveScrollTemplate">
+						<Anchors>
+							<Anchor point="TOPLEFT" x="5" y="-5" />
+							<Anchor point="BOTTOMRIGHT" x="-27" y="5" />
+						</Anchors>
+					</ScrollFrame>
+				</Frames>
+			</Frame>
+		</Frames>
+		<Scripts>
+			<OnLoad>
+				LootReserve.Server.LootEdit:OnWindowLoad(self);
+			</OnLoad>
+			<OnShow>
+				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN);
+			</OnShow>
+			<OnHide>
+				CloseMenus();
+				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE);
+			</OnHide>
+		</Scripts>
+	</Frame>
+</Ui>

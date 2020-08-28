@@ -661,6 +661,7 @@ local activeSessionChanges =
     EditBoxCount = "Disable",
     LabelDuration = "Label",
     DropDownDuration = "DropDown",
+    ButtonLootEdit = "Disable",
 
     Apply = function(self, panel, active)
         for k, action in pairs(self) do
@@ -695,6 +696,7 @@ function LootReserve.Server:SessionStarted()
     PlaySound(SOUNDKIT.GS_CHARACTER_SELECTION_ENTER_WORLD);
     self:UpdateServerAuthority();
     self:UpdateRollList();
+    self.LootEdit.Window:Hide();
 end
 
 function LootReserve.Server:SessionStopped()

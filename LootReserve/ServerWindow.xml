@@ -1350,6 +1350,7 @@
 									info.minWidth = self:GetWidth() - 40;
 									info.func = function(info)
 										LootReserve.Server.NewSessionSettings.LootCategory = info.value;
+										LootReserve.Server.LootEdit:UpdateCategories();
 										UIDropDownMenu_SetSelectedValue(self, info.value);
 									end
 									for id, category in LootReserve:Ordered(LootReserve.Data.Categories) do
@@ -1364,6 +1365,17 @@
 							</OnLoad>
 						</Scripts>
 					</Frame>
+					<Button parentKey="ButtonLootEdit" inherits="UIMenuButtonStretchTemplate" text="Edit Loot">
+						<Size x="100" y="22" />
+						<Anchors>
+							<Anchor point="TOP" relativeKey="$parent.DropDownRaid" relativePoint="BOTTOM" y="7" />
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								LootReserve.Server.LootEdit.Window:SetShown(not LootReserve.Server.LootEdit.Window:IsShown());
+							</OnClick>
+						</Scripts>
+					</Button>
 					<EditBox name="LootReserveServerDropDownCount" parentKey="EditBoxCount" inherits="InputBoxTemplate" autoFocus="false">
 						<Size x="40" y="20" />
 						<Anchors>

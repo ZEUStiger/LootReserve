@@ -27,6 +27,7 @@ LootReserve.Server =
     RollHistory = { },
     RecentLoot = { },
     AddonUsers = { },
+    LootEdit = { },
 
     ReservableItems = { },
     LootTrackingRegistered = false,
@@ -220,6 +221,7 @@ function LootReserve.Server:Load()
 
     -- Update the UI according to loaded settings
     self:LoadNewSessionSessings();
+    self.LootEdit:UpdateCategories();
 end
 
 function LootReserve.Server:Startup()
