@@ -37,7 +37,7 @@ function LootReserve.Server.LootEdit:UpdateLootList()
         frame.Item = item;
 
         if item == 0 then
-            if list.LastIndex > 1 and not list.Frames[list.LastIndex - 1]:IsShown() then
+            if list.LastIndex <= 1 or not list.Frames[list.LastIndex - 1]:IsShown() then
                 frame:SetHeight(0.00001);
                 frame:Hide();
             else
