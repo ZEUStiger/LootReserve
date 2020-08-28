@@ -65,21 +65,6 @@ StaticPopupDialogs["LOOTRESERVE_CONFIRM_FORCED_CANCEL_ROLL"] =
     hideOnEscape = 1,
 };
 
-local function deepcopy(orig)
-    local orig_type = type(orig)
-    local copy
-    if orig_type == 'table' then
-        copy = {}
-        for orig_key, orig_value in next, orig, nil do
-            copy[deepcopy(orig_key)] = deepcopy(orig_value)
-        end
-        setmetatable(copy, deepcopy(getmetatable(orig)))
-    else -- number, string, boolean, etc
-        copy = orig
-    end
-    return copy
-end
-
 StaticPopupDialogs["LOOTRESERVE_CONFIRM_GLOBAL_PROFILE_ENABLE"] =
 {
     text = "By enabling global profile you acknowledge that all the mess you can create by e.g. swapping between characters who are in different raid groups will be on your conscience.|n|nDo you want to enable global profile?",
@@ -631,7 +616,7 @@ function LootReserve.Server:StartSession()
     self.CurrentSession =
     {
         AcceptingReserves = true,
-        Settings = deepcopy(self.NewSessionSettings),
+        Settings = LootReserve:Deepcopy(self.NewSessionSettings),
         StartTime = time(),
         Duration = self.NewSessionSettings.Duration,
         DurationEndTimestamp = time() + self.NewSessionSettings.Duration, -- Used to resume the session after relog or UI reload
@@ -840,7 +825,7 @@ function LootReserve.Server:Reserve(player, item, chat)
             if #reserve.Players == 1 and reserve.Players[1] == player then
                 post = " You are the only player reserving this item thus far.";
             else
-                local others = deepcopy(reserve.Players);
+                local others = LootReserve:Deepcopy(reserve.Players);
                 removeFromTable(others, player);
                 post = format(" It's also reserved by %d other %s: %s.",
                     #others,
@@ -870,7 +855,7 @@ function LootReserve.Server:Reserve(player, item, chat)
 
             for _, other in ipairs(reserve.Players) do
                 if other ~= player and LootReserve:IsPlayerOnline(other) and not self:IsAddonUser(other) then
-                    local others = deepcopy(reserve.Players);
+                    local others = LootReserve:Deepcopy(reserve.Players);
                     removeFromTable(others, other);
 
                     LootReserve:SendChatMessage(format("There %s now %d %s for %s you reserved: %s.",
@@ -971,7 +956,7 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
 
             for _, other in ipairs(reserve.Players) do
                 if LootReserve:IsPlayerOnline(other) and not self:IsAddonUser(other) then
-                    local others = deepcopy(reserve.Players);
+                    local others = LootReserve:Deepcopy(reserve.Players);
                     removeFromTable(others, other);
 
                     if #others == 0 then
@@ -1099,7 +1084,7 @@ function LootReserve.Server:AdvanceRollPhase(item)
         if self:GetWinningRollAndPlayers() then return; end
         if not self.RequestedRoll.Custom then return; end
 
-        local phases = deepcopy(self.RequestedRoll.Phases);
+        local phases = LootReserve:Deepcopy(self.RequestedRoll.Phases);
         if not phases or #phases <= 1 then return; end
         table.remove(phases, 1);
 

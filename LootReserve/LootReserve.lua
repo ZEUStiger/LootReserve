@@ -329,6 +329,19 @@ function LootReserve:StringTrim(str, chars)
     return (str:match("^" .. chars .. "*(.-)" .. chars .. "*$"));
 end
 
+function LootReserve:Deepcopy(orig)
+    if type(orig) == 'table' then
+        local copy = { };
+        for orig_key, orig_value in next, orig, nil do
+            copy[self:Deepcopy(orig_key)] = self:Deepcopy(orig_value)
+        end
+        setmetatable(copy, self:Deepcopy(getmetatable(orig)))
+        return copy;
+    else
+        return orig;
+    end
+end
+
 function LootReserve:Contains(table, item)
     for _, i in ipairs(table) do
         if i == item then
