@@ -143,7 +143,7 @@ function LootReserve.Client:UpdateLootList()
                 for _, child in ipairs(category.Children) do
                     if child.Loot then
                         for _, item in ipairs(child.Loot) do
-                            if item ~= 0 and not uniqueItems[item] then
+                            if item ~= 0 and not uniqueItems[item] and LootReserve.ItemConditions:TestPlayer("player", item, false) then
                                 uniqueItems[item] = true;
                                 local match = matchesFilter(item, filter);
                                 if match then
@@ -164,7 +164,9 @@ function LootReserve.Client:UpdateLootList()
         end
     elseif self.SelectedCategory and self.SelectedCategory.Loot then
         for _, item in ipairs(self.SelectedCategory.Loot) do
-            createFrame(item);
+            if LootReserve.ItemConditions:TestPlayer("player", item, false) then
+                createFrame(item);
+            end
         end
     end
     for i = list.LastIndex + 1, #list.Frames do
@@ -227,7 +229,9 @@ function LootReserve.Client:UpdateCategories()
         end
         if category.Children then
             for i, child in ipairs(category.Children) do
-                createCategoryButtonsRecursively(id, child);
+                if not child.Edited then
+                    createCategoryButtonsRecursively(id, child);
+                end
             end
         end
     end

@@ -7,13 +7,151 @@
 			<BorderColor r="1" g="0.82" b="0" a="0" />
 		</Backdrop>
 		<Frames>
-			<Frame parentKey="ReserveFrame">
+			<Frame parentKey="ConditionsFrame">
 				<Size x="112" y="32" />
 				<Anchors>
 					<Anchor point="RIGHT" x="-6" y="0" />
 				</Anchors>
 				<Frames>
+					<Button parentKey="ClassMask" inherits="UIMenuButtonStretchTemplate">
+						<Size y="20" />
+						<Anchors>
+							<Anchor point="TOPRIGHT" x="3" y="3" />
+						</Anchors>
+						<Scripts>
+							<OnLoad>
+								self.Update = function(self)
+									local item = self:GetParent():GetParent().Item;
+									local conditions = LootReserve.ItemConditions:Get(item, true);
+									if conditions and conditions.ClassMask then
+										local text = "";
+										for i = 1, LootReserve:GetNumClasses() do
+											local name, file, id = LootReserve:GetClassInfo(i);
+											if id and LootReserve.ItemConditions:TestClassMask(conditions.ClassMask, id) then
+												text = text .. (#text > 0 and ", " or "") .. format("|c%s%s|r", RAID_CLASS_COLORS[file].colorStr, name);
+											end
+										end
+										self:SetText(text);
+										self.any = false;
+									else
+										self:SetText("|cFF808080Any Class|r");
+										self.any = true;
+									end
+									self:SetShown(self:GetParent():GetParent().hovered or not self.any);
+									self:SetWidth(10 + self.Text:GetStringWidth() + 10);
+									if self:GetParent().Update then
+										self:GetParent():Update();
+									end
+								end;
+								self:Update();
+							</OnLoad>
+							<OnClick>
+								local item = self:GetParent():GetParent().Item;
+								local conditions = LootReserve.ItemConditions:Get(item, true);
+								local menu =
+								{
+									LootReserve:MakeMenuSeparator(),
+									{ text = "Close" },
+								};
+								local index = 0;
+								for i = 1, LootReserve:GetNumClasses() do
+									local name, file, id = LootReserve:GetClassInfo(i);
+									if name and file and id then
+										index = index + 1;
+										table.insert(menu, index,
+										{
+											text = format("|c%s%s|r", RAID_CLASS_COLORS[file].colorStr, name),
+											keepShownOnClick = true,
+											notCheckable = false,
+											checked = conditions and LootReserve.ItemConditions:TestClassMask(conditions.ClassMask, id),
+											arg1 = id,
+											func = function(_, id, _, checked)
+												local conditions = LootReserve.ItemConditions:Make(item, true);
+												conditions.ClassMask = checked and bit.bor(conditions.ClassMask or 0, bit.lshift(1, id - 1)) or bit.band(conditions.ClassMask or 0, bit.bnot(bit.lshift(1, id - 1)));
+												LootReserve.ItemConditions:Save(item, true);
+												LootReserve.Server.LootEdit:UpdateLootList();
+											end
+										});
+									end
+								end
+								LootReserve:OpenMenu(menu, self:GetParent().ClassMaskMenu, self);
+							</OnClick>
+						</Scripts>
+					</Button>
+					<Frame parentKey="ClassMaskMenu" inherits="UIDropDownMenuTemplate" hidden="true">
+						<KeyValues>
+							<KeyValue key="point" type="string" value="TOPRIGHT" />
+							<KeyValue key="relativePoint" type="string" value="BOTTOMRIGHT" />
+						</KeyValues>
+					</Frame>
+					<Button parentKey="State" inherits="UIMenuButtonStretchTemplate" text="Hide">
+						<Size y="20" />
+						<Anchors>
+							<Anchor point="BOTTOMRIGHT" x="3" y="-3" />
+						</Anchors>
+						<Scripts>
+							<OnLoad>
+								self.Update = function(self)
+									local item = self:GetParent():GetParent().Item;
+									local conditions = LootReserve.ItemConditions:Get(item, true);
+									if conditions and conditions.Faction and not LootReserve.ItemConditions:TestFaction(conditions.Faction) then
+										self.faction = true;
+									else
+										self.faction = false;
+									end
+									self.hidden = conditions and conditions.Hidden;
+									self:SetShown(not self.faction and self:GetParent():GetParent().hovered or self.hidden);
+									self:SetText(self.hidden and "|cFFFF0000Hidden|r" or "Visible");
+									self:SetWidth(10 + self.Text:GetStringWidth() + 10);
+									if self:GetParent().Update then
+										self:GetParent():Update();
+									end
+								end;
+								self:Update();
+							</OnLoad>
+							<OnClick>
+								local item = self:GetParent():GetParent().Item;
+								local conditions = LootReserve.ItemConditions:Make(item, true);
+								conditions.Hidden = not conditions.Hidden;
+								LootReserve.ItemConditions:Save(item, true);
+								LootReserve.Server.LootEdit:UpdateLootList();
+							</OnClick>
+						</Scripts>
+					</Button>
+					<Button parentKey="Faction" inherits="UIMenuButtonStretchTemplate">
+						<Size y="20" />
+						<Anchors>
+							<Anchor point="BOTTOMRIGHT" relativeKey="$parent.State" />
+						</Anchors>
+						<Scripts>
+							<OnLoad>
+								self:Disable();
+								self.Update = function(self)
+									local item = self:GetParent():GetParent().Item;
+									local conditions = LootReserve.ItemConditions:Get(item, true);
+									if conditions and conditions.Faction and not LootReserve.ItemConditions:TestFaction(conditions.Faction) and not conditions.Hidden then
+										self:SetText(format("|cFFFF0000%s-only|r", conditions.Faction));
+										self:Show();
+									else
+										self:Hide();
+									end
+									self:SetWidth(10 + self.Text:GetStringWidth() + 10);
+									if self:GetParent().Update then
+										self:GetParent():Update();
+									end
+								end;
+								self:Update();
+							</OnLoad>
+						</Scripts>
+					</Button>
 				</Frames>
+				<Scripts>
+					<OnLoad>
+						self.Update = function(self)
+							self:SetWidth(math.max(math.max(self.State:GetWidth(), self.Faction:IsShown() and self.Faction:GetWidth() or 0), self.ClassMask:GetWidth()) - 6);
+						end
+					</OnLoad>
+				</Scripts>
 			</Frame>
 			<Button parentKey="ItemFrame" inherits="LootReserveItemButtomTemplate">
 				<KeyValues>
@@ -21,22 +159,40 @@
 				</KeyValues>
 				<Anchors>
 					<Anchor point="LEFT" x="6" />
-					<Anchor point="RIGHT" relativeKey="$parent.ReserveFrame" relativePoint="LEFT" x="-5" />
+					<Anchor point="RIGHT" relativeKey="$parent.ConditionsFrame" relativePoint="LEFT" x="-5" />
 				</Anchors>
 			</Button>
 		</Frames>
 		<Scripts>
+			<OnLoad>
+				self.ConditionBackgrounds = { };
+				local parts = { "TopLeft", "TopRight", "BottomLeft", "BottomRight", "TopMiddle", "MiddleLeft", "MiddleRight", "BottomMiddle", "MiddleMiddle" };
+				for _, frame in ipairs({ self.ConditionsFrame:GetChildren() }) do
+					for _, part in ipairs(parts) do
+						if frame[part] then
+							table.insert(self.ConditionBackgrounds, frame[part]);
+						end
+					end
+				end
+			</OnLoad>
 			<OnUpdate>
-				local hovered = self:IsMouseOver() and self:GetParent():GetParent():IsMouseOver();
+				local hovered = self:IsMouseOver() and self:GetParent():GetParent():IsMouseOver() and not UIDROPDOWNMENU_OPEN_MENU or UIDROPDOWNMENU_OPEN_MENU == self.ConditionsFrame.ClassMaskMenu;
 				if self.hovered ~= hovered then
 					self.hovered = hovered;
 					local r, g, b = self:GetBackdropBorderColor();
 					self:SetBackdropBorderColor(r, g, b, hovered and 1 or 0);
+					self.ConditionsFrame.ClassMask:SetEnabled(hovered);
+					self.ConditionsFrame.ClassMask:SetShown(hovered or not self.ConditionsFrame.ClassMask.any);
+					self.ConditionsFrame.State:SetEnabled(hovered);
+					self.ConditionsFrame.State:SetShown(not self.ConditionsFrame.State.faction and hovered or self.ConditionsFrame.State.hidden);
+					for _, part in ipairs(self.ConditionBackgrounds) do
+						part:SetShown(hovered);
+					end
 				end
 			</OnUpdate>
 		</Scripts>
 	</Frame>
-	<Frame name="LootReserveServerLootEditWindow" parent="UIParent" inherits="BasicFrameTemplateWithInset" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true" hidden="false">
+	<Frame name="LootReserveServerLootEditWindow" parent="UIParent" inherits="BasicFrameTemplateWithInset" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true" hidden="true">
 		<Size x="650" y="450" />
 		<Anchors>
 			<Anchor point="CENTER" />

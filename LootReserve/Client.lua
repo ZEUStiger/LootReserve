@@ -12,6 +12,7 @@ LootReserve.Client =
     Duration = nil,
     MaxDuration = nil,
     ItemReserves = { }, -- { [ItemID] = { "Playername", "Playername", ... }, ... }
+    ItemConditions = { },
     RollRequest = nil,
 
     Settings =
@@ -117,6 +118,7 @@ function LootReserve.Client:ResetSession()
     self.RemainingReserves = 0;
     self.LootCategory = nil;
     self.ItemReserves = { };
+    self.ItemConditions = { };
     self.PendingItems = { };
 end
 

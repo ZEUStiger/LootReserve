@@ -1,6 +1,12 @@
--- TODO: Disable all loot edit actions if session is active
-
 function LootReserve.Server.LootEdit:UpdateLootList()
+    LootReserveServerButtonLootEdit:SetGlow(false);
+    for item in pairs(LootReserve.Server.NewSessionSettings.ItemConditions) do
+        if not LootReserve.Server.NewSessionSettings.LootCategory or LootReserve.Data:IsItemInCategory(item, LootReserve.Server.NewSessionSettings.LootCategory) then
+            LootReserveServerButtonLootEdit:SetGlow(true);
+            break;
+        end
+    end
+
     local filter = LootReserve:TransformSearchText(self.Window.Search:GetText());
     if #filter < 3 then
         filter = nil;
@@ -51,6 +57,12 @@ function LootReserve.Server.LootEdit:UpdateLootList()
             frame.ItemFrame.Icon:SetTexture(texture);
             frame.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
             frame.ItemFrame.Misc:SetText(source or type);
+
+            local conditions = LootReserve.ItemConditions:Get(item, true);
+            frame.ItemFrame:SetAlpha(conditions and (conditions.Hidden or conditions.Faction and not LootReserve.ItemConditions:TestFaction(conditions.Faction)) and 0.25 or 1);
+            frame.ConditionsFrame.ClassMask:Update();
+            frame.ConditionsFrame.Faction:Update();
+            frame.ConditionsFrame.State:Update();
         end
 
         list.ContentHeight = list.ContentHeight + frame:GetHeight();
@@ -74,7 +86,13 @@ function LootReserve.Server.LootEdit:UpdateLootList()
         return false;
     end
 
-    if self.SelectedCategory and self.SelectedCategory.Search and filter then
+    if self.SelectedCategory and self.SelectedCategory.Edited then
+        for item in pairs(LootReserve.Server.NewSessionSettings.ItemConditions) do
+            if not LootReserve.Server.NewSessionSettings.LootCategory or LootReserve.Data:IsItemInCategory(item, LootReserve.Server.NewSessionSettings.LootCategory) then
+                createFrame(item);
+            end
+        end
+    elseif self.SelectedCategory and self.SelectedCategory.Search and filter then
         local missing = false;
         local uniqueItems = { };
         for id, category in LootReserve:Ordered(LootReserve.Data.Categories) do
@@ -114,6 +132,14 @@ function LootReserve.Server.LootEdit:UpdateLootList()
 end
 
 function LootReserve.Server.LootEdit:UpdateCategories()
+    LootReserveServerButtonLootEdit:SetGlow(false);
+    for item in pairs(LootReserve.Server.NewSessionSettings.ItemConditions) do
+        if not LootReserve.Server.NewSessionSettings.LootCategory or LootReserve.Data:IsItemInCategory(item, LootReserve.Server.NewSessionSettings.LootCategory) then
+            LootReserveServerButtonLootEdit:SetGlow(true);
+            break;
+        end
+    end
+
     local list = self.Window.Categories.Scroll.Container;
     list.Frames = list.Frames or { };
     list.LastIndex = 0;
@@ -175,7 +201,6 @@ function LootReserve.Server.LootEdit:UpdateCategories()
         createCategoryButtonsRecursively(id, category);
     end
 
-    local needsSelect = not self.SelectedCategory;
     list.ContentHeight = 0;
     for i, frame in ipairs(list.Frames) do
         if i <= list.LastIndex and (frame.CategoryID < 0 or not LootReserve.Server.NewSessionSettings.LootCategory or frame.CategoryID == LootReserve.Server.NewSessionSettings.LootCategory) then
@@ -185,25 +210,12 @@ function LootReserve.Server.LootEdit:UpdateCategories()
         else
             frame:Hide();
             frame:SetHeight(0.00001);
-            if frame.Category == self.SelectedCategory then
-                needsSelect = true;
-            end
         end
     end
 
-    if needsSelect then
-        local selected = nil;
-        for i, frame in ipairs(list.Frames) do
-            if i <= list.LastIndex then
-                if selected == nil then
-                    if frame.CategoryID > 0 and LootReserve.Server.NewSessionSettings.LootCategory and frame.CategoryID == LootReserve.Server.NewSessionSettings.LootCategory then
-                        selected = false;
-                    end
-                elseif selected == false then
-                    selected = true;
-                    frame:Click();
-                end
-            end
+    for i, frame in ipairs(list.Frames) do
+        if i <= list.LastIndex and frame.Category.Edited then
+            frame:Click();
         end
     end
 
@@ -212,6 +224,7 @@ function LootReserve.Server.LootEdit:UpdateCategories()
 end
 
 function LootReserve.Server.LootEdit:OnCategoryClick(button)
+    CloseMenus();
     PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
     if not button.Category.Search then
         self.Window.Search:ClearFocus();
@@ -238,8 +251,7 @@ end
 function LootReserve.Server.LootEdit:OnWindowLoad(window)
     self.Window = window;
     self.Window.TopLeftCorner:SetSize(32, 32); -- Blizzard UI bug?
-    self.Window.TitleText:SetPoint("TOP", self.Window, "TOP", 0, -4);
-    self.Window.TitleText:SetText("Loot Reserve Server - Loot Edit");
+    self.Window.TitleText:SetText("Loot Reserve Server - Loot List Edit");
     self.Window:SetMinResize(550, 250);
     self:UpdateCategories();
     LootReserve:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(item, success)

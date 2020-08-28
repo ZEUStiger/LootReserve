@@ -205,6 +205,17 @@ function LootReserve:SendChatMessage(text, channel, target)
     end
 end
 
+function LootReserve:GetNumClasses()
+    return 11;
+end
+
+function LootReserve:GetClassInfo(classID)
+    local info = C_CreatureInfo.GetClassInfo(classID);
+    if info then
+        return info.className, info.classFile, info.classID;
+    end
+end
+
 function LootReserve:IsPlayerOnline(player)
     for i = 1, MAX_RAID_MEMBERS do
         local name, _, _, _, _, _, _, online = GetRaidRosterInfo(i);

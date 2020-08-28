@@ -8,6 +8,7 @@ LootReserve.Server =
         MaxReservesPerPlayer = 1,
         Duration = 300,
         ChatFallback = true,
+        ItemConditions = { },
     },
     Settings =
     {
@@ -589,7 +590,7 @@ function LootReserve.Server:PrepareSession()
             for _, child in ipairs(category.Children) do
                 if child.Loot then
                     for _, item in ipairs(child.Loot) do
-                        if item ~= 0 then
+                        if item ~= 0 and LootReserve.ItemConditions:TestServer(item) then
                             self.ReservableItems[item] = true;
                         end
                     end
@@ -784,6 +785,12 @@ function LootReserve.Server:Reserve(player, item, chat)
     if not self.ReservableItems[item] then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.ItemNotReservable, member.ReservesLeft);
         if chat then LootReserve:SendChatMessage("That item cannot be reserved in this raid", "WHISPER", player); end
+        return;
+    end
+
+    if not LootReserve.ItemConditions:TestPlayer(player, item, true) then
+        LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.FailedConditions, member.ReservesLeft);
+        if chat then LootReserve:SendChatMessage("You cannot reserve that item", "WHISPER", player); end
         return;
     end
 

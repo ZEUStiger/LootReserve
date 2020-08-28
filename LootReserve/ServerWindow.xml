@@ -1337,9 +1337,9 @@
 				</Layers>
 				<Frames>
 					<Frame name="LootReserveServerDropDownRaid" parentKey="DropDownRaid" inherits="UIDropDownMenuTemplate">
-						<Size x="160" y="32" />
+						<Size x="140" y="32" />
 						<Anchors>
-							<Anchor point="TOP" relativeKey="$parent.LabelRaid" relativePoint="BOTTOM" />
+							<Anchor point="TOP" relativeKey="$parent.LabelRaid" relativePoint="BOTTOM" x="-20" />
 						</Anchors>
 						<Scripts>
 							<OnLoad>
@@ -1351,6 +1351,7 @@
 									info.func = function(info)
 										LootReserve.Server.NewSessionSettings.LootCategory = info.value;
 										LootReserve.Server.LootEdit:UpdateCategories();
+										LootReserve.Server.LootEdit:UpdateLootList();
 										UIDropDownMenu_SetSelectedValue(self, info.value);
 									end
 									for id, category in LootReserve:Ordered(LootReserve.Data.Categories) do
@@ -1365,14 +1366,63 @@
 							</OnLoad>
 						</Scripts>
 					</Frame>
-					<Button parentKey="ButtonLootEdit" inherits="UIMenuButtonStretchTemplate" text="Edit Loot">
-						<Size x="100" y="22" />
+					<Button name="LootReserveServerButtonLootEdit" parentKey="ButtonLootEdit" inherits="UIMenuButtonStretchTemplate" text="Edit">
+						<Size x="40" y="24" />
 						<Anchors>
-							<Anchor point="TOP" relativeKey="$parent.DropDownRaid" relativePoint="BOTTOM" y="7" />
+							<Anchor point="LEFT" relativeKey="$parent.DropDownRaid" relativePoint="RIGHT" x="-16" y="2" />
 						</Anchors>
+						<Layers>
+							<Layer level="BACKGROUND">
+								<Texture parentKey="GlowLeft" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD" alpha="0.5" hidden="true">
+									<Anchors>
+										<Anchor point="TOPLEFT" x="4" y="-4" />
+										<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMLEFT" x="4" y="4" />
+										<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOM" y="4" />
+									</Anchors>
+									<TexCoords left="0.1" right="0.25" top="0.4" bottom="1" />
+									<Color r="1" g="0.82" b="0" />
+								</Texture>
+								<Texture parentKey="GlowRight" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD" alpha="0.5" hidden="true">
+									<Anchors>
+										<Anchor point="TOPRIGHT" x="-4" y="-4" />
+										<Anchor point="BOTTOMLEFT" relativePoint="BOTTOM" y="4" />
+										<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMRIGHT" x="-4" y="4" />
+									</Anchors>
+									<TexCoords left="0.75" right="0.9" top="0.4" bottom="1" />
+									<Color r="1" g="0.82" b="0" />
+								</Texture>
+								<Texture parentKey="GlowLeft2" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD" alpha="0.5" hidden="true">
+									<Anchors>
+										<Anchor point="TOPLEFT" relativeKey="$parent.GlowLeft" y="-12" />
+										<Anchor point="BOTTOMRIGHT" relativeKey="$parent.GlowLeft" />
+									</Anchors>
+									<TexCoords left="0.05" right="0.25" top="0" bottom="1" />
+								</Texture>
+								<Texture parentKey="GlowRight2" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD" alpha="0.5" hidden="true">
+									<Anchors>
+										<Anchor point="TOPLEFT" relativeKey="$parent.GlowRight" y="-12" />
+										<Anchor point="BOTTOMRIGHT" relativeKey="$parent.GlowRight" />
+									</Anchors>
+									<TexCoords left="0.75" right="0.95" top="0" bottom="1" />
+								</Texture>
+							</Layer>
+						</Layers>
 						<Scripts>
+							<OnLoad>
+								self.GlowLeft:SetDesaturated(true);
+								self.GlowRight:SetDesaturated(true);
+								self.GlowLeft2:SetDesaturated(true);
+								self.GlowRight2:SetDesaturated(true);
+								self.SetGlow = function(self, glow)
+									self.GlowLeft:SetShown(glow);
+									self.GlowRight:SetShown(glow);
+									self.GlowLeft2:SetShown(glow);
+									self.GlowRight2:SetShown(glow);
+								end
+							</OnLoad>
 							<OnClick>
 								LootReserve.Server.LootEdit.Window:SetShown(not LootReserve.Server.LootEdit.Window:IsShown());
+								LootReserve.Server.LootEdit:UpdateCategories();
 							</OnClick>
 						</Scripts>
 					</Button>

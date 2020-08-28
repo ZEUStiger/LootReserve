@@ -10,6 +10,7 @@ LootReserve.Constants =
         ItemNotReservable = 4,
         AlreadyReserved = 5,
         NoReservesLeft = 6,
+        FailedConditions = 7,
     },
     CancelReserveResult =
     {

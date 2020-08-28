@@ -185,6 +185,14 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
         itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, strjoin(",", unpack(reserve.Players)));
     end
 
+    local itemConditions = "";
+    for item, conditions in pairs(session.Settings.ItemConditions) do
+        if LootReserve.Data:IsItemInCategory(item, session.Settings.LootCategory) then
+            local packed = LootReserve.ItemConditions:Pack(conditions);
+            itemConditions = itemConditions .. (#itemConditions > 0 and ";" or "") .. format("%d=%s", item, packed);
+        end
+    end
+
     LootReserve.Comm:Send(target, Opcodes.SessionInfo,
         starting == true,
         session.StartTime or 0,
@@ -193,9 +201,10 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
         session.Settings.LootCategory,
         format("%.2f", session.Duration),
         session.Settings.Duration,
-        itemReserves);
+        itemReserves,
+        itemConditions);
 end
-LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, startTime, acceptingReserves, membersInfo, lootCategory, duration, maxDuration, itemReserves)
+LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, startTime, acceptingReserves, membersInfo, lootCategory, duration, maxDuration, itemReserves, itemConditions)
     starting = tonumber(starting) == 1;
     startTime = tonumber(startTime);
     acceptingReserves = tonumber(acceptingReserves) == 1;
@@ -228,6 +237,15 @@ LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, star
         for _, reserves in ipairs(itemReserves) do
             local item, players = strsplit("=", reserves, 2);
             LootReserve.Client.ItemReserves[tonumber(item)] = #players > 0 and { strsplit(",", players) } or nil;
+        end
+    end
+
+    LootReserve.Client.ItemConditions = { };
+    if #itemConditions > 0 then
+        itemConditions = { strsplit(";", itemConditions) };
+        for _, conditions in ipairs(itemConditions) do
+            local item, packed = strsplit("=", conditions, 2);
+            LootReserve.Client.ItemConditions[tonumber(item)] = #packed > 0 and LootReserve.ItemConditions:Unpack(packed) or nil;
         end
     end
 
@@ -303,6 +321,8 @@ LootReserve.Comm.Handlers[Opcodes.ReserveResult] = function(sender, item, result
             LootReserve:ShowError(message, "You are already reserving that item");
         elseif result == LootReserve.Constants.ReserveResult.NoReservesLeft then
             LootReserve:ShowError(message, "You already reserved too many items");
+        elseif result == LootReserve.Constants.ReserveResult.FailedConditions then
+            LootReserve:ShowError(message, "You cannot reserve that item");
         end
 
         LootReserve.Client:SetItemPending(item, false);

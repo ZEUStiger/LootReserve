@@ -13,6 +13,7 @@ Client.lua
 Server.lua
 Comm.lua
 Data.lua
+ItemConditions.lua
 Common.xml
 ClientWindow.xml
 ServerWindow.xml
