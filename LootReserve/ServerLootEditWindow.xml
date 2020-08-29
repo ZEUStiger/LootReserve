@@ -94,13 +94,10 @@
 								self.Update = function(self)
 									local item = self:GetParent():GetParent().Item;
 									local conditions = LootReserve.ItemConditions:Get(item, true);
-									if conditions and conditions.Faction and not LootReserve.ItemConditions:TestFaction(conditions.Faction) then
-										self.faction = true;
-									else
-										self.faction = false;
-									end
+									self.faction = conditions and conditions.Faction and not LootReserve.ItemConditions:TestFaction(conditions.Faction);
 									self.hidden = conditions and conditions.Hidden;
-									self:SetShown(not self.faction and self:GetParent():GetParent().hovered or self.hidden);
+									self.custom = conditions and conditions.Custom;
+									self:SetShown(not self.faction and not self.custom and self:GetParent():GetParent().hovered or self.hidden);
 									self:SetText(self.hidden and "|cFFFF0000Hidden|r" or "Visible");
 									self:SetWidth(10 + self.Text:GetStringWidth() + 10);
 									if self:GetParent().Update then
@@ -144,11 +141,37 @@
 							</OnLoad>
 						</Scripts>
 					</Button>
+					<Button parentKey="Custom" inherits="UIMenuButtonStretchTemplate" text="Delete">
+						<Size y="20" />
+						<Anchors>
+							<Anchor point="BOTTOMRIGHT" relativeKey="$parent.State" />
+						</Anchors>
+						<Scripts>
+							<OnLoad>
+								self.Update = function(self)
+									local item = self:GetParent():GetParent().Item;
+									local conditions = LootReserve.ItemConditions:Get(item, true);
+									self.custom = conditions and conditions.Custom;
+									self:SetShown(self.custom and self:GetParent():GetParent().hovered);
+									self:SetWidth(10 + self.Text:GetStringWidth() + 10);
+									if self:GetParent().Update then
+										self:GetParent():Update();
+									end
+								end;
+								self:Update();
+							</OnLoad>
+							<OnClick>
+								local item = self:GetParent():GetParent().Item;
+								LootReserve.ItemConditions:Delete(item, true);
+								LootReserve.Server.LootEdit:UpdateLootList();
+							</OnClick>
+						</Scripts>
+					</Button>
 				</Frames>
 				<Scripts>
 					<OnLoad>
 						self.Update = function(self)
-							self:SetWidth(math.max(math.max(self.State:GetWidth(), self.Faction:IsShown() and self.Faction:GetWidth() or 0), self.ClassMask:GetWidth()) - 6);
+							self:SetWidth(math.max(math.max(self.State:GetWidth(), math.max(self.Faction:IsShown() and self.Faction:GetWidth() or 0, self.Custom:IsShown() and self.Custom:GetWidth() or 0)), self.ClassMask:GetWidth()) - 6);
 						end
 					</OnLoad>
 				</Scripts>
@@ -184,12 +207,296 @@
 					self.ConditionsFrame.ClassMask:SetEnabled(hovered);
 					self.ConditionsFrame.ClassMask:SetShown(hovered or not self.ConditionsFrame.ClassMask.any);
 					self.ConditionsFrame.State:SetEnabled(hovered);
-					self.ConditionsFrame.State:SetShown(not self.ConditionsFrame.State.faction and hovered or self.ConditionsFrame.State.hidden);
+					self.ConditionsFrame.State:SetShown(not self.ConditionsFrame.State.faction and not self.ConditionsFrame.State.custom and hovered or self.ConditionsFrame.State.hidden);
+					self.ConditionsFrame.Custom:SetShown(self.ConditionsFrame.Custom.custom and hovered);
 					for _, part in ipairs(self.ConditionBackgrounds) do
 						part:SetShown(hovered);
 					end
 				end
 			</OnUpdate>
+		</Scripts>
+	</Frame>
+	<Frame name="LootReserveLootEditRevertEditsFrame" virtual="true" enableMouse="true">
+		<Size y="44" />
+		<Frames>
+			<Button inherits="UIPanelButtonTemplate" text="Revert All Edits">
+				<Size x="120" y="23" />
+				<Anchors>
+					<Anchor point="CENTER" />
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootReserve.ItemConditions:Clear(LootReserve.Server.NewSessionSettings.LootCategory, true);
+						LootReserve.Server.LootEdit:UpdateLootList();
+					</OnClick>
+				</Scripts>
+			</Button>
+		</Frames>
+	</Frame>
+	<Frame name="LootReserveLootEditAddCustomFrame" virtual="true" enableMouse="true">
+		<Size y="44" />
+		<Frames>
+			<Button parentKey="ItemFrame">
+				<Size y="32" />
+				<Anchors>
+					<Anchor point="LEFT" />
+					<Anchor point="RIGHT" />
+				</Anchors>
+				<Frames>
+					<Button parentKey="Icon" enableMouse="true">
+						<Size x="32" y="32" />
+						<Anchors>
+							<Anchor point="LEFT" x="6" />
+						</Anchors>
+						<Layers>
+							<Layer level="BACKGROUND">
+								<Texture file="Interface\Buttons\UI-EmptySlot-Disabled">
+									<Size x="40" y="40" />
+									<Anchors>
+										<Anchor point="TOPLEFT" x="-4" y="4" />
+									</Anchors>
+									<TexCoords left="0.140625" right="0.84375" top="0.140625" bottom="0.84375" />
+								</Texture>
+							</Layer>
+							<Layer level="BORDER">
+								<Texture parentKey="Texture" setAllPoints="true" nonBlocking="true" />
+							</Layer>
+							<Layer level="OVERLAY">
+								<Texture parentKey="CancelIcon" file="Interface\Buttons\UI-GroupLoot-Pass-Up" hidden="true">
+									<Size x="16" y="16" />
+									<Anchors>
+										<Anchor point="CENTER" />
+									</Anchors>
+								</Texture>
+							</Layer>
+						</Layers>
+						<PushedTexture file="Interface\Buttons\UI-Quickslot-Depress"/>
+						<HighlightTexture file="Interface\Buttons\ButtonHilight-Square" alphaMode="ADD" />
+						<Scripts>
+							<OnLoad>
+								self:RegisterForDrag("LeftButton");
+								self.DropHandler = function(self)
+									local frame = self:GetParent():GetParent();
+									local type, item, link = GetCursorInfo();
+									ClearCursor();
+									if type == "item" and item then
+										frame:SetItem(item);
+										CloseMenus();
+									elseif frame.Item then
+										frame:SetItem(nil);
+										CloseMenus();
+									end
+								end
+							</OnLoad>
+							<OnClick>
+								self:DropHandler();
+							</OnClick>
+							<!--OnDragStart>
+								self:DropHandler();
+							</OnDragStart-->
+							<OnReceiveDrag>
+								self:DropHandler();
+							</OnReceiveDrag>
+							<OnEnter>
+								local frame = self:GetParent():GetParent();
+								if frame.Item and not CursorHasItem() then
+									self.CancelIcon:Show();
+								else
+									self.CancelIcon:Hide();
+								end
+								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								GameTooltip:SetText("Drop an item here");
+								GameTooltip:Show();
+							</OnEnter>
+							<OnLeave>
+								GameTooltip_Hide(self);
+								self.CancelIcon:Hide();
+							</OnLeave>
+						</Scripts>
+					</Button>
+					<Button parentKey="ButtonAdd" inherits="UIPanelButtonTemplate" text="Add">
+						<Size x="60" y="23" />
+						<Anchors>
+							<Anchor point="RIGHT" x="-6" />
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								local frame = self:GetParent():GetParent();
+								if frame.Item then
+									local conditions = LootReserve.ItemConditions:Make(frame.Item, true);
+									conditions.Custom = LootReserve.Server.NewSessionSettings.LootCategory;
+									LootReserve.ItemConditions:Save(frame.Item, true);
+									LootReserve.Server.LootEdit:UpdateLootList();
+									frame:SetItem(nil);
+								end
+							</OnClick>
+						</Scripts>
+					</Button>
+					<ScrollFrame parentKey="Scroll" inherits="InputScrollFrameTemplate">
+						<Size y="18" />
+						<KeyValues>
+							<KeyValue key="hideCharCount" value="true" type="boolean" />
+							<KeyValue key="instructions" value="Enter Item Name or ID..." type="string" />
+						</KeyValues>
+						<Anchors>
+							<Anchor point="LEFT" relativeKey="$parent.Icon" relativePoint="RIGHT" x="10" />
+							<Anchor point="RIGHT" relativeKey="$parent.ButtonAdd" relativePoint="LEFT" x="-5" />
+						</Anchors>
+					</ScrollFrame>
+					<Frame parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
+				</Frames>
+				<Scripts>
+					<OnLoad>
+						self.Icon.SetTexture = function(self, texture)
+							self.Texture:SetTexture(texture);
+						end
+					</OnLoad>
+					<OnClick>
+						if button == "LeftButton" then
+							HandleModifiedItemClick(self:GetParent().Link);
+						end
+					</OnClick>
+				</Scripts>
+			</Button>
+		</Frames>
+		<Scripts>
+			<OnLoad>
+				local function SelectItem(info)
+					self:SetItem(info.arg1);
+				end
+				self.ItemFrame.Scroll.EditBox:SetMultiLine(false);
+				self.ItemFrame.Scroll.EditBox:SetFontObject(GameFontHighlightLarge);
+				self.ItemFrame.Scroll.EditBox:SetPoint("TOPLEFT", self.ItemFrame.Scroll, "TOPLEFT", 0, 0);
+				self.ItemFrame.Scroll.EditBox:SetPoint("BOTTOMRIGHT", self.ItemFrame.Scroll, "BOTTOMRIGHT", 0, 0);
+				self.ItemFrame.Scroll.EditBox.Instructions:SetFontObject(GameFontDisableLarge);
+				self.ItemFrame.Scroll.EditBox.Instructions:SetJustifyH("LEFT");
+				self.ItemFrame.Scroll.EditBox.Instructions:SetJustifyV("MIDDLE");
+				self.ItemFrame.Scroll.EditBox.Instructions:SetPoint("TOPLEFT", self.ItemFrame.Scroll, "TOPLEFT", 0, 0);
+				self.ItemFrame.Scroll.EditBox.Instructions:SetPoint("BOTTOMRIGHT", self.ItemFrame.Scroll, "BOTTOMRIGHT", 0, 0);
+				self.ItemFrame.Scroll.EditBox:HookScript("OnEnterPressed", function(editbox)
+					editbox:ClearFocus();
+				end);
+				self.ItemFrame.Scroll.EditBox:HookScript("OnTextChanged", function(editbox)
+					if self.Name and #self.Name > 0 and editbox:GetText() == self.Name then return; end
+					if self.Item then
+						self:SetItem(nil);
+					end
+					local function UpdateText()
+						if not self:IsShown() then
+							CloseMenus();
+							return;
+						end
+						local text = editbox:GetText();
+						local item = tonumber(text);
+						local menu = { };
+						local missing = false;
+						if item and C_Item.DoesItemExistByID(item) then
+							local name, link, _, _, _, _, _, _, _, texture = GetItemInfo(item);
+							if not name or not link then
+								C_Timer.After(0.25, UpdateText);
+								return;
+							end
+							table.insert(menu,
+							{
+								text = format("|T%d:0|t %s", texture, (link or "|cFFFF0000Loading...|r"):gsub("[%[%]]", "")),
+								arg1 = item,
+								func = SelectItem,
+								notCheckable = true,
+							});
+						elseif not item and #LootReserve:TransformSearchText(text) >= 3 then
+							local results = LootReserve.ItemSearch:Search(text);
+							if results then
+								for i, item in ipairs(results) do
+									if i > 10 then
+										table.insert(menu,
+										{
+											text = format("(and %d more...)", #results - 10),
+											disabled = true,
+										});
+										break;
+									else
+										local name, link, _, _, _, _, _, _, _, texture = GetItemInfo(item);
+										if not link then
+											missing = true;
+										end
+										table.insert(menu,
+										{
+											text = format("|T%d:0|t %s", texture, (link or "|cFFFF0000Loading...|r"):gsub("[%[%]]", "")),
+											arg1 = item,
+											func = SelectItem,
+											notCheckable = true,
+										});
+									end
+								end
+							else
+								table.insert(menu,
+								{
+									text = "Loading item names...",
+									disabled = true,
+								});
+								if not self.LoadingSearch then
+									self.LoadingSearch = true;
+									C_Timer.After(1, function()
+										self.LoadingSearch = nil;
+										UpdateText();
+									end);
+								end
+							end
+						end
+						CloseMenus();
+						if #menu > 0 then
+							LootReserve:OpenMenu(menu, self.ItemFrame.Menu, self.ItemFrame.Scroll);
+						end
+						if missing then
+							C_Timer.After(0.25, UpdateText);
+						end
+					end
+					UpdateText();
+				end);
+				self.SetItem = function(self, item)
+					if item then
+						self.Item = item;
+
+						local name, link, quality, _, _, _, _, _, _, texture = GetItemInfo(item);
+						self.Link = link;
+
+						if not name or not link then
+							C_Timer.After(0.25, function()
+								if self.Item == item then
+									self:SetItem(item);
+								end
+							end);
+							return;
+						end
+
+						local reservers = 0;
+						if LootReserve.Server.CurrentSession then
+							local reserve = LootReserve.Server.CurrentSession.ItemReserves[item];
+							reservers = reserve and #reserve.Players or 0;
+						end
+
+						local color = ITEM_QUALITY_COLORS[quality];
+
+						self.Name = name or "";
+						self.ItemFrame.Icon:SetTexture(texture);
+						--self.ItemFrame.Icon.CancelIcon:SetShown(GameTooltip:IsOwned(self.ItemFrame.Icon)); -- Looks better without it
+						self.ItemFrame.Scroll.EditBox:SetText(self.Name);
+						self.ItemFrame.Scroll.EditBox:SetTextColor(color.r, color.g, color.b);
+						self.ItemFrame.ButtonAdd:Enable();
+					else
+						self.Item = nil;
+						self.Link = nil;
+						self.Name = "";
+						self.ItemFrame.Icon:SetTexture(nil);
+						self.ItemFrame.Icon.CancelIcon:Hide();
+						self.ItemFrame.Scroll.EditBox:SetText("");
+						self.ItemFrame.Scroll.EditBox:SetTextColor(1, 1, 1);
+						self.ItemFrame.ButtonAdd:Disable();
+					end
+					self.ItemFrame.Scroll.EditBox:ClearFocus();
+				end
+				self:SetItem(nil);
+			</OnLoad>
 		</Scripts>
 	</Frame>
 	<Frame name="LootReserveServerLootEditWindow" parent="UIParent" inherits="BasicFrameTemplateWithInset" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true" hidden="true">

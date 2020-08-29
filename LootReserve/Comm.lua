@@ -187,7 +187,7 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
 
     local itemConditions = "";
     for item, conditions in pairs(session.Settings.ItemConditions) do
-        if LootReserve.Data:IsItemInCategory(item, session.Settings.LootCategory) then
+        if LootReserve.Data:IsItemInCategory(item, session.Settings.LootCategory) or conditions.Custom == session.Settings.LootCategory then
             local packed = LootReserve.ItemConditions:Pack(conditions);
             itemConditions = itemConditions .. (#itemConditions > 0 and ";" or "") .. format("%d=%s", item, packed);
         end
@@ -245,7 +245,7 @@ LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, star
         itemConditions = { strsplit(";", itemConditions) };
         for _, conditions in ipairs(itemConditions) do
             local item, packed = strsplit("=", conditions, 2);
-            LootReserve.Client.ItemConditions[tonumber(item)] = #packed > 0 and LootReserve.ItemConditions:Unpack(packed) or nil;
+            LootReserve.Client.ItemConditions[tonumber(item)] = #packed > 0 and LootReserve.ItemConditions:Unpack(packed, lootCategory) or nil;
         end
     end
 

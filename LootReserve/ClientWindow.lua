@@ -138,6 +138,17 @@ function LootReserve.Client:UpdateLootList()
     elseif self.SelectedCategory and self.SelectedCategory.Search and filter then
         local missing = false;
         local uniqueItems = { };
+        for item, conditions in pairs(self.ItemConditions) do
+            if item ~= 0 and conditions.Custom and (not self.LootCategory or conditions.Custom == self.LootCategory) and not uniqueItems[item] and LootReserve.ItemConditions:TestPlayer("player", item, false) then
+                uniqueItems[item] = true;
+                local match = matchesFilter(item, filter);
+                if match then
+                    createFrame(item, "Custom Item");
+                elseif match == nil then
+                    missing = true;
+                end
+            end
+        end
         for id, category in LootReserve:Ordered(LootReserve.Data.Categories) do
             if category.Children and (not self.LootCategory or id == self.LootCategory) then
                 for _, child in ipairs(category.Children) do
@@ -161,6 +172,12 @@ function LootReserve.Client:UpdateLootList()
             C_Timer.After(0.25, function()
                 self:UpdateLootList();
             end);
+        end
+    elseif self.SelectedCategory and self.SelectedCategory.Custom then
+        for item, conditions in pairs(self.ItemConditions) do
+            if item ~= 0 and conditions.Custom and (not self.LootCategory or conditions.Custom == self.LootCategory) and LootReserve.ItemConditions:TestPlayer("player", item, false) then
+                createFrame(item);
+            end
         end
     elseif self.SelectedCategory and self.SelectedCategory.Loot then
         for _, item in ipairs(self.SelectedCategory.Loot) do
@@ -243,7 +260,7 @@ function LootReserve.Client:UpdateCategories()
     local needsSelect = not self.SelectedCategory;
     list.ContentHeight = 0;
     for i, frame in ipairs(list.Frames) do
-        if i <= list.LastIndex and (frame.CategoryID < 0 or not self.LootCategory or frame.CategoryID == self.LootCategory) then
+        if i <= list.LastIndex and (frame.CategoryID < 0 or not self.LootCategory or frame.CategoryID == self.LootCategory) and (not frame.Category.Custom or LootReserve.ItemConditions:HasCustom(false)) then
             frame:SetHeight(frame.DefaultHeight);
             frame:Show();
             list.ContentHeight = list.ContentHeight + frame.DefaultHeight;

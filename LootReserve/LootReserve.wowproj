@@ -29,6 +29,9 @@
     <Content Include="ItemConditions.lua">
       <SubType>Code</SubType>
     </Content>
+    <Content Include="ItemSearch.lua">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="Libs\LibCustomGlow-1.0\LibCustomGlow-1.0.lua">
       <SubType>Code</SubType>
     </Content>

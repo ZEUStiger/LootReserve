@@ -585,6 +585,11 @@ function LootReserve.Server:PrepareSession()
 
     -- Cache the list of items players can reserve
     table.wipe(self.ReservableItems);
+    for item, conditions in pairs(self.CurrentSession.Settings.ItemConditions) do
+        if item ~= 0 and conditions.Custom and LootReserve.ItemConditions:TestServer(item) then
+            self.ReservableItems[item] = true;
+        end
+    end
     for id, category in pairs(LootReserve.Data.Categories) do
         if category.Children and (not self.CurrentSession.Settings.LootCategory or id == self.CurrentSession.Settings.LootCategory) then
             for _, child in ipairs(category.Children) do

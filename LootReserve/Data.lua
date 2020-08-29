@@ -7,8 +7,16 @@ LootReserve.Data =
             {
                 { Name = "My Reserves", Reserves = "my" },
                 { Name = "All Reserves", Reserves = "all" },
-                { Name = "Edited Items", Edited = true },
                 { Name = "Search Results", Search = true },
+            },
+        },
+        [-50] = {
+            Name = "Custom",
+            Custom = true,
+            Children =
+            {
+                { Name = "Edited Items", Edited = true },
+                { Name = "Custom Items", Custom = true },
             },
         },
         [100] = {

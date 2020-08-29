@@ -4,6 +4,7 @@ LootReserve.ItemConditions = LootReserve.ItemConditions or { };
 local DefaultConditions =
 {
     Hidden = nil,
+    Custom = nil,
     ClassMask = nil,
     Faction = nil,
 };
@@ -86,6 +87,58 @@ function LootReserve.ItemConditions:Save(item, server)
     end
 end
 
+function LootReserve.ItemConditions:Delete(item, server)
+    if server and LootReserve.Server.CurrentSession then
+        LootReserve:ShowError("Cannot edit loot during an active session");
+    elseif server then
+        LootReserve.Server.NewSessionSettings.ItemConditions[item] = nil;
+    else
+        LootReserve:ShowError("Cannot edit loot on client");
+    end
+end
+
+function LootReserve.ItemConditions:Clear(category, server)
+    if server and LootReserve.Server.CurrentSession then
+        LootReserve:ShowError("Cannot edit loot during an active session");
+    elseif server then
+        if category then
+            local toRemove = { };
+            for item, conditions in pairs(LootReserve.Server.NewSessionSettings.ItemConditions) do
+                if LootReserve.Data:IsItemInCategory(item, category) or conditions.Custom == category then
+                    table.insert(toRemove, item);
+                end
+            end
+            for _, item in ipairs(toRemove) do
+                LootReserve.Server.NewSessionSettings.ItemConditions[item] = nil;
+            end
+        else
+            table.wipe(LootReserve.Server.NewSessionSettings.ItemConditions);
+        end
+    else
+        LootReserve:ShowError("Cannot edit loot on client");
+    end
+end
+
+function LootReserve.ItemConditions:HasCustom(server)
+    local container;
+    if server and LootReserve.Server.CurrentSession then
+        container = LootReserve.Server.CurrentSession.Settings.ItemConditions
+    elseif server then
+        container = LootReserve.Server.NewSessionSettings.ItemConditions;
+    else
+        container = LootReserve.Client.ItemConditions;
+    end
+
+    if container then
+        for item, conditions in pairs(container) do
+            if conditions.Custom then
+                return true;
+            end
+        end
+    end
+    return false;
+end
+
 function LootReserve.ItemConditions:TestClassMask(classMask, playerClass)
     return classMask and playerClass and bit.band(classMask, bit.lshift(1, playerClass - 1)) ~= 0;
 end
@@ -105,6 +158,13 @@ function LootReserve.ItemConditions:TestPlayer(player, item, server)
         if conditions.Hidden then
             return false;
         end
+        if conditions.Custom then
+            if server and conditions.Custom ~= LootReserve.Server.CurrentSession.Settings.LootCategory then
+                return false;
+            elseif not server and conditions.Custom ~= LootReserve.Client.LootCategory then
+                return false;
+            end
+        end
         if conditions.ClassMask and not self:TestClassMask(conditions.ClassMask, select(3, UnitClass(player))) then
             return false;
         end
@@ -121,6 +181,9 @@ function LootReserve.ItemConditions:TestServer(item)
         if conditions.Hidden then
             return false;
         end
+        if conditions.Custom and conditions.Custom ~= LootReserve.Server.CurrentSession.Settings.LootCategory then
+            return false;
+        end
         if conditions.Faction and not self:TestFaction(conditions.Faction) then
             return false;
         end
@@ -132,6 +195,8 @@ function LootReserve.ItemConditions:Pack(conditions)
     local text = "";
     if conditions.Hidden then
         text = text .. "-";
+    elseif conditions.Custom then
+        text = text .. "+";
     end
     if conditions.Faction == "Alliance" then
         text = text .. "A";
@@ -144,13 +209,15 @@ function LootReserve.ItemConditions:Pack(conditions)
     return text;
 end
 
-function LootReserve.ItemConditions:Unpack(text, item)
+function LootReserve.ItemConditions:Unpack(text, category)
     local conditions = LootReserve:Deepcopy(DefaultConditions);
 
     for i = 1, #text do
         local char = text:sub(i, 1);
         if char == "-" then
             conditions.Hidden = true;
+        elseif char == "+" then
+            conditions.Custom = category;
         elseif char == "A" then
             conditions.Faction = "Alliance";
         elseif char == "H" then
