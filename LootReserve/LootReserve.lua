@@ -328,6 +328,19 @@ function LootReserve:IsItemUsable(item)
     return true;
 end
 
+function LootReserve:IsLootingItem(item)
+    for i = 1, GetNumLootItems() do
+        local link = GetLootSlotLink(i);
+        if link then
+            local id = tonumber(link:match("item:(%d+)"));
+            if id and id == item then
+                return true;
+            end
+        end
+    end
+    return false;
+end
+
 function LootReserve:TransformSearchText(text)
     text = self:StringTrim(text, "[%s%[%]]");
     text = text:upper();

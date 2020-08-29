@@ -1,3 +1,5 @@
+local LibCustomGlow = LibStub("LibCustomGlow-1.0");
+
 function LootReserve.Server:UpdateReserveListRolls(lockdown)
     lockdown = lockdown or InCombatLockdown();
 
@@ -126,16 +128,28 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         frame.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
         local tracking = self.CurrentSession.LootTracking[item];
         local fade = false;
-        if tracking then
+        if LootReserve:IsLootingItem(item) then
+            frame.ItemFrame.Misc:SetText("In loot");
+            fade = false;
+            if LibCustomGlow then
+                LibCustomGlow.ButtonGlow_Start(frame.ItemFrame.IconGlow);
+            end
+        elseif tracking then
             local players = "";
             for player, count in pairs(tracking.Players) do
                 players = players .. (#players > 0 and ", " or "") .. LootReserve:ColoredPlayer(player) .. (count > 1 and format(" (%d)", count) or "");
             end
             frame.ItemFrame.Misc:SetText("Looted by " .. players);
             fade = false;
+            if LibCustomGlow then
+                LibCustomGlow.ButtonGlow_Stop(frame.ItemFrame.IconGlow);
+            end
         else
             frame.ItemFrame.Misc:SetText("Not looted");
             fade = self.Settings.ReservesSorting == LootReserve.Constants.ReservesSorting.ByLooter and next(self.CurrentSession.LootTracking) ~= nil;
+            if LibCustomGlow then
+                LibCustomGlow.ButtonGlow_Stop(frame.ItemFrame.IconGlow);
+            end
         end
         frame:SetAlpha(fade and 0.25 or 1);
 
@@ -236,6 +250,9 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         return 100000000;
     end
     local function getSortingLooter(reserve)
+        if LootReserve:IsLootingItem(reserve.Item) then
+            return "";
+        end
         local tracking = self.CurrentSession.LootTracking[reserve.Item];
         if tracking then
             for player, _ in LootReserve:Ordered(tracking.Players) do
@@ -656,6 +673,14 @@ function LootReserve.Server:OnWindowLoad(window)
         self.Window.PanelRolls.Scroll:UpdateScrollChildRect();
         self.Window.PanelRolls.Scroll:SetVerticalScroll(self.Window.PanelRollsLockdown.Scroll:GetVerticalScroll());
     end);
+
+    local function updateReserveList()
+        self:UpdateReserveList();
+    end
+    LootReserve:RegisterEvent("LOOT_READY", updateReserveList);
+    LootReserve:RegisterEvent("LOOT_CLOSED", updateReserveList);
+    LootReserve:RegisterEvent("LOOT_SLOT_CHANGED", updateReserveList);
+    LootReserve:RegisterEvent("LOOT_SLOT_CLEARED", updateReserveList);
 end
 
 local activeSessionChanges =
