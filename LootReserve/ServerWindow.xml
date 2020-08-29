@@ -1426,17 +1426,29 @@
 							</OnClick>
 						</Scripts>
 					</Button>
-					<EditBox name="LootReserveServerDropDownCount" parentKey="EditBoxCount" inherits="InputBoxTemplate" autoFocus="false">
+					<EditBox name="LootReserveServerDropDownCount" parentKey="EditBoxCount" inherits="NumericInputSpinnerTemplate" autoFocus="false">
 						<Size x="40" y="20" />
 						<Anchors>
 							<Anchor point="TOP" relativeKey="$parent.LabelCount" relativePoint="BOTTOM" />
 						</Anchors>
 						<Scripts>
 							<OnLoad>
+								self:SetMinMaxValues(1, 100);
 								self:SetJustifyH("CENTER");
-								self.Left:SetPoint("LEFT", self, "LEFT", 0, 0);
+								self.IncrementButton:SetWidth(25);
+								self.IncrementButton:SetHeight(25);
+								self.DecrementButton:SetWidth(25);
+								self.DecrementButton:SetHeight(25);
+								self.DecrementButton:SetPoint("RIGHT", self, "LEFT", 0, 0);
+								-- Hide duplicate regions
+								self.Left:Hide();
+								self.Middle:Hide();
+								self.Right:Hide();
+								-- Move inherited region
+								local _, _, left = self:GetRegions();
+								left:SetPoint("LEFT", self, "LEFT", 0, 0);
 							</OnLoad>
-							<OnTextChanged>
+							<OnTextChanged inherit="prepend">
 								local count = tonumber(self:GetText());
 								if count and count > 0 then
 									LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer = count;
