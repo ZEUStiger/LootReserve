@@ -35,12 +35,14 @@ function LootReserve.Client:UpdateReserveStatus()
             if self.SessionServer then
                 local reservers = self:GetItemReservers(item);
                 if self:IsItemReservedByMe(item) then
-                    if #reservers == 1 then
+                    if #reservers == 1 and not self.Blind then
                         frame.ReserveFrame.ReserveIcon.One:Show();
                     else
                         frame.ReserveFrame.ReserveIcon.Many:Show();
-                        frame.ReserveFrame.ReserveIcon.NumberMany:SetText(tostring(#reservers));
-                        frame.ReserveFrame.ReserveIcon.NumberMany:Show();
+                        if not self.Blind then
+                            frame.ReserveFrame.ReserveIcon.NumberMany:SetText(tostring(#reservers));
+                            frame.ReserveFrame.ReserveIcon.NumberMany:Show();
+                        end
                     end
                 else
                     if #reservers > 0 then

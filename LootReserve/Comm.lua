@@ -164,7 +164,14 @@ end
 
 -- SessionInfo
 function LootReserve.Comm:BroadcastSessionInfo(starting)
-    LootReserve.Comm:SendSessionInfo(nil, starting);
+    local session = LootReserve.Server.CurrentSession;
+    if session.Settings.Blind then
+        for player in pairs(session.Members) do
+            LootReserve.Comm:SendSessionInfo(player, starting);
+        end
+    else
+        LootReserve.Comm:SendSessionInfo(nil, starting);
+    end
 end
 function LootReserve.Comm:SendSessionInfo(target, starting)
     local session = LootReserve.Server.CurrentSession;
@@ -182,7 +189,13 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
 
     local itemReserves = "";
     for item, reserve in pairs(session.ItemReserves) do
-        itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, strjoin(",", unpack(reserve.Players)));
+        if session.Settings.Blind and target then
+            if LootReserve:Contains(reserve.Players, target) then
+                itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, target);
+            end
+        else
+            itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, strjoin(",", unpack(reserve.Players)));
+        end
     end
 
     local itemConditions = "";
@@ -202,22 +215,24 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
         format("%.2f", session.Duration),
         session.Settings.Duration,
         itemReserves,
-        itemConditions);
+        itemConditions,
+        session.Settings.Blind);
 end
-LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, startTime, acceptingReserves, membersInfo, lootCategory, duration, maxDuration, itemReserves, itemConditions)
+LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, startTime, acceptingReserves, membersInfo, lootCategory, duration, maxDuration, itemReserves, itemConditions, blind)
     starting = tonumber(starting) == 1;
     startTime = tonumber(startTime);
     acceptingReserves = tonumber(acceptingReserves) == 1;
     lootCategory = tonumber(lootCategory);
     duration = tonumber(duration);
     maxDuration = tonumber(maxDuration);
+    blind = tonumber(blind) == 1;
 
     if LootReserve.Client.SessionServer and LootReserve.Client.SessionServer ~= sender and LootReserve.Client.StartTime > startTime then
         LootReserve:ShowError("%s is attempting to broadcast their older loot reserve session, but you're already connected to %s.|n|nPlease tell %s that they need to reset their session.", LootReserve:ColoredPlayer(sender), LootReserve:ColoredPlayer(LootReserve.Client.SessionServer), LootReserve:ColoredPlayer(sender));
         return;
     end
 
-    LootReserve.Client:StartSession(sender, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration);
+    LootReserve.Client:StartSession(sender, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration, blind);
 
     LootReserve.Client.RemainingReserves = 0;
     if #membersInfo > 0 then
@@ -332,7 +347,10 @@ end
 
 -- ReserveInfo
 function LootReserve.Comm:BroadcastReserveInfo(item, players)
-    LootReserve.Comm:Broadcast(Opcodes.ReserveInfo,
+    LootReserve.Comm:SendReserveInfo(nil, item, players);
+end
+function LootReserve.Comm:SendReserveInfo(target, item, players)
+    LootReserve.Comm:Send(target, Opcodes.ReserveInfo,
         item,
         strjoin(",", unpack(players)));
 end

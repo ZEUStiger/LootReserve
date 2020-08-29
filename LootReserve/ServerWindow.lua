@@ -721,6 +721,7 @@ local activeSessionChanges =
 
 function LootReserve.Server:SessionStarted()
     activeSessionChanges:Apply(self.Window.PanelSession, true);
+    self.Window.PanelSession.CheckButtonBlind:SetChecked(self.CurrentSession.Settings.Blind);
     self.Window.PanelSession.Duration:SetShown(self.CurrentSession.Settings.Duration ~= 0);
     self.Window.PanelSession.ButtonStartSession:Hide();
     self.Window.PanelSession.ButtonStopSession:Show();
@@ -734,6 +735,7 @@ end
 
 function LootReserve.Server:SessionStopped()
     activeSessionChanges:Apply(self.Window.PanelSession, true);
+    self.Window.PanelSession.CheckButtonBlind:SetChecked(self.CurrentSession.Settings.Blind);
     self.Window.PanelSession.Duration:SetShown(self.CurrentSession.Settings.Duration ~= 0);
     self.Window.PanelSession.ButtonStartSession:Show();
     self.Window.PanelSession.ButtonStopSession:Hide();
@@ -750,6 +752,7 @@ end
 
 function LootReserve.Server:SessionReset()
     activeSessionChanges:Apply(self.Window.PanelSession, false);
+    self.Window.PanelSession.CheckButtonBlind:SetChecked(self.NewSessionSettings.Blind);
     self.Window.PanelSession.Duration:Hide();
     self.Window.PanelSession.ButtonStartSession:Show();
     self.Window.PanelSession.ButtonStopSession:Hide();
@@ -800,4 +803,9 @@ function LootReserve.Server:LoadNewSessionSessings()
     setDropDownValue(self.Window.PanelSession.DropDownRaid, self.NewSessionSettings.LootCategory);
     self.Window.PanelSession.EditBoxCount:SetText(tostring(self.NewSessionSettings.MaxReservesPerPlayer));
     setDropDownValue(self.Window.PanelSession.DropDownDuration, self.NewSessionSettings.Duration);
+    if self.CurrentSession then
+        self.Window.PanelSession.CheckButtonBlind:SetChecked(self.CurrentSession.Settings.Blind);
+    else
+        self.Window.PanelSession.CheckButtonBlind:SetChecked(self.NewSessionSettings.Blind);
+    end
 end

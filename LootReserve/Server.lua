@@ -9,6 +9,7 @@ LootReserve.Server =
         Duration = 300,
         ChatFallback = true,
         ItemConditions = { },
+        Blind = false,
     },
     Settings =
     {
@@ -688,8 +689,9 @@ function LootReserve.Server:StartSession()
         local category = LootReserve.Data.Categories[self.CurrentSession.Settings.LootCategory];
         local duration = self.CurrentSession.Settings.Duration
         local count = self.CurrentSession.Settings.MaxReservesPerPlayer;
-        LootReserve:SendChatMessage(format("Loot reserves are now started%s%s. %d reserved %s per character. Whisper !reserve ItemLinkOrName",
+        LootReserve:SendChatMessage(format("Loot reserves are now started%s%s%s. %d reserved %s per character. Whisper !reserve ItemLinkOrName",
             category and format(" for %s", category.Name) or "",
+            self.CurrentSession.Settings.Blind and " (blind)" or "",
             duration ~= 0 and format(" and will last for %d:%02d minutes", math.floor(duration / 60), duration % 60) or "",
             count,
             count == 1 and "item" or "items"
@@ -823,7 +825,11 @@ function LootReserve.Server:Reserve(player, item, chat)
     };
     self.CurrentSession.ItemReserves[item] = reserve;
     table.insert(reserve.Players, player);
-    LootReserve.Comm:BroadcastReserveInfo(item, reserve.Players);
+    if self.CurrentSession.Settings.Blind then
+        LootReserve.Comm:SendReserveInfo(player, item, { player });
+    else
+        LootReserve.Comm:BroadcastReserveInfo(item, reserve.Players);
+    end
 
     if self.CurrentSession.Settings.ChatFallback then
         local function WhisperPlayer()
@@ -836,7 +842,9 @@ function LootReserve.Server:Reserve(player, item, chat)
             end
 
             local post;
-            if #reserve.Players == 1 and reserve.Players[1] == player then
+            if self.CurrentSession.Settings.Blind then
+                post = "";
+            elseif #reserve.Players == 1 and reserve.Players[1] == player then
                 post = " You are the only player reserving this item thus far.";
             else
                 local others = LootReserve:Deepcopy(reserve.Players);
@@ -882,7 +890,7 @@ function LootReserve.Server:Reserve(player, item, chat)
                 end
             end
         end
-        if self.Settings.ChatUpdates then
+        if self.Settings.ChatUpdates and not self.CurrentSession.Settings.Blind then
             WhisperOthers();
         end
     end
@@ -933,7 +941,11 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
     local reserve = self.CurrentSession.ItemReserves[item];
     if reserve then
         removeFromTable(reserve.Players, player);
-        LootReserve.Comm:BroadcastReserveInfo(item, reserve.Players);
+        if self.CurrentSession.Settings.Blind then
+            LootReserve.Comm:SendReserveInfo(player, item, { });
+        else
+            LootReserve.Comm:BroadcastReserveInfo(item, reserve.Players);
+        end
         -- Remove the item entirely if all reserves were cancelled
         if #reserve.Players == 0 then
             self:CancelRollRequest(item);
@@ -987,7 +999,7 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
                 end
             end
         end
-        if self.Settings.ChatUpdates then
+        if self.Settings.ChatUpdates and not self.CurrentSession.Settings.Blind then
             WhisperOthers();
         end
     end

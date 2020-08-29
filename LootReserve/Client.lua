@@ -14,6 +14,7 @@ LootReserve.Client =
     ItemReserves = { }, -- { [ItemID] = { "Playername", "Playername", ... }, ... }
     ItemConditions = { },
     RollRequest = nil,
+    Blind = false,
 
     Settings =
     {
@@ -57,7 +58,7 @@ function LootReserve.Client:SearchForServer(startup)
     LootReserve.Comm:BroadcastHello();
 end
 
-function LootReserve.Client:StartSession(server, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration)
+function LootReserve.Client:StartSession(server, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration, blind)
     self:ResetSession();
     self.SessionServer = server;
     self.StartTime = startTime;
@@ -65,6 +66,7 @@ function LootReserve.Client:StartSession(server, starting, startTime, acceptingR
     self.LootCategory = lootCategory;
     self.Duration = duration;
     self.MaxDuration = maxDuration;
+    self.Blind = blind;
 
     if self.MaxDuration ~= 0 and not self.DurationUpdateRegistered then
         self.DurationUpdateRegistered = true;

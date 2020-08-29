@@ -288,4 +288,55 @@
 			</OnUpdate>
 		</Scripts>
 	</StatusBar>
+	<CheckButton name="LootReserveCheckBoxTemplate" virtual="true">
+		<KeyValues>
+			<!--
+			<KeyValue key="text" value="" type="string" />
+			<KeyValue key="tooltipText" value="" type="string" />
+			<KeyValue key="tooltipSubtext" value="" type="string" />
+			<KeyValue key="tooltipOwnerPoint" value="" type="string" />
+			-->
+		</KeyValues>
+		<Size>
+			<AbsDimension x="26" y="26"/>
+		</Size>
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Text" inherits="GameFontNormal">
+					<Anchors>
+						<Anchor point="LEFT" relativePoint="RIGHT" x="0" y="1" />
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self.Text:SetText(self.text or "");
+				self:SetHitRectInsets(0, -self.Text:GetStringWidth(), 0, 0);
+			</OnLoad>
+			<OnClick>
+				if (self:GetChecked()) then
+					PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+				else
+					PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
+				end
+			</OnClick>
+			<OnEnter>
+				if (self.tooltipText) then
+					GameTooltip:SetOwner(self, self.tooltipOwnerPoint or "ANCHOR_RIGHT");
+					GameTooltip:SetText(self.tooltipText, nil, nil, nil, nil, 1);
+				end
+				if (self.tooltipSubtext) then
+					GameTooltip:AddLine(self.tooltipSubtext, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
+					GameTooltip:Show();
+				end
+			</OnEnter>
+			<OnLeave function="GameTooltip_Hide" />
+		</Scripts>
+		<NormalTexture file="Interface\Buttons\UI-CheckBox-Up"/>
+		<PushedTexture file="Interface\Buttons\UI-CheckBox-Down"/>
+	 	<HighlightTexture file="Interface\Buttons\UI-CheckBox-Highlight" alphaMode="ADD"/>
+		<CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
+		<DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>		
+	</CheckButton>
 </Ui>
