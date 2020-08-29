@@ -213,7 +213,7 @@ function LootReserve.ItemConditions:Unpack(text, category)
     local conditions = LootReserve:Deepcopy(DefaultConditions);
 
     for i = 1, #text do
-        local char = text:sub(i, 1);
+        local char = text:sub(i, i);
         if char == "-" then
             conditions.Hidden = true;
         elseif char == "+" then
