@@ -133,7 +133,7 @@ function LootReserve.Client:UpdateLootList()
         for item in pairs(self.ItemReserves) do
             if self.SelectedCategory.Reserves == "my" and self:IsItemReservedByMe(item) then
                 createFrame(item);
-            elseif self.SelectedCategory.Reserves == "all" and self:IsItemReserved(item) then
+            elseif self.SelectedCategory.Reserves == "all" and self:IsItemReserved(item) and not self.Blind then
                 createFrame(item);
             end
         end
@@ -190,6 +190,13 @@ function LootReserve.Client:UpdateLootList()
     end
     for i = list.LastIndex + 1, #list.Frames do
         list.Frames[i]:Hide();
+    end
+
+    if self.Blind and not list.BlindHint then
+        list.BlindHint = CreateFrame("Frame", nil, list, "LootReserveLootBlindHint");
+    end
+    if list.BlindHint then
+        list.BlindHint:SetShown(self.Blind and self.SelectedCategory and self.SelectedCategory.Reserves == "all");
     end
 
     list:SetSize(list:GetParent():GetWidth(), math.max(list.ContentHeight, list:GetParent():GetHeight()));

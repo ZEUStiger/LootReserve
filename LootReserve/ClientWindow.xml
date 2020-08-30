@@ -147,6 +147,22 @@
 			</OnUpdate>
 		</Scripts>
 	</Frame>
+	<Frame name="LootReserveLootBlindHint" virtual="true" setAllPoints="true">
+		<Anchors>
+			<Anchor point="TOPLEFT" />
+			<Anchor point="BOTTOMRIGHT" />
+		</Anchors>
+		<Layers>
+			<Layer>
+				<FontString inherits="GameFontDisable" text="Blind reserves are active" setAllPoints="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" />
+						<Anchor point="BOTTOMRIGHT" />
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+	</Frame>
 	<Frame name="LootReserveClientWindow" parent="UIParent" inherits="BasicFrameTemplateWithInset" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true" hidden="true">
 		<Size x="650" y="450" />
 		<Anchors>
