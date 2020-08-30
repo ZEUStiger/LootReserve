@@ -1452,7 +1452,6 @@
 							</OnLoad>
 							<OnClick>
 								LootReserve.Server.LootEdit.Window:SetShown(not LootReserve.Server.LootEdit.Window:IsShown());
-								LootReserve.Server.LootEdit:UpdateCategories();
 							</OnClick>
 						</Scripts>
 					</Button>

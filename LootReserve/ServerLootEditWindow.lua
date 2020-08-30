@@ -7,6 +7,8 @@ function LootReserve.Server.LootEdit:UpdateLootList()
         end
     end
 
+    if not self.Window:IsShown() then return; end
+
     local filter = LootReserve:TransformSearchText(self.Window.Search:GetText());
     if #filter < 3 then
         filter = nil;
@@ -179,6 +181,8 @@ function LootReserve.Server.LootEdit:UpdateCategories()
             break;
         end
     end
+
+    if not self.Window:IsShown() then return; end
 
     local list = self.Window.Categories.Scroll.Container;
     list.Frames = list.Frames or { };
