@@ -7,17 +7,23 @@ LootReserve.ItemSearch =
     Names = { },
     PendingNames = { };
     MaxID = 24283,
+    LoadedNames = 0,
+    TotalNames = 0,
 };
 
 function LootReserve.ItemSearch:Load()
-    if self.LoadingState ~= nil then return; end
+    if self.LoadingState ~= nil then return 100 * self.LoadedNames / math.max(1, self.TotalNames); end
     self.LoadingState = false;
+    self.TotalNames = self.MaxID;
 
     LootReserve:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(item, success)
-        if item then
+        if item and self.PendingNames[item] then
             self.PendingNames[item] = nil;
             if success then
                 self.Names[item] = LootReserve:TransformSearchText(GetItemInfo(item) or "");
+                self.LoadedNames = self.LoadedNames + 1;
+            else
+                self.TotalNames = self.TotalNames - 1;
             end
         end
     end);
@@ -28,9 +34,12 @@ function LootReserve.ItemSearch:Load()
                 local name = GetItemInfo(item);
                 if name then
                     self.Names[item] = LootReserve:TransformSearchText(name);
+                    self.LoadedNames = self.LoadedNames + 1;
                 else
                     self.PendingNames[item] = true;
                 end
+            else
+                self.TotalNames = self.TotalNames - 1;
             end
             if item % 250 == 0 then
                 coroutine.yield();
@@ -48,11 +57,13 @@ function LootReserve.ItemSearch:Load()
             self.LoadingTicker:Cancel();
         end
     end);
+
+    return 0;
 end
 
 function LootReserve.ItemSearch:Search(query)
-    self:Load();
-    if not self.LoadingState then return; end
+    local progress = self:Load();
+    if not self.LoadingState then return nil, progress; end
 
     query = LootReserve:TransformSearchText(query);
 

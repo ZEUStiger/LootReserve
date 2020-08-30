@@ -404,7 +404,7 @@
 								notCheckable = true,
 							});
 						elseif not item and #LootReserve:TransformSearchText(text) >= 3 then
-							local results = LootReserve.ItemSearch:Search(text);
+							local results, progress = LootReserve.ItemSearch:Search(text);
 							if results then
 								for i, item in ipairs(results) do
 									if i > 10 then
@@ -431,12 +431,12 @@
 							else
 								table.insert(menu,
 								{
-									text = "Loading item names...",
+									text = format("Loading search database... (%d%%)", progress),
 									disabled = true,
 								});
 								if not self.LoadingSearch then
 									self.LoadingSearch = true;
-									C_Timer.After(1, function()
+									C_Timer.After(0.25, function()
 										self.LoadingSearch = nil;
 										UpdateText();
 									end);
