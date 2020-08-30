@@ -32,6 +32,7 @@ LootReserve.Server =
     RecentLoot = { },
     AddonUsers = { },
     LootEdit = { },
+    MembersEdit = { },
 
     ReservableItems = { },
     LootTrackingRegistered = false,
@@ -446,6 +447,7 @@ function LootReserve.Server:PrepareSession()
                                 ReservedItems = { },
                                 Locked = nil,
                             };
+                            self.MembersEdit:UpdateMembersList();
                         end
                     end
                 end
@@ -751,6 +753,7 @@ function LootReserve.Server:StartSession()
     end
 
     self:UpdateReserveList();
+    self.MembersEdit:UpdateMembersList();
 
     self:SessionStarted();
     return true;
@@ -772,6 +775,7 @@ function LootReserve.Server:ResumeSession()
     end
 
     self:UpdateReserveList();
+    self.MembersEdit:UpdateMembersList();
 
     self:SessionStarted();
     return true;
@@ -797,6 +801,7 @@ function LootReserve.Server:StopSession()
     end
 
     self:UpdateReserveList();
+    self.MembersEdit:UpdateMembersList();
 
     self:SessionStopped();
     return true;
@@ -822,6 +827,7 @@ function LootReserve.Server:ResetSession()
     self.SaveProfile.CurrentSession = self.CurrentSession;
 
     self:UpdateReserveList();
+    self.MembersEdit:UpdateMembersList();
 
     self:SessionReset();
     return true;
@@ -960,6 +966,7 @@ function LootReserve.Server:Reserve(player, item, chat)
     end
 
     self:UpdateReserveList();
+    self.MembersEdit:UpdateMembersList();
 end
 
 function LootReserve.Server:CancelReserve(player, item, chat, forced)
@@ -1076,6 +1083,7 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
 
     self:UpdateReserveList();
     self:UpdateReserveListRolls();
+    self.MembersEdit:UpdateMembersList();
 end
 
 function LootReserve.Server:IsRolling(item)

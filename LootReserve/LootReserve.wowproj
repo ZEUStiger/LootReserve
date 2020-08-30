@@ -75,6 +75,13 @@
     <Content Include="ServerLootEditWindow.xml">
       <SubType>Frame</SubType>
     </Content>
+    <Content Include="ServerMembersEditWindow.lua">
+      <SubType>Code</SubType>
+      <DependentUpon>ServerMembersEditWindow.xml</DependentUpon>
+    </Content>
+    <Content Include="ServerMembersEditWindow.xml">
+      <SubType>Frame</SubType>
+    </Content>
     <Content Include="ServerWindow.lua">
       <SubType>Code</SubType>
       <DependentUpon>ServerWindow.xml</DependentUpon>

@@ -20,3 +20,4 @@ ClientWindow.xml
 ServerWindow.xml
 RollRequestWindow.xml
 ServerLootEditWindow.xml
+ServerMembersEditWindow.xml
