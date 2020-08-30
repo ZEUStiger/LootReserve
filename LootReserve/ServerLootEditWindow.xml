@@ -483,6 +483,7 @@
 						self.ItemFrame.Scroll.EditBox:SetText(self.Name);
 						self.ItemFrame.Scroll.EditBox:SetTextColor(color.r, color.g, color.b);
 						self.ItemFrame.ButtonAdd:Enable();
+						self.ItemFrame.Scroll.EditBox:ClearFocus();
 					else
 						self.Item = nil;
 						self.Link = nil;
@@ -493,7 +494,6 @@
 						self.ItemFrame.Scroll.EditBox:SetTextColor(1, 1, 1);
 						self.ItemFrame.ButtonAdd:Disable();
 					end
-					self.ItemFrame.Scroll.EditBox:ClearFocus();
 				end
 				self:SetItem(nil);
 			</OnLoad>

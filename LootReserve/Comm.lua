@@ -167,7 +167,9 @@ function LootReserve.Comm:BroadcastSessionInfo(starting)
     local session = LootReserve.Server.CurrentSession;
     if session.Settings.Blind then
         for player in pairs(session.Members) do
-            LootReserve.Comm:SendSessionInfo(player, starting);
+            if LootReserve:IsPlayerOnline(player) then
+                LootReserve.Comm:SendSessionInfo(player, starting);
+            end
         end
     else
         LootReserve.Comm:SendSessionInfo(nil, starting);

@@ -239,7 +239,7 @@ function LootReserve:GetPlayerClassColor(player)
             return colors.colorStr;
         end
     end
-    return "ff808080";
+    return "FF808080";
 end
 
 function LootReserve:GetRaidUnitID(player)
