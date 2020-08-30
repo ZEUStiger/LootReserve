@@ -538,7 +538,7 @@
 					<ScrollFrame parentKey="Scroll" inherits="LootReserveScrollTemplate">
 						<Anchors>
 							<Anchor point="TOPLEFT" x="5" y="-5" />
-							<Anchor point="BOTTOMRIGHT" x="-27" y="5" />
+							<Anchor point="BOTTOMRIGHT" x="-21" y="5" />
 						</Anchors>
 					</ScrollFrame>
 				</Frames>
@@ -556,7 +556,7 @@
 					<ScrollFrame parentKey="Scroll" inherits="LootReserveScrollTemplate">
 						<Anchors>
 							<Anchor point="TOPLEFT" x="5" y="-5" />
-							<Anchor point="BOTTOMRIGHT" x="-27" y="5" />
+							<Anchor point="BOTTOMRIGHT" x="-21" y="5" />
 						</Anchors>
 					</ScrollFrame>
 				</Frames>

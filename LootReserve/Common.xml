@@ -137,12 +137,13 @@
 		</Scripts>
 	</Button>
 	<ScrollFrame name="LootReserveScrollTemplate" inherits="UIPanelScrollFrameTemplate" virtual="true">
-		<Frames>
+		<ScrollChild>
 			<Frame parentKey="Container" />
-		</Frames>
+		</ScrollChild>
 		<Scripts>
-			<OnLoad>
-				self:SetScrollChild(self.Container);
+			<OnLoad inherit="prepend">
+				self.ScrollBar:SetPoint("TOPLEFT", self, "TOPRIGHT", 0, -16);
+				self.ScrollBar:SetPoint("BOTTOMLEFT", self, "BOTTOMRIGHT", 0, 16);
 			</OnLoad>
 			<OnShow>
 				if self:IsProtected() and InCombatLockdown() then return; end
