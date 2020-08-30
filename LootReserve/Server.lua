@@ -18,6 +18,7 @@ LootReserve.Server =
         ChatThrottle = false,
         ReservesSorting = LootReserve.Constants.ReservesSorting.ByTime,
         UseGlobalProfile = false,
+        Phases = LootReserve:Deepcopy(LootReserve.Constants.DefaultPhases),
         RollUsePhases = false,
         RollPhases = { },
         RollAdvanceOnExpire = true,
@@ -102,15 +103,44 @@ StaticPopupDialogs["LOOTRESERVE_CONFIRM_GLOBAL_PROFILE_DISABLE"] =
     hideOnEscape = 1,
 };
 
-local function removeFromTable(tbl, item)
-    for index, i in ipairs(tbl) do
-        if i == item then
-            table.remove(tbl, index);
-            return true;
+StaticPopupDialogs["LOOTRESERVE_NEW_PHASE_NAME"] =
+{
+    text = "Name the new stage:",
+    button1 = ACCEPT,
+    button2 = CANCEL,
+    hasEditBox = true,
+    maxLetters = 50,
+    OnAccept = function(self)
+        local name = LootReserve:StringTrim(self.editBox:GetText());
+        if #name > 0 and not LootReserve:Contains(LootReserve.Server.Settings.Phases, name) then
+            table.insert(LootReserve.Server.Settings.Phases, name);
         end
-    end
-    return false;
-end
+    end,
+    EditBoxOnEnterPressed = function(self)
+        StaticPopupDialogs["LOOTRESERVE_NEW_PHASE_NAME"].OnAccept(self:GetParent());
+        self:GetParent():Hide();
+    end,
+    EditBoxOnEscapePressed = function(self)
+        self:GetParent():Hide();
+    end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+};
+
+StaticPopupDialogs["LOOTRESERVE_CONFIRM_RESET_PHASES"] =
+{
+    text = "Are you sure you want to reset stages to default?",
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function(self)
+        LootReserve.Server.Settings.Phases = LootReserve:Deepcopy(LootReserve.Constants.DefaultPhases);
+    end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+};
+
 local function formatToRegexp(fmt)
     return fmt:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)");
 end
@@ -300,7 +330,7 @@ function LootReserve.Server:PrepareLootTracking()
         item = tonumber(item:match("item:(%d+)"));
         count = tonumber(count);
         if looter and item and count then
-            removeFromTable(self.RecentLoot, item);
+            LootReserve:TableRemove(self.RecentLoot, item);
             table.insert(self.RecentLoot, item);
             while #self.RecentLoot > 10 do
                 table.remove(self.RecentLoot, 1);
@@ -848,7 +878,7 @@ function LootReserve.Server:Reserve(player, item, chat)
                 post = " You are the only player reserving this item thus far.";
             else
                 local others = LootReserve:Deepcopy(reserve.Players);
-                removeFromTable(others, player);
+                LootReserve:TableRemove(others, player);
                 post = format(" It's also reserved by %d other %s: %s.",
                     #others,
                     #others == 1 and "player" or "players",
@@ -878,7 +908,7 @@ function LootReserve.Server:Reserve(player, item, chat)
             for _, other in ipairs(reserve.Players) do
                 if other ~= player and LootReserve:IsPlayerOnline(other) and not self:IsAddonUser(other) then
                     local others = LootReserve:Deepcopy(reserve.Players);
-                    removeFromTable(others, other);
+                    LootReserve:TableRemove(others, other);
 
                     LootReserve:SendChatMessage(format("There %s now %d %s for %s you reserved: %s.",
                         #others == 1 and "is" or "are",
@@ -931,7 +961,7 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
     end
 
     member.ReservesLeft = math.min(member.ReservesLeft + 1, self.CurrentSession.Settings.MaxReservesPerPlayer);
-    removeFromTable(member.ReservedItems, item);
+    LootReserve:TableRemove(member.ReservedItems, item);
     LootReserve.Comm:SendCancelReserveResult(player, item, forced and LootReserve.Constants.CancelReserveResult.Forced or LootReserve.Constants.CancelReserveResult.OK, member.ReservesLeft);
 
     if self:IsRolling(item) and not self.RequestedRoll.Custom then
@@ -940,7 +970,7 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
 
     local reserve = self.CurrentSession.ItemReserves[item];
     if reserve then
-        removeFromTable(reserve.Players, player);
+        LootReserve:TableRemove(reserve.Players, player);
         if self.CurrentSession.Settings.Blind then
             LootReserve.Comm:SendReserveInfo(player, item, { });
         else
@@ -983,7 +1013,7 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
             for _, other in ipairs(reserve.Players) do
                 if LootReserve:IsPlayerOnline(other) and not self:IsAddonUser(other) then
                     local others = LootReserve:Deepcopy(reserve.Players);
-                    removeFromTable(others, other);
+                    LootReserve:TableRemove(others, other);
 
                     if #others == 0 then
                         LootReserve:SendChatMessage(format("You are now the only contender for %s.", link), "WHISPER", other);

@@ -366,6 +366,16 @@ function LootReserve:Deepcopy(orig)
     end
 end
 
+function LootReserve:TableRemove(tbl, item)
+    for index, i in ipairs(tbl) do
+        if i == item then
+            table.remove(tbl, index);
+            return true;
+        end
+    end
+    return false;
+end
+
 function LootReserve:Contains(table, item)
     for _, i in ipairs(table) do
         if i == item then

@@ -566,12 +566,11 @@
 						]]
 
 						-- Roll Phases
-						local phases = { "Main-Spec", "Off-Spec", "Reputation", "Profession", "Looks", "Vendor" };
 						local phaseMenu = { };
 						for _, contains in ipairs({ true, false }) do
 							local first = true;
 							local i = 0;
-							for _, phase in ipairs(contains and LootReserve.Server.Settings.RollPhases or phases) do
+							for _, phase in ipairs(contains and LootReserve.Server.Settings.RollPhases or LootReserve.Server.Settings.Phases) do
 								if LootReserve:Contains(LootReserve.Server.Settings.RollPhases, phase) == contains then
 									if #phaseMenu > 0 and first then
 										table.insert(phaseMenu, LootReserve:MakeMenuSeparator());
@@ -580,7 +579,7 @@
 									i = i + 1;
 									table.insert(phaseMenu,
 									{
-										text = contains and format("%d. %s", i, phase) or phase,
+										text = contains and format("|cFF00FF00%d. %s|r", i, phase) or phase,
 										arg1 = phase,
 										arg2 = contains,
 										func = function(info, phase, contains)
@@ -612,6 +611,37 @@
 								end
 							end
 						end
+						if #phaseMenu > 0 then
+							table.insert(phaseMenu, LootReserve:MakeMenuSeparator());
+						end
+						table.insert(phaseMenu, { text = "Manage", isTitle = true });
+						table.insert(phaseMenu, { text = "Add...", func = function()
+							CloseMenus();
+							StaticPopup_Show("LOOTRESERVE_NEW_PHASE_NAME");
+						end });
+						local removePhasesMenu = { };
+						for _, phase in ipairs(LootReserve.Server.Settings.Phases) do
+							table.insert(removePhasesMenu, { text = phase, arg1 = phase, func = function(info)
+								LootReserve:TableRemove(LootReserve.Server.Settings.Phases, info.arg1);
+								LootReserve:TableRemove(LootReserve.Server.Settings.RollPhases, info.arg1);
+								CloseMenus();
+								self:Click();
+								for i = 1, UIDROPDOWNMENU_MAXBUTTONS do
+									local button = _G["DropDownList1Button"..i];
+									if button and button.arg1 == "!Phases" then
+										local arrow = _G[button:GetName().."ExpandArrow"];
+										if arrow then
+											arrow:Click();
+										end
+									end
+								end
+							end });
+						end
+						table.insert(phaseMenu, { text = "Remove...", keepShownOnClick = true, hasArrow = true, menuList = removePhasesMenu });
+						table.insert(phaseMenu, { text = "Reset", func = function()
+							CloseMenus();
+							StaticPopup_Show("LOOTRESERVE_CONFIRM_RESET_PHASES");
+						end });
 
 						-- Roll Duration
 						local function FormatTime(time)

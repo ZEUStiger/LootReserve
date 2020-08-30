@@ -40,4 +40,13 @@ LootReserve.Constants =
         RollTie = 7,
         SessionInstructions = 8,
     },
+    DefaultPhases =
+    {
+        "Main-Spec",
+        "Off-Spec",
+        "Reputation",
+        "Profession",
+        "Looks",
+        "Vendor",
+    },
 };
