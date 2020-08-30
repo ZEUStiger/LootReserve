@@ -97,7 +97,7 @@
 									self.faction = conditions and conditions.Faction and not LootReserve.ItemConditions:TestFaction(conditions.Faction);
 									self.hidden = conditions and conditions.Hidden;
 									self.custom = conditions and conditions.Custom;
-									self:SetShown(not self.faction and not self.custom and self:GetParent():GetParent().hovered or self.hidden);
+									self:SetShown(not self.faction and not self.custom and self:GetParent():GetParent().hovered or self.hidden and not self.custom);
 									self:SetText(self.hidden and "|cFFFF0000Hidden|r" or "Visible");
 									self:SetWidth(10 + self.Text:GetStringWidth() + 10);
 									if self:GetParent().Update then
@@ -207,7 +207,7 @@
 					self.ConditionsFrame.ClassMask:SetEnabled(hovered);
 					self.ConditionsFrame.ClassMask:SetShown(hovered or not self.ConditionsFrame.ClassMask.any);
 					self.ConditionsFrame.State:SetEnabled(hovered);
-					self.ConditionsFrame.State:SetShown(not self.ConditionsFrame.State.faction and not self.ConditionsFrame.State.custom and hovered or self.ConditionsFrame.State.hidden);
+					self.ConditionsFrame.State:SetShown(not self.ConditionsFrame.State.faction and not self.ConditionsFrame.State.custom and hovered or self.ConditionsFrame.State.hidden and not self.ConditionsFrame.State.custom);
 					self.ConditionsFrame.Custom:SetShown(self.ConditionsFrame.Custom.custom and hovered);
 					for _, part in ipairs(self.ConditionBackgrounds) do
 						part:SetShown(hovered);
