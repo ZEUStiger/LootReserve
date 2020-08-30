@@ -183,7 +183,7 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
     local membersInfo = "";
     for player, member in pairs(session.Members) do
         if not target or player == target then
-            membersInfo = membersInfo .. (#membersInfo > 0 and ";" or "") .. format("%s=%s", player, strjoin(",", member.ReservesLeft));
+            membersInfo = membersInfo .. (#membersInfo > 0 and ";" or "") .. format("%s=%s", player, strjoin(",", session.Settings.Lock and member.Locked and "#" or member.ReservesLeft));
         end
     end
 
@@ -242,6 +242,7 @@ LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, star
             if player == Ambiguate(UnitName("player"), "short") then
                 local remainingReserves = strsplit(",", info);
                 LootReserve.Client.RemainingReserves = tonumber(remainingReserves) or 0;
+                LootReserve.Client.Locked = remainingReserves == "#";
             end
         end
     end
@@ -317,10 +318,12 @@ end
 LootReserve.Comm.Handlers[Opcodes.ReserveResult] = function(sender, item, result, remainingReserves)
     item = tonumber(item);
     result = tonumber(result);
-    remainingReserves = tonumber(remainingReserves);
+    local locked = remainingReserves == "#";
+    remainingReserves = tonumber(remainingReserves) or 0;
 
     if LootReserve.Client.SessionServer == sender then
         LootReserve.Client.RemainingReserves = remainingReserves;
+        LootReserve.Client.Locked = locked;
         local message = "Failed to reserve the item:|n%s"
         if result == LootReserve.Constants.ReserveResult.OK then
             -- OK
@@ -338,6 +341,9 @@ LootReserve.Comm.Handlers[Opcodes.ReserveResult] = function(sender, item, result
             LootReserve:ShowError(message, "You already reserved too many items");
         elseif result == LootReserve.Constants.ReserveResult.FailedConditions then
             LootReserve:ShowError(message, "You cannot reserve that item");
+        elseif result == LootReserve.Constants.ReserveResult.Locked then
+            LootReserve:ShowError(message, "You cannot alter your reserves anymore");
+            LootReserve.Client.Locked = true;
         end
 
         LootReserve.Client:SetItemPending(item, false);
@@ -396,10 +402,12 @@ end
 LootReserve.Comm.Handlers[Opcodes.CancelReserveResult] = function(sender, item, result, remainingReserves)
     item = tonumber(item);
     result = tonumber(result);
-    remainingReserves = tonumber(remainingReserves);
+    local locked = remainingReserves == "#";
+    remainingReserves = tonumber(remainingReserves) or 0;
 
     if LootReserve.Client.SessionServer == sender then
         LootReserve.Client.RemainingReserves = remainingReserves;
+        LootReserve.Client.Locked = locked;
         local message = "Failed to cancel reserve of the item:|n%s"
         if result == LootReserve.Constants.CancelReserveResult.OK then
             -- OK
@@ -424,6 +432,9 @@ LootReserve.Comm.Handlers[Opcodes.CancelReserveResult] = function(sender, item, 
                 end
             end
             ShowForced();
+        elseif result == LootReserve.Constants.CancelReserveResult.Locked then
+            LootReserve:ShowError(message, "You cannot alter your reserves anymore");
+            LootReserve.Client.Locked = true;
         end
 
         LootReserve.Client:SetItemPending(item, false);

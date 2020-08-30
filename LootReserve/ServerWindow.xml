@@ -1354,7 +1354,7 @@
 						<FontString parentKey="LabelCount" inherits="GameFontNormal" text="Reserves">
 							<Size y="20" />
 							<Anchors>
-								<Anchor point="TOP" relativeKey="$parent.LabelRaid" relativePoint="BOTTOM" x="-40" y="-42" />
+								<Anchor point="TOP" relativeKey="$parent.LabelRaid" relativePoint="BOTTOM" x="-40" y="-38" />
 							</Anchors>
 						</FontString>
 						<FontString parentKey="LabelDuration" inherits="GameFontNormal" text="Duration">
@@ -1504,6 +1504,27 @@
 								if LootReserve.Server.CurrentSession then
 									LootReserve.Server.CurrentSession.Settings.Blind = self:GetChecked();
 									LootReserve.Comm:BroadcastSessionInfo();
+								end
+							</OnClick>
+						</Scripts>
+					</CheckButton>
+					<CheckButton parentKey="CheckButtonLock" inherits="LootReserveCheckBoxTemplate">
+						<KeyValues>
+							<KeyValue key="text" value="Lock-in" type="string" />
+							<KeyValue key="tooltipText" value="Reserves Lock-in" type="string" />
+							<KeyValue key="tooltipSubtext" value="If enabled, players that were present in the raid while reserves were being accepted will no longer be able to alter them, should the reserving process be resumed. Only new players, who haven't yet participated in reserves, will be allowed to make them.|n|nThe state of player lock-ins can be viewed and adjusted by clicking the button below." type="string" />
+						</KeyValues>
+						<Anchors>
+							<Anchor point="TOP" relativeKey="$parent.CheckButtonBlind" relativePoint="BOTTOM" y="0" />
+						</Anchors>
+						<Scripts>
+							<OnClick inherit="prepend">
+								LootReserve.Server.NewSessionSettings.Lock = self:GetChecked();
+								if LootReserve.Server.CurrentSession then
+									LootReserve.Server.CurrentSession.Settings.Lock = self:GetChecked();
+									if LootReserve.Server.CurrentSession.AcceptingReserves then
+										LootReserve.Comm:BroadcastSessionInfo();
+									end
 								end
 							</OnClick>
 						</Scripts>

@@ -6,6 +6,10 @@ function LootReserve.Client:UpdateReserveStatus()
         self.Window.RemainingText:SetText("|cFF808080Loot reserves are no longer being accepted|r");
         --self.Window.RemainingTextGlow:SetVertexColor(1, 0, 0, 0.15);
         -- animated in LootReserve.Client:OnWindowLoad instead
+    elseif self.Locked then
+        self.Window.RemainingText:SetText("|cFF808080You are locked-in and cannot alter your reserves|r");
+        --self.Window.RemainingTextGlow:SetVertexColor(1, 0, 0, 0.15);
+        -- animated in LootReserve.Client:OnWindowLoad instead
     else
         local reserves = LootReserve.Client:GetRemainingReserves();
         self.Window.RemainingText:SetText(format("You can reserve|cFF%s %d |rmore |4item:items;", reserves > 0 and "00FF00" or "FF0000", reserves));
@@ -29,8 +33,8 @@ function LootReserve.Client:UpdateReserveStatus()
             frame.ReserveFrame.ReserveIcon.NumberMany:Hide();
 
             local pending = self:IsItemPending(item);
-            frame.ReserveFrame.ReserveButton:SetEnabled(not pending);
-            frame.ReserveFrame.CancelReserveButton:SetEnabled(not pending);
+            frame.ReserveFrame.ReserveButton:SetEnabled(not pending and not self.Locked);
+            frame.ReserveFrame.CancelReserveButton:SetEnabled(not pending and not self.Locked);
 
             if self.SessionServer then
                 local reservers = self:GetItemReservers(item);
@@ -336,7 +340,7 @@ function LootReserve.Client:OnWindowLoad(window)
     self:UpdateReserveStatus();
     LootReserve:RegisterUpdate(function(elapsed)
         if not self.SessionServer then
-        elseif not self.AcceptingReserves then
+        elseif not self.AcceptingReserves or self.Locked then
             local r, g, b, a = self.Window.RemainingTextGlow:GetVertexColor();
             elapsed = math.min(elapsed, 1);
             r = r + (1 - r) * elapsed / 0.5;

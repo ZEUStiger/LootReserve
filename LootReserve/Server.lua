@@ -10,6 +10,7 @@ LootReserve.Server =
         ChatFallback = true,
         ItemConditions = { },
         Blind = false,
+        Lock = false,
     },
     Settings =
     {
@@ -443,6 +444,7 @@ function LootReserve.Server:PrepareSession()
                             {
                                 ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
                                 ReservedItems = { },
+                                Locked = nil,
                             };
                         end
                     end
@@ -685,6 +687,7 @@ function LootReserve.Server:StartSession()
             {
                 ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
                 ReservedItems = { ItemID, ItemID, ... },
+                Locked = nil,
             },
             ...
         },
@@ -761,6 +764,7 @@ function LootReserve.Server:ResumeSession()
 
     self.CurrentSession.AcceptingReserves = true;
     self.CurrentSession.DurationEndTimestamp = time() + math.floor(self.CurrentSession.Duration);
+
     LootReserve.Comm:BroadcastSessionInfo();
 
     if self.CurrentSession.Settings.ChatFallback then
@@ -780,6 +784,11 @@ function LootReserve.Server:StopSession()
     end
 
     self.CurrentSession.AcceptingReserves = false;
+
+    for player, member in pairs(self.CurrentSession.Members) do
+        member.Locked = true;
+    end
+
     LootReserve.Comm:BroadcastSessionInfo();
     LootReserve.Comm:SendSessionStop();
 
@@ -835,6 +844,12 @@ function LootReserve.Server:Reserve(player, item, chat)
     if not member then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.NotMember, 0);
         if chat then LootReserve:SendChatMessage("You are not participating in loot reserves", "WHISPER", player); end
+        return;
+    end
+
+    if self.CurrentSession.Settings.Lock and member.Locked then
+        LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.Locked, "#");
+        if chat then LootReserve:SendChatMessage("You cannot alter your reserves anymore", "WHISPER", player); end
         return;
     end
 
@@ -964,6 +979,12 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
     if not member then
         LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.NotMember, 0);
         if chat then LootReserve:SendChatMessage("You are not participating in loot reserves", "WHISPER", player); end
+        return;
+    end
+
+    if self.CurrentSession.Settings.Lock and member.Locked then
+        LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.Locked, "#");
+        if chat then LootReserve:SendChatMessage("You cannot alter your reserves anymore", "WHISPER", player); end
         return;
     end
 

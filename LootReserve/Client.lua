@@ -8,6 +8,7 @@ LootReserve.Client =
     StartTime = 0,
     AcceptingReserves = false,
     RemainingReserves = 0,
+    Locked = false,
     LootCategory = nil,
     Duration = nil,
     MaxDuration = nil,

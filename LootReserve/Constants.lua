@@ -11,6 +11,7 @@ LootReserve.Constants =
         AlreadyReserved = 5,
         NoReservesLeft = 6,
         FailedConditions = 7,
+        Locked = 8,
     },
     CancelReserveResult =
     {
@@ -21,6 +22,7 @@ LootReserve.Constants =
         ItemNotReservable = 4,
         NotReserved = 5,
         Forced = 6,
+        Locked = 7,
     },
     ReservesSorting =
     {
