@@ -41,6 +41,8 @@ LootReserve.Server =
     ChatFallbackRegistered = false,
     SessionEventsRegistered = false,
     AllItemNamesCached = false,
+    StartupAwaitingAuthority = false,
+    StartupAwaitingAuthorityRegistered = false,
 };
 
 StaticPopupDialogs["LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE"] =
@@ -262,17 +264,34 @@ function LootReserve.Server:Startup()
         self:PrepareRequestRoll();
     end
 
-    if self.CurrentSession and self:CanBeServer() then
-        -- Hook handlers
-        self:PrepareSession();
-        -- Inform other players about ongoing session
-        LootReserve.Comm:BroadcastSessionInfo();
+    if self.CurrentSession and not LootReserve.Client.SessionServer then
+        if self:CanBeServer() then
+            -- Hook handlers
+            self:PrepareSession();
+            -- Inform other players about ongoing session
+            LootReserve.Comm:BroadcastSessionInfo();
+        else
+            -- If we have a session but no authority to be a server - wait until we have RL/ML role and restart the server again
+            self.StartupAwaitingAuthority = true;
+            self:UpdateServerAuthority();
+            if not self.StartupAwaitingAuthorityRegistered then
+                self.StartupAwaitingAuthorityRegistered = true;
+                LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", function()
+                    if self.StartupAwaitingAuthority and self.CurrentSession and not LootReserve.Client.SessionServer and self:CanBeServer() then
+                        self.StartupAwaitingAuthority = false;
+                        self:Startup();
+                    end
+                end);
+            end
+        end
+
         -- Update UI
         if self.CurrentSession.AcceptingReserves then
             self:SessionStarted();
         else
             self:SessionStopped();
         end
+
         self:UpdateReserveList();
 
         self.Window:Show();

@@ -1630,6 +1630,18 @@
 					</Layer>
 				</Layers>
 			</Frame>
+			<Frame parentKey="AwaitingAuthority" hidden="true" enableMouse="true" frameLevel="1000">
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.PanelSession" />
+					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.PanelSession" />
+				</Anchors>
+				<!--Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background-Dark" /-->
+				<Layers>
+					<Layer>
+						<FontString inherits="GameFontNormal" text="You have an active session|nbut aren't currently the raid|nleader or the master looter|n|nThe session will resume|nwhen you're assigned|none of these roles" />
+					</Layer>
+				</Layers>
+			</Frame>
 			<Frame parentKey="PanelReserves" parentArray="Panels" hidden="true">
 				<Anchors>
 					<Anchor point="TOPLEFT" x="7" y="-48" />

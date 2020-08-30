@@ -726,7 +726,7 @@ function LootReserve.Server:SessionStarted()
     self.Window.PanelSession.ButtonStartSession:Hide();
     self.Window.PanelSession.ButtonStopSession:Show();
     self.Window.PanelSession.ButtonResetSession:Hide();
-    self:OnWindowTabClick(self.Window.TabReserves);
+    self:OnWindowTabClick(self.StartupAwaitingAuthority and self.Window.TabSession or self.Window.TabReserves);
     PlaySound(SOUNDKIT.GS_CHARACTER_SELECTION_ENTER_WORLD);
     self:UpdateServerAuthority();
     self:UpdateRollList();
@@ -775,8 +775,9 @@ end
 function LootReserve.Server:UpdateServerAuthority()
     local hasAuthority = self:CanBeServer();
     self.Window.PanelSession.ButtonStartSession:SetEnabled(hasAuthority);
-    self.Window.PanelSession:SetAlpha((hasAuthority or self.CurrentSession) and 1 or 0.15);
+    self.Window.PanelSession:SetAlpha((hasAuthority or self.CurrentSession and not self.StartupAwaitingAuthority) and 1 or 0.15);
     self.Window.NoAuthority:SetShown(not hasAuthority and not self.CurrentSession and self.Window.PanelSession:IsShown());
+    self.Window.AwaitingAuthority:SetShown(not hasAuthority and self.CurrentSession and self.Window.PanelSession:IsShown() and self.StartupAwaitingAuthority);
 end
 
 function LootReserve.Server:UpdateAddonUsers()

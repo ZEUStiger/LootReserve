@@ -154,7 +154,7 @@ end
 LootReserve.Comm.Handlers[Opcodes.Hello] = function(sender)
     LootReserve.Comm:SendVersion(sender);
 
-    if LootReserve.Server.CurrentSession then
+    if LootReserve.Server.CurrentSession and LootReserve.Server:CanBeServer() then
         LootReserve.Comm:SendSessionInfo(sender);
     end
     if LootReserve.Server.RequestedRoll and not LootReserve.Server.RequestedRoll.RaidRoll and LootReserve.Server:CanRoll(sender) then
