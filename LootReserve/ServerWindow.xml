@@ -308,6 +308,9 @@
 									table.insert(menu, #menu - 1,
 									{
 										text = "Advance Automatically",
+										tooltipTitle = "Advance Automatically",
+										tooltipText = "Advance to the next stage when the timer expires if nobody rolled.",
+										tooltipOnButton = true,
 										checked = LootReserve.Server.Settings.RollAdvanceOnExpire,
 										notCheckable = false,
 										keepShownOnClick = true,
@@ -317,10 +320,58 @@
 								table.insert(menu, #menu - 1,
 								{
 									text = "End Automatically",
+									tooltipTitle = "End Automatically",
+									tooltipText = "Announce the winner and end the roll when the timer expires.",
+									tooltipOnButton = true,
 									checked = LootReserve.Server.Settings.RollFinishOnExpire,
 									notCheckable = false,
 									keepShownOnClick = true,
 									func = function() LootReserve.Server.Settings.RollFinishOnExpire = not LootReserve.Server.Settings.RollFinishOnExpire; end,
+								});
+							end
+							if not LootReserve.Server.RequestedRoll.Custom and not LootReserve.Server.RequestedRoll.RaidRoll then
+								if not separator then
+									table.insert(menu, #menu - 1, LootReserve:MakeMenuSeparator());
+									separator = true;
+								end
+								table.insert(menu, #menu - 1,
+								{
+									text = "Skip Roll if Not Contested",
+									tooltipTitle = "Skip Roll if Not Contested",
+									tooltipText = "Just announce the winner instead of rolling on the item if it's reserved by only one player.",
+									tooltipOnButton = true,
+									checked = LootReserve.Server.Settings.RollSkipNotContested,
+									notCheckable = false,
+									keepShownOnClick = true,
+									func = function() LootReserve.Server.Settings.RollSkipNotContested = not LootReserve.Server.Settings.RollSkipNotContested; LootReserve.Server:TryFinishRoll(); end,
+								});
+								table.insert(menu, #menu - 1,
+								{
+									text = "End Automatically",
+									tooltipTitle = "End Automatically",
+									tooltipText = "Announce the winner and end the roll as soon as all reserving players rolled.",
+									tooltipOnButton = true,
+									checked = LootReserve.Server.Settings.RollFinishOnAllReservingRolled,
+									notCheckable = false,
+									keepShownOnClick = true,
+									func = function() LootReserve.Server.Settings.RollFinishOnAllReservingRolled = not LootReserve.Server.Settings.RollFinishOnAllReservingRolled; LootReserve.Server:TryFinishRoll(); end,
+								});
+							end
+							if LootReserve.Server.RequestedRoll.RaidRoll then
+								if not separator then
+									table.insert(menu, #menu - 1, LootReserve:MakeMenuSeparator());
+									separator = true;
+								end
+								table.insert(menu, #menu - 1,
+								{
+									text = "End Automatically",
+									tooltipTitle = "End Automatically",
+									tooltipText = "Instantly announce the winner and end the raid-roll.",
+									tooltipOnButton = true,
+									checked = LootReserve.Server.Settings.RollFinishOnRaidRoll,
+									notCheckable = false,
+									keepShownOnClick = true,
+									func = function() LootReserve.Server.Settings.RollFinishOnRaidRoll = not LootReserve.Server.Settings.RollFinishOnRaidRoll; LootReserve.Server:TryFinishRoll(); end,
 								});
 							end
 							
@@ -666,6 +717,28 @@
 							{ text = "Among All Players", func = StartRoll },
 							{ text = "Auto Raid-Roll", func = RaidRoll },
 							LootReserve:MakeMenuSeparator(),
+							{ text = "Settings for \"Reserving Players\"", isTitle = true },
+							{
+								text = "Skip Roll if Not Contested",
+								tooltipTitle = "Skip Roll if Not Contested",
+								tooltipText = "Just announce the winner instead of rolling on the item if it's reserved by only one player.",
+								tooltipOnButton = true,
+								checked = LootReserve.Server.Settings.RollSkipNotContested,
+								notCheckable = false,
+								keepShownOnClick = true,
+								func = function() LootReserve.Server.Settings.RollSkipNotContested = not LootReserve.Server.Settings.RollSkipNotContested; end,
+							},
+							{
+								text = "End Automatically",
+								tooltipTitle = "End Automatically",
+								tooltipText = "Announce the winner and end the roll as soon as all reserving players rolled.",
+								tooltipOnButton = true,
+								checked = LootReserve.Server.Settings.RollFinishOnAllReservingRolled,
+								notCheckable = false,
+								keepShownOnClick = true,
+								func = function() LootReserve.Server.Settings.RollFinishOnAllReservingRolled = not LootReserve.Server.Settings.RollFinishOnAllReservingRolled; end,
+							},
+							LootReserve:MakeMenuSeparator(),
 							{ text = "Settings for \"All Players\"", isTitle = true },
 							{
 								text = format(LootReserve.Server.Settings.RollUsePhases and "Roll For: |cFF00FF00%s|r" or "Roll For...", strjoin(", ", unpack(LootReserve.Server.Settings.RollPhases))),
@@ -688,6 +761,9 @@
 							},
 							{
 								text = "Advance Automatically",
+								tooltipTitle = "Advance Automatically",
+								tooltipText = "Advance to the next stage when the timer expires if nobody rolled.",
+								tooltipOnButton = true,
 								disabled = not LootReserve.Server.Settings.RollUsePhases or #LootReserve.Server.Settings.RollPhases &lt;= 1 or not LootReserve.Server.Settings.RollLimitDuration,
 								checked = LootReserve.Server.Settings.RollAdvanceOnExpire,
 								notCheckable = false,
@@ -696,11 +772,26 @@
 							},
 							{
 								text = "End Automatically",
+								tooltipTitle = "End Automatically",
+								tooltipText = "Announce the winner and end the roll when the timer expires.",
+								tooltipOnButton = true,
 								disabled = not LootReserve.Server.Settings.RollLimitDuration,
 								checked = LootReserve.Server.Settings.RollFinishOnExpire,
 								notCheckable = false,
 								keepShownOnClick = true,
 								func = function() LootReserve.Server.Settings.RollFinishOnExpire = not LootReserve.Server.Settings.RollFinishOnExpire; end,
+							},
+							LootReserve:MakeMenuSeparator(),
+							{ text = "Settings for \"Raid-Roll\"", isTitle = true },
+							{
+								text = "End Automatically",
+								tooltipTitle = "End Automatically",
+								tooltipText = "Instantly announce the winner and end the raid-roll.",
+								tooltipOnButton = true,
+								checked = LootReserve.Server.Settings.RollFinishOnRaidRoll,
+								notCheckable = false,
+								keepShownOnClick = true,
+								func = function() LootReserve.Server.Settings.RollFinishOnRaidRoll = not LootReserve.Server.Settings.RollFinishOnRaidRoll; end,
 							},
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Cancel" },

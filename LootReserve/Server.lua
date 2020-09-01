@@ -26,6 +26,9 @@ LootReserve.Server =
         RollLimitDuration = false,
         RollDuration = 60,
         RollFinishOnExpire = true,
+        RollFinishOnAllReservingRolled = false,
+        RollFinishOnRaidRoll = false,
+        RollSkipNotContested = false,
     },
     RequestedRoll = nil,
     RollHistory = { },
@@ -1114,7 +1117,43 @@ function LootReserve.Server:ExpireRollRequest()
             end
         end
 
-        self:RollExpired();
+        self:RollEnded();
+    end
+end
+
+function LootReserve.Server:TryFinishRoll()
+    if self.RequestedRoll then
+        if not self.RequestedRoll.Custom and self.Settings.RollSkipNotContested then
+            local count = 0;
+            for player, roll in pairs(self.RequestedRoll.Players) do
+                count = count + 1;
+            end
+            if count == 1 then
+                self:FinishRollRequest(self.RequestedRoll.Item, true);
+                self:RollEnded();
+                return true;
+            end
+        end
+        if not self.RequestedRoll.Custom and self.Settings.RollFinishOnAllReservingRolled then
+            local missingRolls = false;
+            for player, roll in pairs(self.RequestedRoll.Players) do
+                if roll == 0 then
+                    missingRolls = true;
+                    break;
+                end
+            end
+            if not missingRolls then
+                self:FinishRollRequest(self.RequestedRoll.Item);
+                self:RollEnded();
+                return true;
+            end
+        end
+        if self.RequestedRoll.RaidRoll and self.Settings.RollFinishOnRaidRoll and next(self.RequestedRoll.Players) then
+            self:FinishRollRequest(self.RequestedRoll.Item);
+            self:RollEnded();
+            return true;
+        end
+        return false;
     end
 end
 
@@ -1163,10 +1202,12 @@ function LootReserve.Server:ResolveRollTie(item)
     end
 end
 
-function LootReserve.Server:FinishRollRequest(item)
+function LootReserve.Server:FinishRollRequest(item, soleReserver)
     if self:IsRolling(item) then
         local roll, players = self:GetWinningRollAndPlayers();
         if roll and players then
+            local raidroll = self.RequestedRoll.RaidRoll;
+            local phases = LootReserve:Deepcopy(self.RequestedRoll.Phases);
             local function Announce()
                 local name, link = GetItemInfo(item);
                 if not name or not link then
@@ -1174,7 +1215,19 @@ function LootReserve.Server:FinishRollRequest(item)
                     return;
                 end
 
-                LootReserve:SendChatMessage(format(self.RequestedRoll.RaidRoll and "%s won %s%s via raid-roll" or "%s won %s%s with a roll of %d", strjoin(", ", unpack(players)), LootReserve:FixLink(link), self.RequestedRoll.Phases and format(" for %s", self.RequestedRoll.Phases[1] or "") or "", roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollWinner));
+                LootReserve:SendChatMessage(format(raidroll and "%s won %s%s via raid-roll" or "%s won %s%s with a roll of %d", strjoin(", ", unpack(players)), LootReserve:FixLink(link), phases and format(" for %s", phases[1] or "") or "", roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollWinner));
+            end
+            Announce();
+        elseif soleReserver and not self.RequestedRoll.Custom and next(self.RequestedRoll.Players) then
+            local player = next(self.RequestedRoll.Players);
+            local function Announce()
+                local name, link = GetItemInfo(item);
+                if not name or not link then
+                    C_Timer.After(0.25, Announce);
+                    return;
+                end
+
+                LootReserve:SendChatMessage(format("%s won %s as the only reserver", player, LootReserve:FixLink(link)), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollWinner));
             end
             Announce();
         end
@@ -1300,6 +1353,8 @@ function LootReserve.Server:PrepareRequestRoll()
                     self.RequestedRoll.Players[player] = tonumber(roll);
                     self:UpdateReserveListRolls();
                     self:UpdateRollList();
+
+                    self:TryFinishRoll();
                 end
             end
         end);
@@ -1361,6 +1416,10 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
 
     for _, player in ipairs(allowedPlayers or reserve.Players) do
         self.RequestedRoll.Players[player] = 0;
+    end
+
+    if self:TryFinishRoll() then
+        return;
     end
 
     self:PrepareRequestRoll();
@@ -1498,6 +1557,8 @@ function LootReserve.Server:PassRoll(player, item)
 
     self:UpdateReserveListRolls();
     self:UpdateRollListRolls();
+
+    self:TryFinishRoll();
 end
 
 function LootReserve.Server:DeleteRoll(player, item)
@@ -1530,6 +1591,8 @@ function LootReserve.Server:DeleteRoll(player, item)
 
     self:UpdateReserveListRolls();
     self:UpdateRollListRolls();
+
+    self:TryFinishRoll();
 end
 
 function LootReserve.Server:WhisperAllWithoutReserves()

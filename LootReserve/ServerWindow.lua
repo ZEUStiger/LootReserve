@@ -764,14 +764,19 @@ function LootReserve.Server:SessionReset()
     self:UpdateRollList();
 end
 
-function LootReserve.Server:RollExpired()
-    local list = self.Window.PanelRolls.Scroll.Container.Frames;
-    if list and list[2] and UIDROPDOWNMENU_OPEN_MENU == list[2].Menu then
-        CloseMenus();
-    end
-    list = self.Window.PanelRollsLockdown.Scroll.Container.Frames;
-    if list and list[2] and UIDROPDOWNMENU_OPEN_MENU == list[2].Menu then
-        CloseMenus();
+function LootReserve.Server:RollEnded()
+    if UIDROPDOWNMENU_OPEN_MENU then
+        for _, panel in ipairs({ "PanelReserves", "PanelReservesLockdown", "PanelRolls", "PanelRollsLockdown" }) do
+            local list = self.Window[panel].Scroll.Container;
+            if list and list.Frames then
+                for _, frame in ipairs(list.Frames) do
+                    if UIDROPDOWNMENU_OPEN_MENU == frame.Menu then
+                        CloseMenus();
+                        return;
+                    end
+                end
+            end
+        end
     end
 end
 
