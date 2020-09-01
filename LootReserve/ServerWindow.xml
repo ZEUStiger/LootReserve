@@ -1084,7 +1084,7 @@
 			<Button parentKey="MenuButton" hidden="true">
 				<Size x="12" y="12" />
 				<Anchors>
-					<Anchor point="RIGHT" />
+					<Anchor point="RIGHT" x="-2" />
 				</Anchors>
 				<NormalTexture file="Interface\Buttons\UI-OptionsButton" />
 				<PushedTexture file="Interface\Buttons\UI-OptionsButton" alpha="0.25" />
