@@ -15,6 +15,8 @@ LootReserve.Server =
     Settings =
     {
         ChatAsRaidWarning = { },
+        ChatAnnounceWinToGuild = false,
+        ChatAnnounceWinToGuildThreshold = 3,
         ChatUpdates = true,
         ChatThrottle = false,
         ReservesSorting = LootReserve.Constants.ReservesSorting.ByTime,
@@ -34,11 +36,13 @@ LootReserve.Server =
     RollHistory = { },
     RecentLoot = { },
     AddonUsers = { },
+    GuildMembers = { },
     LootEdit = { },
     MembersEdit = { },
 
     ReservableItems = { },
     LootTrackingRegistered = false,
+    GuildMemberTrackingRegistered = false,
     DurationUpdateRegistered = false,
     RollDurationUpdateRegistered = false,
     RollMatcherRegistered = false,
@@ -315,6 +319,8 @@ function LootReserve.Server:Startup()
 
     -- Hook events to record recent loot and track looters
     self:PrepareLootTracking();
+
+    self:PrepareGuildTracking();
 end
 
 function LootReserve.Server:PrepareLootTracking()
@@ -374,6 +380,22 @@ function LootReserve.Server:PrepareLootTracking()
             end
         end
     end);
+end
+
+function LootReserve.Server:PrepareGuildTracking()
+    if self.GuildMemberTrackingRegistered then return; end
+    self.GuildMemberTrackingRegistered = true;
+
+    LootReserve:RegisterEvent("GUILD_ROSTER_UPDATE", function()
+        table.wipe(self.GuildMembers);
+        for i = 1, GetNumGuildMembers() do
+            local name = GetGuildRosterInfo(i);
+            name = Ambiguate(name, "short");
+            table.insert(self.GuildMembers, name);
+        end
+    end);
+
+    GuildRoster();
 end
 
 function LootReserve.Server:PrepareSession()
@@ -1208,26 +1230,41 @@ function LootReserve.Server:FinishRollRequest(item, soleReserver)
         if roll and players then
             local raidroll = self.RequestedRoll.RaidRoll;
             local phases = LootReserve:Deepcopy(self.RequestedRoll.Phases);
+            local category = self.CurrentSession and LootReserve.Data.Categories[self.CurrentSession.Settings.LootCategory] or nil;
             local function Announce()
-                local name, link = GetItemInfo(item);
+                local name, link, quality = GetItemInfo(item);
                 if not name or not link then
                     C_Timer.After(0.25, Announce);
                     return;
                 end
 
                 LootReserve:SendChatMessage(format(raidroll and "%s won %s%s via raid-roll" or "%s won %s%s with a roll of %d", strjoin(", ", unpack(players)), LootReserve:FixLink(link), phases and format(" for %s", phases[1] or "") or "", roll), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollWinner));
+                if LootReserve.Server.Settings.ChatAnnounceWinToGuild and IsInGuild() and quality >= (LootReserve.Server.Settings.ChatAnnounceWinToGuildThreshold or 3) then
+                    for _, player in ipairs(players) do
+                        if LootReserve:Contains(self.GuildMembers, player) then
+                            LootReserve:SendChatMessage(format("%s won %s%s%s", strjoin(", ", unpack(players)), LootReserve:FixLink(link), phases and format(" for %s", phases[1] or "") or "", category and format(" from %s", category.Name) or ""), "GUILD");
+                            break;
+                        end
+                    end
+                end
             end
             Announce();
         elseif soleReserver and not self.RequestedRoll.Custom and next(self.RequestedRoll.Players) then
             local player = next(self.RequestedRoll.Players);
+            local category = self.CurrentSession and LootReserve.Data.Categories[self.CurrentSession.Settings.LootCategory] or nil;
             local function Announce()
-                local name, link = GetItemInfo(item);
+                local name, link, quality = GetItemInfo(item);
                 if not name or not link then
                     C_Timer.After(0.25, Announce);
                     return;
                 end
 
                 LootReserve:SendChatMessage(format("%s won %s as the only reserver", player, LootReserve:FixLink(link)), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollWinner));
+                if LootReserve.Server.Settings.ChatAnnounceWinToGuild and IsInGuild() and quality >= (LootReserve.Server.Settings.ChatAnnounceWinToGuildThreshold or 3) then
+                    if LootReserve:Contains(self.GuildMembers, player) then
+                        LootReserve:SendChatMessage(format("%s won %s%s", player, LootReserve:FixLink(link), category and format(" from %s", category.Name) or ""), "GUILD");
+                    end
+                end
             end
             Announce();
         end
