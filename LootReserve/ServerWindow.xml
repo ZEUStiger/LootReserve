@@ -646,15 +646,7 @@
 											end
 											CloseMenus();
 											self:Click();
-											for i = 1, UIDROPDOWNMENU_MAXBUTTONS do
-												local button = _G["DropDownList1Button"..i];
-												if button and button.arg1 == "!Phases" then
-													local arrow = _G[button:GetName().."ExpandArrow"];
-													if arrow then
-														arrow:Click();
-													end
-												end
-											end
+											LootReserve:OpenSubMenu("#phases");
 										end,
 										checked = contains,
 										notCheckable = false,
@@ -677,15 +669,7 @@
 								LootReserve:TableRemove(LootReserve.Server.Settings.RollPhases, info.arg1);
 								CloseMenus();
 								self:Click();
-								for i = 1, UIDROPDOWNMENU_MAXBUTTONS do
-									local button = _G["DropDownList1Button"..i];
-									if button and button.arg1 == "!Phases" then
-										local arrow = _G[button:GetName().."ExpandArrow"];
-										if arrow then
-											arrow:Click();
-										end
-									end
-								end
+								LootReserve:OpenSubMenu("#phases");
 							end });
 						end
 						table.insert(phaseMenu, { text = "Remove...", keepShownOnClick = true, hasArrow = true, menuList = removePhasesMenu });
@@ -742,7 +726,7 @@
 							{ text = "Settings for \"All Players\"", isTitle = true },
 							{
 								text = format(LootReserve.Server.Settings.RollUsePhases and "Roll For: |cFF00FF00%s|r" or "Roll For...", strjoin(", ", unpack(LootReserve.Server.Settings.RollPhases))),
-								arg1 = "!Phases",
+								arg1 = "#phases",
 								checked = LootReserve.Server.Settings.RollUsePhases,
 								notCheckable = false,
 								keepShownOnClick = true,
@@ -1214,15 +1198,7 @@
 						local function RefreshWinToGuildThreshold()
 							CloseMenus();
 							self:Click();
-							for i = 1, UIDROPDOWNMENU_MAXBUTTONS do
-								local button = _G["DropDownList1Button"..i];
-								if button and button.arg1 == "!AnnounceToGuild" then
-									local arrow = _G[button:GetName().."ExpandArrow"];
-									if arrow then
-										arrow:Click();
-									end
-								end
-							end
+							LootReserve:OpenSubMenu("#guild");
 						end
 						local function ToggleGlobalProfile(enabled)
 							if enabled then
@@ -1265,7 +1241,7 @@
 								MakeMenuToggle("Roll Winner",                   { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.RollWinner                }, MakeRaidWarningTooltip("when the rolled item is won by a player")),
 								MakeMenuToggle("Roll Tie",                      { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.RollTie                   }, MakeRaidWarningTooltip("when a roll ended in a tie and tied players need to roll again")),
 							} },
-							{ text = format("Announce to %s...", MakeChatColoredText("/guild", "GUILD")), arg1 = "!AnnounceToGuild", keepShownOnClick = true, hasArrow = true, menuList = {
+							{ text = format("Announce to %s...", MakeChatColoredText("/guild", "GUILD")), arg1 = "#guild", keepShownOnClick = true, hasArrow = true, menuList = {
 								MakeMenuToggle("Roll Winner", "ChatAnnounceWinToGuild", format("Broadcast to %s when the rolled item is won by a guild member.", MakeChatColoredText("/guild", "GUILD")), RefreshWinToGuildThreshold),
 								LootReserve:MakeMenuSeparator(),
 								{ text = "Quality Threshold", isTitle = true, disabled = not LootReserve.Server.Settings.ChatAnnounceWinToGuild },

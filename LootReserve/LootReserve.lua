@@ -185,6 +185,18 @@ function LootReserve:OpenMenu(menu, menuContainer, anchor)
     EasyMenu(menu, menuContainer, anchor, 0, 0, "MENU");
 end
 
+function LootReserve:OpenSubMenu(arg1)
+    for i = 1, UIDROPDOWNMENU_MAXBUTTONS do
+        local button = _G["DropDownList1Button"..i];
+        if button and button.arg1 == arg1 then
+            local arrow = _G[button:GetName().."ExpandArrow"];
+            if arrow then
+                arrow:Click();
+            end
+        end
+    end
+end
+
 -- Used to prevent LootReserve:SendChatMessage from breaking a hyperlink into multiple segments if the message is too long
 -- Use it if a text of undetermined length preceeds the hyperlink
 -- GOOD: format("%s win %s", strjoin(", ", players), LootReserve:FixLink(link)) - players might contain so many names that the message overflows 255 chars limit
