@@ -1289,6 +1289,7 @@ function LootReserve.Server:AdvanceRollPhase(item)
 end
 
 function LootReserve.Server:CancelRollRequest(item)
+    self.NextRollCountdown = nil;
     if self:IsRolling(item) then
         -- Cleanup chat from players who didn't roll to reduce memory and storage space usage
         if self.RequestedRoll.Chat then
@@ -1342,8 +1343,18 @@ function LootReserve.Server:PrepareRequestRoll()
             if self.RequestedRoll and self.RequestedRoll.Duration and self.RequestedRoll.Duration ~= 0 then
                 if self.RequestedRoll.Duration > elapsed then
                     self.RequestedRoll.Duration = self.RequestedRoll.Duration - elapsed;
+                    if self.Settings.RollCountdown then
+                        if not self.NextRollCountdown then
+                            self.NextRollCountdown = math.min(self.Settings.RollCountdown, math.floor(self.RequestedRoll.Duration));
+                        end
+                        if self.RequestedRoll.Duration <= self.NextRollCountdown then
+                            LootReserve:SendChatMessage(format("%d...", self.NextRollCountdown), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollCountdown));
+                            self.NextRollCountdown = self.NextRollCountdown - 1;
+                        end
+                    end
                 else
                     self.RequestedRoll.Duration = 0;
+                    self.NextRollCountdown = nil;
                     self:ExpireRollRequest();
                 end
             end

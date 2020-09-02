@@ -688,8 +688,21 @@
 							{
 								text = FormatTime(time),
 								arg1 = time,
-								func = function(info, time) LootReserve.Server.Settings.RollDuration = time; CloseMenus(); self:Click(); end,
+								func = function(info, time) LootReserve.Server.Settings.RollDuration = time; CloseMenus(); self:Click(); LootReserve:OpenSubMenu("#duration"); end,
 								checked = LootReserve.Server.Settings.RollDuration == time,
+								notCheckable = false,
+							});
+						end
+						table.insert(durationMenu, LootReserve:MakeMenuSeparator());
+						table.insert(durationMenu, { text = "Countdown", isTitle = true });
+						for _, time in ipairs({ 0, 3, 5, 10 }) do
+							time = time ~= 0 and time or nil;
+							table.insert(durationMenu,
+							{
+								text = time and format("%d secs", time) or "Disabled",
+								arg1 = time,
+								func = function(info, time) LootReserve.Server.Settings.RollCountdown = time; CloseMenus(); self:Click(); LootReserve:OpenSubMenu("#duration"); end,
+								checked = LootReserve.Server.Settings.RollCountdown == time,
 								notCheckable = false,
 							});
 						end
@@ -735,7 +748,8 @@
 								menuList = phaseMenu,
 							},
 							{
-								text = format(LootReserve.Server.Settings.RollLimitDuration and "Limit Duration: |cFF00FF00%s|r" or "Limit Duration", FormatTime(LootReserve.Server.Settings.RollDuration)),
+								text = format(LootReserve.Server.Settings.RollLimitDuration and (LootReserve.Server.Settings.RollCountdown and "Limit Duration: |cFF00FF00%s|r|cFF808080 (%d secs C/D)|r" or "Limit Duration: |cFF00FF00%s|r") or "Limit Duration", FormatTime(LootReserve.Server.Settings.RollDuration), LootReserve.Server.Settings.RollCountdown),
+								arg1 = "#duration",
 								checked = LootReserve.Server.Settings.RollLimitDuration,
 								notCheckable = false,
 								keepShownOnClick = true,
@@ -1238,6 +1252,7 @@
 								MakeMenuToggle("Announce Instructions",         { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.SessionInstructions       }, MakeRaidWarningTooltip("when manually announcing reserve instructions")),
 								MakeMenuToggle("Roll on an Item",               { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.RollStartCustom           }, MakeRaidWarningTooltip("when starting an item roll")),
 								MakeMenuToggle("Roll on a Reserved Item",       { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.RollStartReserved         }, MakeRaidWarningTooltip("when starting a roll on a reserved item")),
+								MakeMenuToggle("Roll Countdown",                { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.RollCountdown             }, MakeRaidWarningTooltip("when the roll timer is nearing its end (if countdown was enabled for this roll)")),
 								MakeMenuToggle("Roll Winner",                   { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.RollWinner                }, MakeRaidWarningTooltip("when the rolled item is won by a player")),
 								MakeMenuToggle("Roll Tie",                      { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.RollTie                   }, MakeRaidWarningTooltip("when a roll ended in a tie and tied players need to roll again")),
 							} },
