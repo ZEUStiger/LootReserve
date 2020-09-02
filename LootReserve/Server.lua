@@ -880,7 +880,7 @@ function LootReserve.Server:Reserve(player, item, chat)
 
     if self.CurrentSession.Settings.Lock and member.Locked then
         LootReserve.Comm:SendReserveResult(player, item, LootReserve.Constants.ReserveResult.Locked, "#");
-        if chat then LootReserve:SendChatMessage("You cannot alter your reserves anymore", "WHISPER", player); end
+        if chat then LootReserve:SendChatMessage("Your reserves are locked-in and cannot be changed anymore", "WHISPER", player); end
         return;
     end
 
@@ -1016,7 +1016,7 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
 
     if self.CurrentSession.Settings.Lock and member.Locked then
         LootReserve.Comm:SendCancelReserveResult(player, item, LootReserve.Constants.CancelReserveResult.Locked, "#");
-        if chat then LootReserve:SendChatMessage("You cannot alter your reserves anymore", "WHISPER", player); end
+        if chat then LootReserve:SendChatMessage("Your reserves are locked-in and cannot be changed anymore", "WHISPER", player); end
         return;
     end
 

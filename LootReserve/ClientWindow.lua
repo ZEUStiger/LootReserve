@@ -7,7 +7,7 @@ function LootReserve.Client:UpdateReserveStatus()
         --self.Window.RemainingTextGlow:SetVertexColor(1, 0, 0, 0.15);
         -- animated in LootReserve.Client:OnWindowLoad instead
     elseif self.Locked then
-        self.Window.RemainingText:SetText("|cFF808080You are locked-in and cannot alter your reserves|r");
+        self.Window.RemainingText:SetText("|cFF808080You are locked-in and cannot change your reserves|r");
         --self.Window.RemainingTextGlow:SetVertexColor(1, 0, 0, 0.15);
         -- animated in LootReserve.Client:OnWindowLoad instead
     else

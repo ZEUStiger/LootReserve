@@ -1618,7 +1618,7 @@
 						<KeyValues>
 							<KeyValue key="text" value="Lock-in" type="string" />
 							<KeyValue key="tooltipText" value="Reserves Lock-in" type="string" />
-							<KeyValue key="tooltipSubtext" value="All reserves (made or missed) are final and cannot be altered after the server stops accepting reserves, even if the session is later resumed. New players, who haven't yet participated in reserves, will be allowed to make them.|n|nThe state of player lock-ins can be viewed and adjusted by clicking the button below." type="string" />
+							<KeyValue key="tooltipSubtext" value="All reserves (made or missed) are final and cannot be changed after the server stops accepting reserves, even if the session is later resumed. New players, who haven't yet participated in reserves, will be allowed to make them.|n|nThe state of player lock-ins can be viewed and adjusted by clicking the button below." type="string" />
 						</KeyValues>
 						<Anchors>
 							<Anchor point="TOP" relativeKey="$parent.CheckButtonBlind" relativePoint="BOTTOM" y="0" />

@@ -344,7 +344,7 @@ LootReserve.Comm.Handlers[Opcodes.ReserveResult] = function(sender, item, result
         elseif result == LootReserve.Constants.ReserveResult.FailedConditions then
             LootReserve:ShowError(message, "You cannot reserve that item");
         elseif result == LootReserve.Constants.ReserveResult.Locked then
-            LootReserve:ShowError(message, "You cannot alter your reserves anymore");
+            LootReserve:ShowError(message, "Your reserves are locked-in and cannot be changed anymore");
             LootReserve.Client.Locked = true;
         end
 
@@ -435,7 +435,7 @@ LootReserve.Comm.Handlers[Opcodes.CancelReserveResult] = function(sender, item, 
             end
             ShowForced();
         elseif result == LootReserve.Constants.CancelReserveResult.Locked then
-            LootReserve:ShowError(message, "You cannot alter your reserves anymore");
+            LootReserve:ShowError(message, "Your reserves are locked-in and cannot be changed anymore");
             LootReserve.Client.Locked = true;
         end
 
