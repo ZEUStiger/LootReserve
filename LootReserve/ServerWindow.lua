@@ -614,12 +614,9 @@ function LootReserve.Server:OnWindowLoad(window)
     self:UpdateServerAuthority();
     self:LoadNewSessionSessings();
 
-    local function updateAuthority() self:UpdateServerAuthority(); end
-    LootReserve:RegisterEvent("GROUP_JOINED", updateAuthority);
-    LootReserve:RegisterEvent("GROUP_LEFT", updateAuthority);
-    LootReserve:RegisterEvent("PARTY_LEADER_CHANGED", updateAuthority);
-    LootReserve:RegisterEvent("PARTY_LOOT_METHOD_CHANGED", updateAuthority);
-    LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", updateAuthority);
+    LootReserve:RegisterEvent("GROUP_JOINED", "GROUP_LEFT", "PARTY_LEADER_CHANGED", "PARTY_LOOT_METHOD_CHANGED", "GROUP_ROSTER_UPDATE", function()
+        self:UpdateServerAuthority();
+    end);
     LootReserve:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(item, success)
         if item and self.CurrentSession and self.CurrentSession.ItemReserves[item] then
             self:UpdateReserveList();
@@ -673,14 +670,9 @@ function LootReserve.Server:OnWindowLoad(window)
         self.Window.PanelRolls.Scroll:UpdateScrollChildRect();
         self.Window.PanelRolls.Scroll:SetVerticalScroll(self.Window.PanelRollsLockdown.Scroll:GetVerticalScroll());
     end);
-
-    local function updateReserveList()
+    LootReserve:RegisterEvent("LOOT_READY", "LOOT_CLOSED", "LOOT_SLOT_CHANGED", "LOOT_SLOT_CLEARED", function()
         self:UpdateReserveList();
-    end
-    LootReserve:RegisterEvent("LOOT_READY", updateReserveList);
-    LootReserve:RegisterEvent("LOOT_CLOSED", updateReserveList);
-    LootReserve:RegisterEvent("LOOT_SLOT_CHANGED", updateReserveList);
-    LootReserve:RegisterEvent("LOOT_SLOT_CLEARED", updateReserveList);
+    end);
 end
 
 local activeSessionChanges =

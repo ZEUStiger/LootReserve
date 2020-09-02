@@ -132,8 +132,7 @@ function LootReserve:RegisterUpdate(handler)
     end);
 end
 
-function LootReserve:RegisterEvent(event, handler)
-    LootReserve.EventFrame:RegisterEvent(event);
+function LootReserve:RegisterEvent(...)
     if not LootReserve.EventFrame.RegisteredEvents then
         LootReserve.EventFrame.RegisteredEvents = { };
         LootReserve.EventFrame:SetScript("OnEvent", function(self, event, ...)
@@ -146,8 +145,24 @@ function LootReserve:RegisterEvent(event, handler)
         end);
     end
 
-    LootReserve.EventFrame.RegisteredEvents[event] = LootReserve.EventFrame.RegisteredEvents[event] or { };
-    table.insert(LootReserve.EventFrame.RegisteredEvents[event], handler);
+    local params = select("#", ...);
+
+    local handler = select(params, ...);
+    if type(handler) ~= "function" then
+        error("LootReserve:RegisterEvent: The last passed parameter must be the handler function");
+        return;
+    end
+
+    for i = 1, params - 1 do
+        local event = select(i, ...);
+        if type(event) == "string" then
+            LootReserve.EventFrame:RegisterEvent(event);
+            LootReserve.EventFrame.RegisteredEvents[event] = LootReserve.EventFrame.RegisteredEvents[event] or { };
+            table.insert(LootReserve.EventFrame.RegisteredEvents[event], handler);
+        else
+            error("LootReserve:RegisterEvent: All but the last passed parameters must be event names");
+        end
+    end
 end
 
 function LootReserve:OpenMenu(menu, menuContainer, anchor)
