@@ -25,7 +25,7 @@ function LootReserve.Client:UpdateReserveStatus()
     for i, frame in ipairs(list.Frames) do
         local item = frame.Item;
         if item ~= 0 then
-            frame.ReserveFrame.ReserveButton:SetShown(self.SessionServer and not self:IsItemReservedByMe(item) and self:HasRemainingReserves());
+            frame.ReserveFrame.ReserveButton:SetShown(self.SessionServer and not self:IsItemReservedByMe(item) and self:HasRemainingReserves() and LootReserve.ItemConditions:TestPlayer("player", item, false));
             frame.ReserveFrame.CancelReserveButton:SetShown(self.SessionServer and self:IsItemReservedByMe(item) and self.AcceptingReserves);
             frame.ReserveFrame.ReserveIcon.One:Hide();
             frame.ReserveFrame.ReserveIcon.Many:Hide();
