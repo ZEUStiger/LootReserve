@@ -1145,7 +1145,7 @@ end
 
 function LootReserve.Server:TryFinishRoll()
     if self.RequestedRoll then
-        if not self.RequestedRoll.Custom and self.Settings.RollSkipNotContested then
+        if not self.RequestedRoll.Custom and not self.RequestedRoll.RaidRoll and self.Settings.RollSkipNotContested then
             local count = 0;
             for player, roll in pairs(self.RequestedRoll.Players) do
                 count = count + 1;
@@ -1156,7 +1156,7 @@ function LootReserve.Server:TryFinishRoll()
                 return true;
             end
         end
-        if not self.RequestedRoll.Custom and self.Settings.RollFinishOnAllReservingRolled then
+        if not self.RequestedRoll.Custom and not self.RequestedRoll.RaidRoll and self.Settings.RollFinishOnAllReservingRolled then
             local missingRolls = false;
             for player, roll in pairs(self.RequestedRoll.Players) do
                 if roll == 0 then
