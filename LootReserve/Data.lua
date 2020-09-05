@@ -230,7 +230,7 @@ LootReserve.Data =
                     Loot =
                     {
                         16923, 16916, 16931, 16905, 16897, 16942, 16950, 16958, 16966, 0,
-                        19003, 0,
+                        19002, 19003, 0,
                         19360, 19363, 19364, 19356, 0,
                         19375, 19377, 19378, 19380, 19381, 19376, 19382, 19379, 0,
                         11938,
@@ -768,6 +768,8 @@ LootReserve.Data =
         [17012] = { Hidden = true },
         [18422] = { Faction = "Horde" },
         [18423] = { Faction = "Alliance" },
+        [19002] = { Faction = "Horde" },
+        [19003] = { Faction = "Alliance" },
 
         -- Class restrictions on items
         [16665] = { ClassMask = 4 },
