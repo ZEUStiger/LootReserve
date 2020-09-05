@@ -1249,6 +1249,7 @@
 								MakeMenuToggle("Reserves Started",              { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.SessionStart              }, MakeRaidWarningTooltip("when starting to accept reserves")),
 								MakeMenuToggle("Reserves Resumed",              { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.SessionResume             }, MakeRaidWarningTooltip("when resuming reserves")),
 								MakeMenuToggle("Reserves Stopped",              { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.SessionStop               }, MakeRaidWarningTooltip("when stopping reserves")),
+								MakeMenuToggle("Blind Reserves Toggled",        { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.SessionBlindToggle        }, MakeRaidWarningTooltip("when enabling or disabling blind reserves")),
 								MakeMenuToggle("Announce Instructions",         { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.SessionInstructions       }, MakeRaidWarningTooltip("when manually announcing reserve instructions")),
 								MakeMenuToggle("Roll on an Item",               { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.RollStartCustom           }, MakeRaidWarningTooltip("when starting an item roll")),
 								MakeMenuToggle("Roll on a Reserved Item",       { "ChatAsRaidWarning", LootReserve.Constants.ChatAnnouncement.RollStartReserved         }, MakeRaidWarningTooltip("when starting a roll on a reserved item")),
@@ -1610,6 +1611,9 @@
 								if LootReserve.Server.CurrentSession then
 									LootReserve.Server.CurrentSession.Settings.Blind = self:GetChecked();
 									LootReserve.Comm:BroadcastSessionInfo();
+									if LootReserve.Server.CurrentSession.Settings.ChatFallback then
+										LootReserve:SendChatMessage(LootReserve.Server.CurrentSession.Settings.Blind and "Blind reserves enabled, you can no longer see what other players have reserved" or "Blind reserves disabled, to see what other players reserved - whisper me:  !reserve", LootReserve.Server:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionBlindToggle));
+									end
 								end
 							</OnClick>
 						</Scripts>

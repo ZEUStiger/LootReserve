@@ -42,6 +42,7 @@ LootReserve.Constants =
         RollTie = 7,
         SessionInstructions = 8,
         RollCountdown = 9,
+        SessionBlindToggle = 10,
     },
     DefaultPhases =
     {
