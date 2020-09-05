@@ -263,7 +263,7 @@ LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, star
         itemConditions = { strsplit(";", itemConditions) };
         for _, conditions in ipairs(itemConditions) do
             local item, packed = strsplit("=", conditions, 2);
-            LootReserve.Client.ItemConditions[tonumber(item)] = #packed > 0 and LootReserve.ItemConditions:Unpack(packed, lootCategory) or nil;
+            LootReserve.Client.ItemConditions[tonumber(item)] = LootReserve.ItemConditions:Unpack(packed, lootCategory);
         end
     end
 

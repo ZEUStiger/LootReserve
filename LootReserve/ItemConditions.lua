@@ -206,7 +206,9 @@ function LootReserve.ItemConditions:Pack(conditions)
     if conditions.ClassMask and conditions.ClassMask ~= 0 then
         text = text .. "C" .. conditions.ClassMask;
     end
-    return text;
+    -- TODO: Remove in the next mandatory version
+    return #text > 0 and text or "*";
+    --return text;
 end
 
 function LootReserve.ItemConditions:Unpack(text, category)
