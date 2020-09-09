@@ -7,6 +7,12 @@
 				<Layers>
 					<Layer>
 						<Texture parentKey="Texture" setAllPoints="true" nonBlocking="true" />
+						<FontString parentKey="Name" inherits="GameFontNormal" hidden="true" wordwrap="false" justifyH="LEFT">
+							<Anchors>
+								<Anchor point="LEFT" relativePoint="RIGHT" x="5" />
+								<Anchor point="RIGHT" relativeKey="$parent.$parent.$parent" relativePoint="RIGHT" />
+							</Anchors>
+						</FontString>
 					</Layer>
 				</Layers>
 				<Scripts>
@@ -163,7 +169,7 @@
 						<FontString parentKey="Reserves" inherits="GameFontNormal" justifyH="LEFT" text="Reserves">
 							<Anchors>
 								<Anchor point="LEFT" relativeKey="$parent.Count" relativePoint="RIGHT" x="5" />
-								<Anchor point="RIGHT" x="-5" />
+								<Anchor point="RIGHT" x="-16" />
 							</Anchors>
 						</FontString>
 					</Layer>

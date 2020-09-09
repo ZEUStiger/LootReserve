@@ -68,6 +68,12 @@ function LootReserve.Server.MembersEdit:UpdateMembersList()
             local name, link, _, _, _, _, _, _, _, texture = GetItemInfo(item);
             button.Link = link;
             button.Icon.Texture:SetTexture(texture);
+            if #member.ReservedItems == 1 and item ~= 0 then
+                button.Icon.Name:SetText((link or "|cFFFF0000Loading...|r"):gsub("[%[%]]", ""));
+                button.Icon.Name:Show();
+            else
+                button.Icon.Name:Hide();
+            end
         end
         for i = last + 1, #frame.ReservesFrame.Items do
             frame.ReservesFrame.Items[i]:Hide();
