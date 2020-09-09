@@ -167,7 +167,7 @@
 							</Anchors>
 						</FontString>
 					</Layer>
-					<Layer layer="ARTWORK">
+					<Layer level="ARTWORK">
 						<Texture parentKey="HeaderGlowMiddle" alpha="0.25" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD">
 							<Size y="12" />
 							<Anchors>

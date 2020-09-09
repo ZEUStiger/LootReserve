@@ -429,7 +429,7 @@
 					<Anchor point="BOTTOMRIGHT" x="-6" y="6" />
 				</Anchors>
 				<Layers>
-					<Layer layer="OVERLAY">
+					<Layer level="OVERLAY">
 						<FontString parentKey="HeaderRoll" inherits="GameFontNormalSmall" text="Roll" justifyH="CENTER">
 							<Size x="32" y="12" />
 							<Anchors>
@@ -452,7 +452,7 @@
 							<Color r="0.5" g="0.5" b="0.5" />
 						</FontString>
 					</Layer>
-					<Layer layer="ARTWORK">
+					<Layer level="ARTWORK">
 						<Texture parentKey="HeaderGlow" alpha="0.25" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD">
 							<Size y="12" />
 							<Anchors>
