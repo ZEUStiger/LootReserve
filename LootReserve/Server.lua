@@ -516,29 +516,6 @@ function LootReserve.Server:PrepareSession()
     if self.CurrentSession.Settings.ChatFallback and not self.ChatFallbackRegistered then
         self.ChatFallbackRegistered = true;
 
-        -- Precache item names
-        local function updateItemNameCache()
-            if self.AllItemNamesCached then return self.AllItemNamesCached; end
-
-            self.AllItemNamesCached = true;
-            for id, category in pairs(LootReserve.Data.Categories) do
-                if category.Children then
-                    for _, child in ipairs(category.Children) do
-                        if child.Loot then
-                            for _, item in ipairs(child.Loot) do
-                                if item ~= 0 and self.ReservableItems[item] then
-                                    if not GetItemInfo(item) then
-                                        self.AllItemNamesCached = false;
-                                    end
-                                end
-                            end
-                        end
-                    end
-                end
-            end
-            return self.AllItemNamesCached;
-        end
-
         local prefixA = "!reserve";
         local prefixB = "!res";
 
@@ -600,23 +577,13 @@ function LootReserve.Server:PrepareSession()
             else
                 text = LootReserve:TransformSearchText(text);
                 local function handleItemCommandByName()
-                    if updateItemNameCache() then
+                    if self:UpdateItemNameCache() then
                         local match = nil;
                         local matches = { };
-                        for id, category in pairs(LootReserve.Data.Categories) do
-                            if category.Children then
-                                for _, child in ipairs(category.Children) do
-                                    if child.Loot then
-                                        for _, item in ipairs(child.Loot) do
-                                            if item ~= 0 and self.ReservableItems[item] then
-                                                if string.find(GetItemInfo(item):upper(), text) and not LootReserve:Contains(matches, item) then
-                                                    match = match and 0 or item;
-                                                    table.insert(matches, item);
-                                                end
-                                            end
-                                        end
-                                    end
-                                end
+                        for item, name in pairs(self.ItemNames) do
+                            if self.ReservableItems[item] and string.find(name, text) and not LootReserve:Contains(matches, item) then
+                                match = match and 0 or item;
+                                table.insert(matches, item);
                             end
                         end
 
@@ -685,6 +652,53 @@ function LootReserve.Server:PrepareSession()
             end
         end
     end
+end
+
+function LootReserve.Server:UpdateItemNameCache()
+    if self.AllItemNamesCached then return self.AllItemNamesCached; end
+
+    self.AllItemNamesCached = true;
+    for item, conditions in pairs(self.NewSessionSettings.ItemConditions) do
+        if item ~= 0 and conditions.Custom then
+            local name = GetItemInfo(item);
+            if name then
+                self.ItemNames[item] = LootReserve:TransformSearchText(name);
+            else
+                self.AllItemNamesCached = false;
+            end
+        end
+    end
+    if self.CurrentSession then
+        for item, conditions in pairs(self.CurrentSession.Settings.ItemConditions) do
+            if item ~= 0 and conditions.Custom then
+                local name = GetItemInfo(item);
+                if name then
+                    self.ItemNames[item] = LootReserve:TransformSearchText(name);
+                else
+                    self.AllItemNamesCached = false;
+                end
+            end
+        end
+    end
+    for id, category in pairs(LootReserve.Data.Categories) do
+        if category.Children then
+            for _, child in ipairs(category.Children) do
+                if child.Loot then
+                    for _, item in ipairs(child.Loot) do
+                        if item ~= 0 and not self.ItemNames[item] then
+                            local name = GetItemInfo(item);
+                            if name then
+                                self.ItemNames[item] = LootReserve:TransformSearchText(name);
+                            else
+                                self.AllItemNamesCached = false;
+                            end
+                        end
+                    end
+                end
+            end
+        end
+    end
+    return self.AllItemNamesCached;
 end
 
 function LootReserve.Server:StartSession()
