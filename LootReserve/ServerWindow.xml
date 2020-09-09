@@ -1117,26 +1117,8 @@
 		<Frames>
 			<Button inherits="LootReserveCommonFrameMovingHeaderTemplate" />
 			<Button inherits="LootReserveCommonFrameSizeGrabberTemplate" />
-			<Button parentKey="ButtonSettings" inherits="UIMenuButtonStretchTemplate" frameLevel="100">
-				<Size x="20" y="20" />
-				<Anchors>
-					<Anchor point="TOPLEFT" y="-1" />
-				</Anchors>
-				<Layers>
-					<Layer>
-						<Texture parentKey="Icon" file="Interface\Buttons\UI-OptionsButton">
-							<Size x="14" y="14" />
-							<Anchors>
-								<Anchor point="CENTER" />
-							</Anchors>
-						</Texture>
-					</Layer>
-				</Layers>
-				<HighlightTexture file="Interface\Buttons\UI-Common-MouseHilight" alphaMode="ADD" />
+			<Button inherits="LootReserveSettingsButtonTemplate">
 				<Scripts>
-					<OnLoad>
-						self:SetPushedTextOffset(1, -1);
-					</OnLoad>
 					<OnClick>
 						local function GetSettingContainerAndKey(setting)
 							if type(setting) == "table" then
@@ -1281,19 +1263,8 @@
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Close" },
 						};
-						LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
+						LootReserve:OpenMenu(menu, self.Menu, self);
 					</OnClick>
-					<OnMouseDown>
-						self.Icon:SetPoint("CENTER", self, "CENTER", self:GetPushedTextOffset());
-					</OnMouseDown>
-					<OnMouseUp>
-						self.Icon:SetPoint("CENTER", self, "CENTER");
-					</OnMouseUp>
-					<OnEnter>
-						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-						GameTooltip:SetText("Settings");
-					</OnEnter>
-					<OnLeave function="GameTooltip_Hide" />
 				</Scripts>
 			</Button>
 			<StatusBar parentKey="Duration" inherits="LootReserveDurationStatusBar">
@@ -1504,60 +1475,12 @@
 							</OnLoad>
 						</Scripts>
 					</Frame>
-					<Button name="LootReserveServerButtonLootEdit" parentKey="ButtonLootEdit" inherits="UIMenuButtonStretchTemplate" text="Edit">
+					<Button name="LootReserveServerButtonLootEdit" parentKey="ButtonLootEdit" inherits="LootReserveGlowingButtonTemplate" text="Edit">
 						<Size x="40" y="24" />
 						<Anchors>
 							<Anchor point="LEFT" relativeKey="$parent.DropDownRaid" relativePoint="RIGHT" x="-16" y="2" />
 						</Anchors>
-						<Layers>
-							<Layer level="BACKGROUND">
-								<Texture parentKey="GlowLeft" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD" alpha="0.5" hidden="true">
-									<Anchors>
-										<Anchor point="TOPLEFT" x="4" y="-4" />
-										<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMLEFT" x="4" y="4" />
-										<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOM" y="4" />
-									</Anchors>
-									<TexCoords left="0.1" right="0.25" top="0.4" bottom="1" />
-									<Color r="1" g="0.82" b="0" />
-								</Texture>
-								<Texture parentKey="GlowRight" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD" alpha="0.5" hidden="true">
-									<Anchors>
-										<Anchor point="TOPRIGHT" x="-4" y="-4" />
-										<Anchor point="BOTTOMLEFT" relativePoint="BOTTOM" y="4" />
-										<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMRIGHT" x="-4" y="4" />
-									</Anchors>
-									<TexCoords left="0.75" right="0.9" top="0.4" bottom="1" />
-									<Color r="1" g="0.82" b="0" />
-								</Texture>
-								<Texture parentKey="GlowLeft2" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD" alpha="0.5" hidden="true">
-									<Anchors>
-										<Anchor point="TOPLEFT" relativeKey="$parent.GlowLeft" y="-12" />
-										<Anchor point="BOTTOMRIGHT" relativeKey="$parent.GlowLeft" />
-									</Anchors>
-									<TexCoords left="0.05" right="0.25" top="0" bottom="1" />
-								</Texture>
-								<Texture parentKey="GlowRight2" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD" alpha="0.5" hidden="true">
-									<Anchors>
-										<Anchor point="TOPLEFT" relativeKey="$parent.GlowRight" y="-12" />
-										<Anchor point="BOTTOMRIGHT" relativeKey="$parent.GlowRight" />
-									</Anchors>
-									<TexCoords left="0.75" right="0.95" top="0" bottom="1" />
-								</Texture>
-							</Layer>
-						</Layers>
 						<Scripts>
-							<OnLoad>
-								self.GlowLeft:SetDesaturated(true);
-								self.GlowRight:SetDesaturated(true);
-								self.GlowLeft2:SetDesaturated(true);
-								self.GlowRight2:SetDesaturated(true);
-								self.SetGlow = function(self, glow)
-									self.GlowLeft:SetShown(glow);
-									self.GlowRight:SetShown(glow);
-									self.GlowLeft2:SetShown(glow);
-									self.GlowRight2:SetShown(glow);
-								end
-							</OnLoad>
 							<OnClick>
 								LootReserve.Server.LootEdit.Window:SetShown(not LootReserve.Server.LootEdit.Window:IsShown());
 							</OnClick>

@@ -340,4 +340,92 @@
 		<CheckedTexture file="Interface\Buttons\UI-CheckBox-Check"/>
 		<DisabledCheckedTexture file="Interface\Buttons\UI-CheckBox-Check-Disabled"/>		
 	</CheckButton>
+	<Button name="LootReserveSettingsButtonTemplate" parentKey="ButtonSettings" inherits="UIMenuButtonStretchTemplate" frameLevel="100" virtual="true">
+		<Size x="20" y="20" />
+		<Anchors>
+			<Anchor point="TOPLEFT" y="-1" />
+		</Anchors>
+		<Layers>
+			<Layer>
+				<Texture parentKey="Icon" file="Interface\Buttons\UI-OptionsButton">
+					<Size x="14" y="14" />
+					<Anchors>
+						<Anchor point="CENTER" />
+					</Anchors>
+				</Texture>
+			</Layer>
+		</Layers>
+		<Frames>
+			<Frame parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
+		</Frames>
+		<HighlightTexture file="Interface\Buttons\UI-Common-MouseHilight" alphaMode="ADD" />
+		<Scripts>
+			<OnLoad>
+				self:SetPushedTextOffset(1, -1);
+			</OnLoad>
+			<OnMouseDown>
+				self.Icon:SetPoint("CENTER", self, "CENTER", self:GetPushedTextOffset());
+			</OnMouseDown>
+			<OnMouseUp>
+				self.Icon:SetPoint("CENTER", self, "CENTER");
+			</OnMouseUp>
+			<OnEnter>
+				GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+				GameTooltip:SetText("Settings");
+			</OnEnter>
+			<OnLeave function="GameTooltip_Hide" />
+		</Scripts>
+	</Button>
+	<Button name="LootReserveGlowingButtonTemplate" inherits="UIMenuButtonStretchTemplate" virtual="true">
+		<Layers>
+			<Layer level="BACKGROUND">
+				<Texture parentKey="GlowLeft" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD" alpha="0.5" hidden="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="4" y="-4" />
+						<Anchor point="BOTTOMLEFT" relativePoint="BOTTOMLEFT" x="4" y="4" />
+						<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOM" y="4" />
+					</Anchors>
+					<TexCoords left="0.1" right="0.25" top="0.4" bottom="1" />
+					<Color r="1" g="0.82" b="0" />
+				</Texture>
+				<Texture parentKey="GlowRight" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD" alpha="0.5" hidden="true">
+					<Anchors>
+						<Anchor point="TOPRIGHT" x="-4" y="-4" />
+						<Anchor point="BOTTOMLEFT" relativePoint="BOTTOM" y="4" />
+						<Anchor point="BOTTOMRIGHT" relativePoint="BOTTOMRIGHT" x="-4" y="4" />
+					</Anchors>
+					<TexCoords left="0.75" right="0.9" top="0.4" bottom="1" />
+					<Color r="1" g="0.82" b="0" />
+				</Texture>
+				<Texture parentKey="GlowLeft2" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD" alpha="0.5" hidden="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.GlowLeft" y="-12" />
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.GlowLeft" />
+					</Anchors>
+					<TexCoords left="0.05" right="0.25" top="0" bottom="1" />
+				</Texture>
+				<Texture parentKey="GlowRight2" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD" alpha="0.5" hidden="true">
+					<Anchors>
+						<Anchor point="TOPLEFT" relativeKey="$parent.GlowRight" y="-12" />
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent.GlowRight" />
+					</Anchors>
+					<TexCoords left="0.75" right="0.95" top="0" bottom="1" />
+				</Texture>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self.GlowLeft:SetDesaturated(true);
+				self.GlowRight:SetDesaturated(true);
+				self.GlowLeft2:SetDesaturated(true);
+				self.GlowRight2:SetDesaturated(true);
+				self.SetGlow = function(self, glow)
+					self.GlowLeft:SetShown(glow);
+					self.GlowRight:SetShown(glow);
+					self.GlowLeft2:SetShown(glow);
+					self.GlowRight2:SetShown(glow);
+				end
+			</OnLoad>
+		</Scripts>
+	</Button>
 </Ui>

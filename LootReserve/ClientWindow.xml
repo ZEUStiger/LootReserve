@@ -191,26 +191,8 @@
 		<Frames>
 			<Button inherits="LootReserveCommonFrameMovingHeaderTemplate" />
 			<Button inherits="LootReserveCommonFrameSizeGrabberTemplate" />
-			<Button parentKey="ButtonSettings" inherits="UIMenuButtonStretchTemplate" frameLevel="100">
-				<Size x="20" y="20" />
-				<Anchors>
-					<Anchor point="TOPLEFT" y="-1" />
-				</Anchors>
-				<Layers>
-					<Layer>
-						<Texture parentKey="Icon" file="Interface\Buttons\UI-OptionsButton">
-							<Size x="14" y="14" />
-							<Anchors>
-								<Anchor point="CENTER" />
-							</Anchors>
-						</Texture>
-					</Layer>
-				</Layers>
-				<HighlightTexture file="Interface\Buttons\UI-Common-MouseHilight" alphaMode="ADD" />
+			<Button inherits="LootReserveSettingsButtonTemplate">
 				<Scripts>
-					<OnLoad>
-						self:SetPushedTextOffset(1, -1);
-					</OnLoad>
 					<OnClick>
 						local cooldown = math.max(0, (LootReserve.Client.ServerSearchTimeoutTime or 0) - time());
 						local menu =
@@ -225,22 +207,10 @@
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Close" },
 						};
-						LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
+						LootReserve:OpenMenu(menu, self.Menu, self);
 					</OnClick>
-					<OnMouseDown>
-						self.Icon:SetPoint("CENTER", self, "CENTER", self:GetPushedTextOffset());
-					</OnMouseDown>
-					<OnMouseUp>
-						self.Icon:SetPoint("CENTER", self, "CENTER");
-					</OnMouseUp>
-					<OnEnter>
-						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-						GameTooltip:SetText("Settings");
-					</OnEnter>
-					<OnLeave function="GameTooltip_Hide" />
 				</Scripts>
 			</Button>
-			<Frame parentKey="Menu" inherits="UIDropDownMenuTemplate" hidden="true" />
 			<StatusBar parentKey="Duration" inherits="LootReserveDurationStatusBar">
 				<KeyValues>
 					<KeyValue key="server" value="false" type="boolean" />
