@@ -390,8 +390,10 @@ function LootReserve.Server:PrepareGuildTracking()
         table.wipe(self.GuildMembers);
         for i = 1, GetNumGuildMembers() do
             local name = GetGuildRosterInfo(i);
-            name = Ambiguate(name, "short");
-            table.insert(self.GuildMembers, name);
+            if name then
+                name = Ambiguate(name, "short");
+                table.insert(self.GuildMembers, name);
+            end
         end
     end);
 
