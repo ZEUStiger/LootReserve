@@ -138,7 +138,9 @@
 	</Button>
 	<ScrollFrame name="LootReserveScrollTemplate" inherits="UIPanelScrollFrameTemplate" virtual="true">
 		<ScrollChild>
-			<Frame parentKey="Container" />
+			<Frame parentKey="Container">
+				<Size y="1" />
+			</Frame>
 		</ScrollChild>
 		<Scripts>
 			<OnLoad inherit="prepend">
@@ -147,11 +149,11 @@
 			</OnLoad>
 			<OnShow>
 				if self:IsProtected() and InCombatLockdown() then return; end
-				self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
+				self.Container:SetWidth(self:GetWidth());
 			</OnShow>
 			<OnSizeChanged>
 				if self:IsProtected() and InCombatLockdown() then return; end
-				self.Container:SetSize(self:GetWidth(), math.max(self.Container.ContentHeight or 0, self:GetHeight()));
+				self.Container:SetWidth(self:GetWidth());
 			</OnSizeChanged>
 		</Scripts>
 	</ScrollFrame>

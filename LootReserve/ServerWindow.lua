@@ -290,7 +290,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         list.Frames[i]:Hide();
     end
 
-    list:SetSize(list:GetParent():GetWidth(), math.max(list.ContentHeight or 0, list:GetParent():GetHeight() - 1));
+    list:GetParent():UpdateScrollChildRect();
 
     self:UpdateReserveListRolls(lockdown);
 
@@ -541,7 +541,7 @@ function LootReserve.Server:UpdateRollList(lockdown)
         list.Frames[i]:Hide();
     end
 
-    list:SetSize(list:GetParent():GetWidth(), math.max(list.ContentHeight or 0, list:GetParent():GetHeight() - 1));
+    list:GetParent():UpdateScrollChildRect();
 
     self:UpdateRollListRolls(lockdown);
 end

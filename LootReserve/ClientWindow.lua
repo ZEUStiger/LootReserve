@@ -68,7 +68,6 @@ function LootReserve.Client:UpdateLootList()
     local list = self.Window.Loot.Scroll.Container;
     list.Frames = list.Frames or { };
     list.LastIndex = 0;
-    list.ContentHeight = 0;
     
     local function createFrame(item, source)
         list.LastIndex = list.LastIndex + 1;
@@ -111,8 +110,6 @@ function LootReserve.Client:UpdateLootList()
             frame.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
             frame.ItemFrame.Misc:SetText(source or type);
         end
-
-        list.ContentHeight = list.ContentHeight + frame:GetHeight();
     end
 
     local function matchesFilter(item, filter)
@@ -203,7 +200,7 @@ function LootReserve.Client:UpdateLootList()
         list.BlindHint:SetShown(self.Blind and self.SelectedCategory and self.SelectedCategory.Reserves == "all");
     end
 
-    list:SetSize(list:GetParent():GetWidth(), math.max(list.ContentHeight, list:GetParent():GetHeight()));
+    list:GetParent():UpdateScrollChildRect();
 
     self:UpdateReserveStatus();
 end
@@ -212,7 +209,6 @@ function LootReserve.Client:UpdateCategories()
     local list = self.Window.Categories.Scroll.Container;
     list.Frames = list.Frames or { };
     list.LastIndex = 0;
-    list.ContentHeight = 0;
     
     local function createButton(id, category)
         list.LastIndex = list.LastIndex + 1;
@@ -249,8 +245,6 @@ function LootReserve.Client:UpdateCategories()
                 frame:SetScript("OnClick", function(frame) self:OnCategoryClick(frame); end);
             end
         end
-
-        list.ContentHeight = list.ContentHeight + frame:GetHeight();
     end
     
     local function createCategoryButtonsRecursively(id, category)
@@ -271,12 +265,10 @@ function LootReserve.Client:UpdateCategories()
     end
 
     local needsSelect = not self.SelectedCategory;
-    list.ContentHeight = 0;
     for i, frame in ipairs(list.Frames) do
         if i <= list.LastIndex and (frame.CategoryID < 0 or not self.LootCategory or frame.CategoryID == self.LootCategory) and (not frame.Category.Custom or LootReserve.ItemConditions:HasCustom(false)) then
             frame:SetHeight(frame.DefaultHeight);
             frame:Show();
-            list.ContentHeight = list.ContentHeight + frame.DefaultHeight;
         else
             frame:Hide();
             frame:SetHeight(0.00001);
@@ -302,8 +294,7 @@ function LootReserve.Client:UpdateCategories()
         end
     end
 
-    list:SetPoint("TOPLEFT");
-    list:SetSize(list:GetParent():GetWidth(), math.max(list.ContentHeight, list:GetParent():GetHeight()));
+    list:GetParent():UpdateScrollChildRect();
 end
 
 function LootReserve.Client:OnCategoryClick(button)

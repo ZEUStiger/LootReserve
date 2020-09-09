@@ -4,7 +4,6 @@ function LootReserve.Server.MembersEdit:UpdateMembersList()
     local list = self.Window.Scroll.Container;
     list.Frames = list.Frames or { };
     list.LastIndex = 0;
-    list.ContentHeight = 0;
 
     -- Clear everything
     for _, frame in ipairs(list.Frames) do
@@ -73,8 +72,6 @@ function LootReserve.Server.MembersEdit:UpdateMembersList()
         for i = last + 1, #frame.ReservesFrame.Items do
             frame.ReservesFrame.Items[i]:Hide();
         end
-
-        list.ContentHeight = list.ContentHeight + frame:GetHeight();
     end
 
     for player, member in LootReserve:Ordered(session.Members, function(aMember, bMember, aPlayer, bPlayer) return aPlayer < bPlayer; end) do
@@ -85,7 +82,7 @@ function LootReserve.Server.MembersEdit:UpdateMembersList()
         list.Frames[i]:Hide();
     end
 
-    list:SetSize(list:GetParent():GetWidth(), math.max(list.ContentHeight, list:GetParent():GetHeight()));
+    list:GetParent():UpdateScrollChildRect();
 end
 
 function LootReserve.Server.MembersEdit:OnWindowLoad(window)

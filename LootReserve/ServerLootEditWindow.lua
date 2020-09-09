@@ -158,19 +158,17 @@ function LootReserve.Server.LootEdit:UpdateLootList()
         list.RevertEditsFrame:Show();
         list.RevertEditsFrame:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -list.ContentHeight);
         list.RevertEditsFrame:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, -list.ContentHeight);
-        list.ContentHeight = list.ContentHeight + list.RevertEditsFrame:GetHeight();
     elseif self.SelectedCategory.Custom then
         list.AddCustomFrame:Show();
         list.AddCustomFrame:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -list.ContentHeight);
         list.AddCustomFrame:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, -list.ContentHeight);
-        list.ContentHeight = list.ContentHeight + list.AddCustomFrame:GetHeight();
     end
 
     for i = list.LastIndex + 1, #list.Frames do
         list.Frames[i]:Hide();
     end
 
-    list:SetSize(list:GetParent():GetWidth(), math.max(list.ContentHeight, list:GetParent():GetHeight()));
+    list:GetParent():UpdateScrollChildRect();
 end
 
 function LootReserve.Server.LootEdit:UpdateCategories()
@@ -187,7 +185,6 @@ function LootReserve.Server.LootEdit:UpdateCategories()
     local list = self.Window.Categories.Scroll.Container;
     list.Frames = list.Frames or { };
     list.LastIndex = 0;
-    list.ContentHeight = 0;
     
     local function createButton(id, category)
         list.LastIndex = list.LastIndex + 1;
@@ -224,8 +221,6 @@ function LootReserve.Server.LootEdit:UpdateCategories()
                 frame:SetScript("OnClick", function(frame) self:OnCategoryClick(frame); end);
             end
         end
-
-        list.ContentHeight = list.ContentHeight + frame:GetHeight();
     end
     
     local function createCategoryButtonsRecursively(id, category)
@@ -245,12 +240,10 @@ function LootReserve.Server.LootEdit:UpdateCategories()
         createCategoryButtonsRecursively(id, category);
     end
 
-    list.ContentHeight = 0;
     for i, frame in ipairs(list.Frames) do
         if i <= list.LastIndex and (frame.CategoryID < 0 or not LootReserve.Server.NewSessionSettings.LootCategory or frame.CategoryID == LootReserve.Server.NewSessionSettings.LootCategory) then
             frame:SetHeight(frame.DefaultHeight);
             frame:Show();
-            list.ContentHeight = list.ContentHeight + frame.DefaultHeight;
         else
             frame:Hide();
             frame:SetHeight(0.00001);
@@ -263,8 +256,7 @@ function LootReserve.Server.LootEdit:UpdateCategories()
         end
     end
 
-    list:SetPoint("TOPLEFT");
-    list:SetSize(list:GetParent():GetWidth(), math.max(list.ContentHeight, list:GetParent():GetHeight()));
+    list:GetParent():UpdateScrollChildRect();
 end
 
 function LootReserve.Server.LootEdit:OnCategoryClick(button)
