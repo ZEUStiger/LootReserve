@@ -1461,6 +1461,7 @@
 										LootReserve.Server.NewSessionSettings.LootCategory = info.value;
 										LootReserve.Server.LootEdit:UpdateCategories();
 										LootReserve.Server.LootEdit:UpdateLootList();
+										LootReserve.Server.Import:SessionSettingsUpdated();
 										UIDropDownMenu_SetSelectedValue(self, info.value);
 									end
 									for id, category in LootReserve:Ordered(LootReserve.Data.Categories) do
@@ -1512,6 +1513,8 @@
 								local count = tonumber(self:GetText());
 								if count and count > 0 then
 									LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer = count;
+									LootReserve.Server.MembersEdit:UpdateMembersList();
+									LootReserve.Server.Import:SessionSettingsUpdated();
 								else
 									self:SetText("");
 								end
@@ -1563,7 +1566,7 @@
 							</OnClick>
 						</Scripts>
 					</CheckButton>
-					<Button parentKey="ButtonMembersEdit" inherits="UIMenuButtonStretchTemplate" text="Players">
+					<Button name="LootReserveServerButtonMembersEdit" parentKey="ButtonMembersEdit" inherits="LootReserveGlowingButtonTemplate" text="Players">
 						<Size x="72" y="24" />
 						<Anchors>
 							<Anchor point="TOPLEFT" relativeKey="$parent.CheckButtonLock" relativePoint="BOTTOMLEFT" x="2" y="-2" />

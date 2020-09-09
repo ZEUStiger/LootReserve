@@ -11,6 +11,7 @@ LootReserve.Server =
         ItemConditions = { },
         Blind = false,
         Lock = false,
+        ImportedMembers = { },
     },
     Settings =
     {
@@ -39,8 +40,10 @@ LootReserve.Server =
     GuildMembers = { },
     LootEdit = { },
     MembersEdit = { },
+    Import = { },
 
     ReservableItems = { },
+    ItemNames = { },
     LootTrackingRegistered = false,
     GuildMemberTrackingRegistered = false,
     DurationUpdateRegistered = false,
@@ -780,6 +783,33 @@ function LootReserve.Server:StartSession()
     end
 
     self:PrepareSession();
+
+    -- Import reserves
+    for player, importedMember in pairs(self.CurrentSession.Settings.ImportedMembers) do
+        local member = self.CurrentSession.Members[player] or
+        {
+            ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
+            ReservedItems = { },
+        };
+        self.CurrentSession.Members[player] = member;
+        for _, item in ipairs(importedMember.ReservedItems) do
+            if self.ReservableItems[item] and --[[LootReserve.ItemConditions:TestPlayer(player, item, true) and]] not LootReserve:Contains(member.ReservedItems, item) and member.ReservesLeft > 0 then
+                member.ReservesLeft = member.ReservesLeft - 1;
+                table.insert(member.ReservedItems, item);
+
+                local reserve = self.CurrentSession.ItemReserves[item] or
+                {
+                    Item = item,
+                    StartTime = time(),
+                    Players = { },
+                };
+                self.CurrentSession.ItemReserves[item] = reserve;
+                table.insert(reserve.Players, player);
+            end
+        end
+    end
+    table.wipe(self.NewSessionSettings.ImportedMembers);
+    table.wipe(self.CurrentSession.Settings.ImportedMembers);
 
     LootReserve.Comm:BroadcastVersion();
     LootReserve.Comm:BroadcastSessionInfo(true);

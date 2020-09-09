@@ -21,3 +21,4 @@ ServerWindow.xml
 RollRequestWindow.xml
 ServerLootEditWindow.xml
 ServerMembersEditWindow.xml
+ServerImportWindow.xml

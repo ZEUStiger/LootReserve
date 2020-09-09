@@ -181,7 +181,10 @@ function LootReserve.ItemConditions:TestServer(item)
         if conditions.Hidden then
             return false;
         end
-        if conditions.Custom and conditions.Custom ~= LootReserve.Server.CurrentSession.Settings.LootCategory then
+        if conditions.Custom and LootReserve.Server.CurrentSession and conditions.Custom ~= LootReserve.Server.CurrentSession.Settings.LootCategory then
+            return false;
+        end
+        if conditions.Custom and not LootReserve.Server.CurrentSession and conditions.Custom ~= LootReserve.Server.NewSessionSettings.LootCategory then
             return false;
         end
         if conditions.Faction and not self:TestFaction(conditions.Faction) then

@@ -70,6 +70,7 @@
 												conditions.ClassMask = checked and bit.bor(conditions.ClassMask or 0, bit.lshift(1, id - 1)) or bit.band(conditions.ClassMask or 0, bit.bnot(bit.lshift(1, id - 1)));
 												LootReserve.ItemConditions:Save(item, true);
 												LootReserve.Server.LootEdit:UpdateLootList();
+												LootReserve.Server.Import:SessionSettingsUpdated();
 											end
 										});
 									end
@@ -112,6 +113,7 @@
 								conditions.Hidden = not conditions.Hidden;
 								LootReserve.ItemConditions:Save(item, true);
 								LootReserve.Server.LootEdit:UpdateLootList();
+								LootReserve.Server.Import:SessionSettingsUpdated();
 							</OnClick>
 						</Scripts>
 					</Button>
@@ -164,6 +166,7 @@
 								local item = self:GetParent():GetParent().Item;
 								LootReserve.ItemConditions:Delete(item, true);
 								LootReserve.Server.LootEdit:UpdateLootList();
+								LootReserve.Server.Import:SessionSettingsUpdated();
 							</OnClick>
 						</Scripts>
 					</Button>
@@ -228,6 +231,7 @@
 					<OnClick>
 						LootReserve.ItemConditions:Clear(LootReserve.Server.NewSessionSettings.LootCategory, true);
 						LootReserve.Server.LootEdit:UpdateLootList();
+						LootReserve.Server.Import:SessionSettingsUpdated();
 					</OnClick>
 				</Scripts>
 			</Button>
@@ -327,6 +331,7 @@
 									conditions.Custom = LootReserve.Server.NewSessionSettings.LootCategory;
 									LootReserve.ItemConditions:Save(frame.Item, true);
 									LootReserve.Server.LootEdit:UpdateLootList();
+									LootReserve.Server.Import:SessionSettingsUpdated();
 									frame:SetItem(nil);
 								end
 							</OnClick>

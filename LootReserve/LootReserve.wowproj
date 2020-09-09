@@ -68,6 +68,13 @@
     <Content Include="Server.lua">
       <SubType>Code</SubType>
     </Content>
+    <Content Include="ServerImportWindow.lua">
+      <SubType>Code</SubType>
+      <DependentUpon>ServerImportWindow.xml</DependentUpon>
+    </Content>
+    <Content Include="ServerImportWindow.xml">
+      <SubType>Frame</SubType>
+    </Content>
     <Content Include="ServerLootEditWindow.lua">
       <SubType>Code</SubType>
       <DependentUpon>ServerLootEditWindow.xml</DependentUpon>
