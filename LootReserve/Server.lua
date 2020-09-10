@@ -18,6 +18,7 @@ LootReserve.Server =
         ChatAsRaidWarning = { },
         ChatAnnounceWinToGuild = false,
         ChatAnnounceWinToGuildThreshold = 3,
+        ChatReservesList = true,
         ChatUpdates = true,
         ChatThrottle = false,
         ReservesSorting = LootReserve.Constants.ReservesSorting.ByTime,
@@ -150,6 +151,19 @@ StaticPopupDialogs["LOOTRESERVE_CONFIRM_RESET_PHASES"] =
     button2 = NO,
     OnAccept = function(self)
         LootReserve.Server.Settings.Phases = LootReserve:Deepcopy(LootReserve.Constants.DefaultPhases);
+    end,
+    timeout = 0,
+    whileDead = 1,
+    hideOnEscape = 1,
+};
+
+StaticPopupDialogs["LOOTRESERVE_CONFIRM_ANNOUNCE_BLIND_RESERVES"] =
+{
+    text = "Blind reserves in effect. Are you sure you want to publicly announce all reserves?",
+    button1 = YES,
+    button2 = NO,
+    OnAccept = function(self)
+        LootReserve.Server:SendReservesList(nil, false, true);
     end,
     timeout = 0,
     whileDead = 1,
@@ -534,7 +548,12 @@ function LootReserve.Server:PrepareSession()
 
             text = text:lower();
             text = LootReserve:StringTrim(text);
-            if stringStartsWith(text, prefixA) then
+            if text == "!reserves" then
+                if self.Settings.ChatReservesList then
+                    self:SendReservesList(sender, true);
+                end
+                return;
+            elseif stringStartsWith(text, prefixA) then
                 text = text:sub(1 + #prefixA);
             elseif stringStartsWith(text, prefixB) then
                 text = text:sub(1 + #prefixB);
@@ -550,7 +569,7 @@ function LootReserve.Server:PrepareSession()
             text = LootReserve:StringTrim(text);
             local command = "reserve";
             if #text == 0 then
-                self:SendReservesList(sender, true);
+                LootReserve:SendChatMessage("Seems like you forgot to enter the item you want to reserve. Whisper  !reserve ItemLinkOrName", "WHISPER", sender);
                 return;
             elseif stringStartsWith(text, "cancel") then
                 text = text:sub(1 + #("cancel"));
@@ -825,8 +844,8 @@ function LootReserve.Server:StartSession()
             count,
             count == 1 and "item" or "items"
         ), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionStart));
-        if not self.CurrentSession.Settings.Blind then
-            LootReserve:SendChatMessage("To see all reserves made - whisper me:  !reserve", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionStart));
+        if self.Settings.ChatReservesList and not self.CurrentSession.Settings.Blind then
+            LootReserve:SendChatMessage("To see all reserves made - whisper me:  !reserves", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionStart));
         end
         LootReserve:SendChatMessage("To reserve an item - whisper me:  !reserve ItemLinkOrName", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionStart));
     end
@@ -1165,52 +1184,64 @@ function LootReserve.Server:CancelReserve(player, item, chat, forced)
     self.MembersEdit:UpdateMembersList();
 end
 
-function LootReserve.Server:SendReservesList(player, chat)
-    if not LootReserve:IsPlayerOnline(player) then
-        LootReserve:SendChatMessage("You are not in the raid", "WHISPER", player);
-        return;
-    end
+function LootReserve.Server:SendReservesList(player, chat, force)
+    if player then
+        if not LootReserve:IsPlayerOnline(player) then
+            LootReserve:SendChatMessage("You are not in the raid", "WHISPER", player);
+            return;
+        end
 
-    if not self.CurrentSession then
-        LootReserve:SendChatMessage("Loot reserves aren't active in your raid", "WHISPER", player);
-        return;
-    end
+        if not self.CurrentSession then
+            LootReserve:SendChatMessage("Loot reserves aren't active in your raid", "WHISPER", player);
+            return;
+        end
 
-    if not self.CurrentSession.Members[player] then
-        LootReserve:SendChatMessage("You are not participating in loot reserves", "WHISPER", player);
-        return;
-    end
+        if not self.CurrentSession.Members[player] then
+            LootReserve:SendChatMessage("You are not participating in loot reserves", "WHISPER", player);
+            return;
+        end
 
-    if self.CurrentSession.Settings.Blind then
-        LootReserve:SendChatMessage("Blind reserves in effect, you can't see what other players have reserved", "WHISPER", player);
-        return;
+        if self.CurrentSession.Settings.Blind then
+            LootReserve:SendChatMessage("Blind reserves in effect, you can't see what other players have reserved", "WHISPER", player);
+            return;
+        end
+    else
+        if not self.CurrentSession then
+            LootReserve:ShowError("Loot reserves aren't active in your raid");
+            return;
+        end
+
+        if self.CurrentSession.Settings.Blind and not force then
+            StaticPopup_Show("LOOTRESERVE_CONFIRM_ANNOUNCE_BLIND_RESERVES");
+            return;
+        end
     end
 
     if self.CurrentSession.Settings.ChatFallback then
-        local function WhisperPlayer()
+        local function Announce()
             local list = { };
 
             for item, reserve in pairs(self.CurrentSession.ItemReserves) do
                 if --[[LootReserve.ItemConditions:TestPlayer(player, item, true)]]true then
                     local name, link = GetItemInfo(item);
                     if not name or not link then
-                        C_Timer.After(0.25, WhisperPlayer);
+                        C_Timer.After(0.25, Announce);
                         return;
                     end
-                    table.insert(list, format("%s: %s", link, strjoin(",", unpack(reserve.Players))));
+                    table.insert(list, format("%s: %s", link, strjoin(", ", unpack(reserve.Players))));
                 end
             end
 
             if #list > 0 then
-                LootReserve:SendChatMessage("Reserved items:", "WHISPER", player);
+                LootReserve:SendChatMessage("Reserved items:", player and "WHISPER" or "RAID", player);
                 for _, line in ipairs(list) do
-                    LootReserve:SendChatMessage(line, "WHISPER", player);
+                    LootReserve:SendChatMessage(line, player and "WHISPER" or "RAID", player);
                 end
             else
-                LootReserve:SendChatMessage("No reserves were made yet", "WHISPER", player);
+                LootReserve:SendChatMessage("No reserves were made yet", player and "WHISPER" or "RAID", player);
             end
         end
-        WhisperPlayer();
+        Announce();
     end
 end
 
@@ -1764,5 +1795,9 @@ function LootReserve.Server:BroadcastInstructions()
     if not self.CurrentSession then return; end
     if not self.CurrentSession.AcceptingReserves then return; end
 
-    LootReserve:SendChatMessage("Loot reserves are currently ongoing. Whisper !reserve ItemLinkOrName", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionInstructions));
+    LootReserve:SendChatMessage("Loot reserves are currently ongoing", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionInstructions));
+    if self.Settings.ChatReservesList and not self.CurrentSession.Settings.Blind then
+        LootReserve:SendChatMessage("To see all reserves made - whisper me:  !reserves", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionInstructions));
+    end
+    LootReserve:SendChatMessage("To reserve an item - whisper me:  !reserve ItemLinkOrName", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionInstructions));
 end
