@@ -1,2 +1,5 @@
 syntax: glob
 .vs
+.work
+*.wowsuo
+*.user
