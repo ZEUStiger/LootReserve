@@ -297,7 +297,7 @@
 				<Scripts>
 					<OnClick>
 						if LootReserve.Server.CurrentSession then
-							LootReserve.Server.Export.Window:Show();
+							LootReserve.Server.Export.Window:SetShown(not LootReserve.Server.Export.Window:IsShown());
 							return;
 						end
 

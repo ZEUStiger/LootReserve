@@ -724,6 +724,7 @@ function LootReserve.Server:SessionStarted()
     self:UpdateServerAuthority();
     self:UpdateRollList();
     self.LootEdit.Window:Hide();
+    self.Import.Window:Hide();
 end
 
 function LootReserve.Server:SessionStopped()

@@ -194,7 +194,7 @@
 			</Frame>
 		</Frames>
 	</Frame>
-	<Frame name="LootReserveServerImportWindow" parent="UIParent" inherits="BasicFrameTemplateWithInset" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true" hidden="false">
+	<Frame name="LootReserveServerImportWindow" parent="UIParent" inherits="BasicFrameTemplateWithInset" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true" hidden="true">
 		<Size x="450" y="550" />
 		<Anchors>
 			<Anchor point="CENTER" />
@@ -470,7 +470,7 @@
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeKey="$parent.Header" relativePoint="BOTTOMLEFT" y="-1" />
 					<Anchor point="TOPRIGHT" relativeKey="$parent.Header" relativePoint="BOTTOMRIGHT" x="-16" y="-1" />
-					<Anchor point="BOTTOM" relativeKey="$parent.ImportButton" relativePoint="TOP" y="5" />
+					<Anchor point="BOTTOM" relativeKey="$parent.ImportButton" relativePoint="TOP" y="3" />
 				</Anchors>
 			</ScrollFrame>
 		</Frames>

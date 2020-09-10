@@ -41,6 +41,7 @@ LootReserve.Server =
     LootEdit = { },
     MembersEdit = { },
     Import = { },
+    Export = { },
 
     ReservableItems = { },
     ItemNames = { },
