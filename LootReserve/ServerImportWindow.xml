@@ -109,7 +109,7 @@
 		</Layers>
 		<Scripts>
 			<OnLoad>
-				self.init = function()
+				self.init = function(self)
 					local options = { };
 					for _, text in ipairs({ strsplit("$", self.values) }) do
 						local name, value = strsplit("=", text);

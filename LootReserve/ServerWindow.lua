@@ -167,6 +167,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
             end
             local unit = LootReserve:GetRaidUnitID(player) or LootReserve:GetPartyUnitID(player);
             local button = frame.ReservesFrame.Players[i];
+            if button.init then button:init(); end
             button:Show();
             button.Player = player;
             button.Unit = unit;
@@ -450,6 +451,7 @@ function LootReserve.Server:UpdateRollList(lockdown)
                 end
                 local unit = LootReserve:GetRaidUnitID(player) or LootReserve:GetPartyUnitID(player);
                 local button = frame.ReservesFrame.Players[last];
+                if button.init then button:init(); end
                 button:Show();
                 button.Player = player;
                 button.Unit = unit;
@@ -797,6 +799,7 @@ end
 
 function LootReserve.Server:LoadNewSessionSessings()
     local function setDropDownValue(dropDown, value)
+        if dropDown.init then dropDown:init(); end
         ToggleDropDownMenu(nil, nil, dropDown);
         UIDropDownMenu_SetSelectedValue(dropDown, value);
         CloseMenus();
