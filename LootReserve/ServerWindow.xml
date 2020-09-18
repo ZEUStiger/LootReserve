@@ -1785,6 +1785,9 @@
 			</OnLoad>
 			<OnShow>
 				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN);
+				LootReserve.Server:LoadNewSessionSessings();
+				LootReserve.Server:UpdateReserveList();
+				LootReserve.Server:UpdateRollList();
 			</OnShow>
 			<OnHide>
 				CloseMenus();

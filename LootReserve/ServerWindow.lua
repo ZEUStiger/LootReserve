@@ -1,6 +1,8 @@
 local LibCustomGlow = LibStub("LibCustomGlow-1.0");
 
 function LootReserve.Server:UpdateReserveListRolls(lockdown)
+    if not self.Window:IsShown() then return; end
+
     lockdown = lockdown or InCombatLockdown();
 
     local list = (lockdown and self.Window.PanelReservesLockdown or self.Window.PanelReserves).Scroll.Container;
@@ -48,6 +50,8 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
 end
 
 function LootReserve.Server:UpdateReserveListChat(lockdown)
+    if not self.Window:IsShown() then return; end
+
     lockdown = lockdown or InCombatLockdown();
 
     local list = (lockdown and self.Window.PanelReservesLockdown or self.Window.PanelReserves).Scroll.Container;
@@ -72,6 +76,8 @@ function LootReserve.Server:UpdateReserveListChat(lockdown)
 end
 
 function LootReserve.Server:UpdateReserveList(lockdown)
+    if not self.Window:IsShown() then return; end
+
     lockdown = lockdown or InCombatLockdown();
 
     local filter = LootReserve:TransformSearchText(self.Window.Search:GetText());
@@ -301,6 +307,8 @@ function LootReserve.Server:UpdateReserveList(lockdown)
 end
 
 function LootReserve.Server:UpdateRollListRolls(lockdown)
+    if not self.Window:IsShown() then return; end
+
     lockdown = lockdown or InCombatLockdown();
 
     local list = (lockdown and self.Window.PanelRollsLockdown or self.Window.PanelRolls).Scroll.Container;
@@ -346,6 +354,8 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
 end
 
 function LootReserve.Server:UpdateRollListChat(lockdown)
+    if not self.Window:IsShown() then return; end
+
     lockdown = lockdown or InCombatLockdown();
 
     local list = (lockdown and self.Window.PanelRollsLockdown or self.Window.PanelRolls).Scroll.Container;
@@ -368,6 +378,8 @@ function LootReserve.Server:UpdateRollListChat(lockdown)
 end
 
 function LootReserve.Server:UpdateRollList(lockdown)
+    if not self.Window:IsShown() then return; end
+
     lockdown = lockdown or InCombatLockdown();
 
     local filter = LootReserve:TransformSearchText(self.Window.Search:GetText());
@@ -798,6 +810,8 @@ function LootReserve.Server:UpdateAddonUsers()
 end
 
 function LootReserve.Server:LoadNewSessionSessings()
+    if not self.Window:IsShown() then return; end
+    
     local function setDropDownValue(dropDown, value)
         if dropDown.init then dropDown:init(); end
         ToggleDropDownMenu(nil, nil, dropDown);
