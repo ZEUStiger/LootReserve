@@ -869,7 +869,11 @@ function LootReserve.Server:ResumeSession()
     LootReserve.Comm:BroadcastSessionInfo();
 
     if self.CurrentSession.Settings.ChatFallback then
-        LootReserve:SendChatMessage("Accepting loot reserves again. Whisper !reserve ItemLinkOrName", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionResume));
+        LootReserve:SendChatMessage("Accepting loot reserves again", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionResume));
+        if self.Settings.ChatReservesList and not self.CurrentSession.Settings.Blind then
+            LootReserve:SendChatMessage("To see all reserves made - whisper me:  !reserves", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionResume));
+        end
+        LootReserve:SendChatMessage("To reserve an item - whisper me:  !reserve ItemLinkOrName", self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionResume));
     end
 
     self:UpdateReserveList();
@@ -1783,7 +1787,7 @@ function LootReserve.Server:WhisperAllWithoutReserves()
 
     for player, member in pairs(self.CurrentSession.Members) do
         if #member.ReservedItems == 0 and member.ReservesLeft > 0 and LootReserve:IsPlayerOnline(player) then
-            LootReserve:SendChatMessage(format("Don't forget to reserve your items. You have %d %s left. Whisper !reserve ItemLinkOrName",
+            LootReserve:SendChatMessage(format("Don't forget to reserve your items. You have %d %s left. Whisper  !reserve ItemLinkOrName",
                 member.ReservesLeft,
                 member.ReservesLeft == 1 and "reserve" or "reserves"
             ), "WHISPER", player);
