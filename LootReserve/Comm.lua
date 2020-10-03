@@ -285,7 +285,7 @@ LootReserve.Comm.Handlers[Opcodes.SessionStop] = function(sender)
     end
 end
 
--- SessionStop
+-- SessionReset
 function LootReserve.Comm:SendSessionReset()
     LootReserve.Comm:Broadcast(Opcodes.SessionReset);
 end
