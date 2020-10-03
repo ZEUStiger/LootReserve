@@ -919,7 +919,7 @@ function LootReserve.Server:ResetSession()
         return;
     end
 
-    if self.RequestedRoll and not self.RequestedRoll.Custom then
+    if self.RequestedRoll and not self.RequestedRoll.Custom and not self.RequestedRoll.RaidRoll then
         self:CancelRollRequest(self.RequestedRoll.Item);
     end
 
