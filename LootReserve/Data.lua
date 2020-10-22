@@ -468,6 +468,13 @@ LootReserve.Data =
                     },
                 },
                 {
+                    Name = "Enchants",
+                    Loot =
+                    {
+                        20728, 20731, 20734, 20729, 20736, 20730, 20727,
+                    },
+                },
+                {
                     Name = "Class books",
                     Loot =
                     {
@@ -942,6 +949,8 @@ LootReserve.Data =
         [19722] = { ClassMask = 1090 },
         [19723] = { ClassMask = 385 },
         [19724] = { ClassMask = 28 },
+        [20264] = { Faction = "Alliance" },
+        [20257] = { Faction = "Horde" },
         [20866] = { ClassMask = 140 },
         [20867] = { ClassMask = 265 },
         [20868] = { ClassMask = 21 },
@@ -999,6 +1008,12 @@ LootReserve.Data =
         [21304] = { ClassMask = 4 },
         [21306] = { ClassMask = 4 },
         [21307] = { ClassMask = 4 },
+        [21453] = { Faction = "Alliance" },
+        [21454] = { Faction = "Horde" },
+        [21486] = { Faction = "Alliance" },
+        [21487] = { Faction = "Horde" },
+        [21803] = { Faction = "Alliance" },
+        [21804] = { Faction = "Horde" },
         [21889] = { ClassMask = 2, Faction = "Alliance" },
         [22349] = { ClassMask = 9 },
         [22350] = { ClassMask = 1094 },
