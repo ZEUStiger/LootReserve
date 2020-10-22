@@ -103,6 +103,9 @@
     <Content Include="ServerWindow.xml">
       <SubType>Frame</SubType>
     </Content>
+    <Content Include="Textures\FavoriteSet.tga" />
+    <Content Include="Textures\FavoriteUnset.tga" />
+    <Content Include="Textures\FavoriteWhite.tga" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Libs/LibStub/LibStub.lua">
@@ -130,6 +133,7 @@
     <Folder Include="Libs\AceComm-3.0\" />
     <Folder Include="Libs\LibCustomGlow-1.0\" />
     <Folder Include="Libs\LibStub\" />
+    <Folder Include="Textures\" />
   </ItemGroup>
   <Import Project="$(DevEnvDir)\Extensions\Tools\MSBuild\AddonStudio\Wow\3.0\WowAddonStudio.targets" />
   <!--

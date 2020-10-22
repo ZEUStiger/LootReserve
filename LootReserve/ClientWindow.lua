@@ -68,20 +68,20 @@ function LootReserve.Client:UpdateLootList()
     local list = self.Window.Loot.Scroll.Container;
     list.Frames = list.Frames or { };
     list.LastIndex = 0;
-    
+    list.ContentHeight = 0;
+
+    if list.CharacterFavoritesHeader then
+        list.CharacterFavoritesHeader:Hide();
+    end
+    if list.GlobalFavoritesHeader then
+        list.GlobalFavoritesHeader:Hide();
+    end
+
     local function createFrame(item, source)
         list.LastIndex = list.LastIndex + 1;
         local frame = list.Frames[list.LastIndex];
         while not frame do
             frame = CreateFrame("Frame", nil, list, "LootReserveLootListTemplate");
-
-            if #list.Frames == 0 then
-                frame:SetPoint("TOPLEFT", list, "TOPLEFT");
-                frame:SetPoint("TOPRIGHT", list, "TOPRIGHT");
-            else
-                frame:SetPoint("TOPLEFT", list.Frames[#list.Frames], "BOTTOMLEFT", 0, 0);
-                frame:SetPoint("TOPRIGHT", list.Frames[#list.Frames], "BOTTOMRIGHT", 0, 0);
-            end
             table.insert(list.Frames, frame);
             frame = list.Frames[list.LastIndex];
         end
@@ -96,6 +96,7 @@ function LootReserve.Client:UpdateLootList()
                 frame:SetHeight(16);
                 frame:Hide();
             end
+            frame.Favorite:Hide();
         else
             frame:SetHeight(44);
             frame:Show();
@@ -109,7 +110,16 @@ function LootReserve.Client:UpdateLootList()
             frame.ItemFrame.Icon:SetTexture(texture);
             frame.ItemFrame.Name:SetText((link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""));
             frame.ItemFrame.Misc:SetText(source or type);
+            frame.Favorite:SetPoint("LEFT", frame.ItemFrame.Name, "LEFT", math.min(frame.ItemFrame:GetWidth() - 57, frame.ItemFrame.Name:GetStringWidth()), 0);
+            frame.Favorite.Set:SetShown(not self:IsFavorite(item));
+            frame.Favorite.Unset:SetShown(not frame.Favorite.Set:IsShown());
+            frame.Favorite:SetShown(frame.hovered or frame.Favorite.Unset:IsShown());
+            frame.ItemFrame.Name:SetPoint("TOPRIGHT", frame.ItemFrame, "TOPRIGHT", frame.Favorite:IsShown() and -20 or 0, 0);
         end
+
+        frame:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -list.ContentHeight);
+        frame:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, -list.ContentHeight);
+        list.ContentHeight = list.ContentHeight + frame:GetHeight();
     end
 
     local function matchesFilter(item, filter)
@@ -136,6 +146,44 @@ function LootReserve.Client:UpdateLootList()
                 createFrame(item);
             elseif self.SelectedCategory.Reserves == "all" and self:IsItemReserved(item) and not self.Blind then
                 createFrame(item);
+            end
+        end
+    elseif self.SelectedCategory and self.SelectedCategory.Favorites then
+        for _, favorites in ipairs({ self.CharacterFavorites, self.GlobalFavorites }) do
+            local first = true;
+            for item in LootReserve:Ordered(favorites, function(_, _, aItem, bItem)
+                local aName = GetItemInfo(aItem);
+                local bName = GetItemInfo(bItem);
+                if not aName then return false; end
+                if not bName then return true; end
+                return aName < bName;
+            end) do
+                local conditions = self.ItemConditions[item];
+                if item ~= 0 and (not self.LootCategory or LootReserve.Data:IsItemInCategory(item, self.LootCategory) or conditions and conditions.Custom == self.LootCategory) and LootReserve.ItemConditions:TestPlayer("player", item, false) then
+                    if first then
+                        first = false;
+                        if favorites == self.CharacterFavorites then
+                            if not list.CharacterFavoritesHeader then
+                                list.CharacterFavoritesHeader = CreateFrame("Frame", nil, list, "LootReserveLootFavoritesHeader");
+                                list.CharacterFavoritesHeader.Text:SetText(format("%s's Favorites", LootReserve:ColoredPlayer(Ambiguate(UnitName("player"), "short"))));
+                            end
+                            list.CharacterFavoritesHeader:Show();
+                            list.CharacterFavoritesHeader:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -list.ContentHeight);
+                            list.CharacterFavoritesHeader:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, -list.ContentHeight);
+                            list.ContentHeight = list.ContentHeight + list.CharacterFavoritesHeader:GetHeight();
+                        elseif favorites == self.GlobalFavorites then
+                            if not list.GlobalFavoritesHeader then
+                                list.GlobalFavoritesHeader = CreateFrame("Frame", nil, list, "LootReserveLootFavoritesHeader");
+                                list.GlobalFavoritesHeader.Text:SetText("Account Favorites");
+                            end
+                            list.GlobalFavoritesHeader:Show();
+                            list.GlobalFavoritesHeader:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -list.ContentHeight);
+                            list.GlobalFavoritesHeader:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, -list.ContentHeight);
+                            list.ContentHeight = list.ContentHeight + list.GlobalFavoritesHeader:GetHeight();
+                        end
+                    end
+                    createFrame(item);
+                end
             end
         end
     elseif self.SelectedCategory and self.SelectedCategory.Search and filter then
@@ -355,6 +403,8 @@ function LootReserve.Client:OnWindowLoad(window)
                     self:UpdateLootList();
                 end
             end
+        elseif self.SelectedCategory.Favorites and self:IsFavorite(item) then
+            self:UpdateLootList();
         elseif self.SelectedCategory.Search or self.SelectedCategory.Reserves then
             self:UpdateLootList();
         end

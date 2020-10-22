@@ -135,6 +135,58 @@
 					<Anchor point="RIGHT" relativeKey="$parent.ReserveFrame" relativePoint="LEFT" x="-5" />
 				</Anchors>
 			</Button>
+			<Frame parentKey="Favorite" clipChildren="true" frameLevel="100">
+				<Size x="20" y="20" />
+				<Frames>
+					<Button parentKey="Set">
+						<Size x="32" y="32" />
+						<Anchors>
+							<Anchor point="CENTER" y="-4" />
+						</Anchors>
+						<NormalTexture file="Interface\AddOns\LootReserve\Textures\FavoriteUnset" />
+						<PushedTexture file="Interface\AddOns\LootReserve\Textures\FavoriteUnset" alpha="0.5" />
+						<HighlightTexture file="Interface\AddOns\LootReserve\Textures\FavoriteSet" alphaMode="ADD" alpha="0.25" />
+						<Scripts>
+							<OnClick>
+								LootReserve.Client:SetFavorite(self:GetParent():GetParent().Item, true);
+								self:Hide();
+								self:GetParent().Unset:Show();
+								PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+							</OnClick>
+							<OnEnter>
+								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								GameTooltip:SetText("Add to Favorites");
+								GameTooltip:AddLine("Favorite soulbound items are saved per-character, otherwise per-account.", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
+								GameTooltip:Show();
+							</OnEnter>
+							<OnLeave function="GameTooltip_Hide" />
+						</Scripts>
+					</Button>
+					<Button parentKey="Unset">
+						<Size x="32" y="32" />
+						<Anchors>
+							<Anchor point="CENTER" y="-4" />
+						</Anchors>
+						<NormalTexture file="Interface\AddOns\LootReserve\Textures\FavoriteSet" />
+						<PushedTexture file="Interface\AddOns\LootReserve\Textures\FavoriteSet" alpha="0.75" />
+						<HighlightTexture file="Interface\AddOns\LootReserve\Textures\FavoriteUnset" alphaMode="ADD" alpha="0.5" />
+						<Scripts>
+							<OnClick>
+								LootReserve.Client:SetFavorite(self:GetParent():GetParent().Item, false);
+								self:Hide();
+								self:GetParent().Set:Show();
+								PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_OFF);
+							</OnClick>
+							<OnEnter>
+								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								GameTooltip:SetText("Remove from Favorites");
+								GameTooltip:Show();
+							</OnEnter>
+							<OnLeave function="GameTooltip_Hide" />
+						</Scripts>
+					</Button>
+				</Frames>
+			</Frame>
 		</Frames>
 		<Scripts>
 			<OnUpdate>
@@ -143,8 +195,13 @@
 					self.hovered = hovered;
 					local r, g, b = self:GetBackdropBorderColor();
 					self:SetBackdropBorderColor(r, g, b, hovered and 1 or 0);
+					self.Favorite:SetShown(hovered or self.Favorite.Unset:IsShown());
+					self.ItemFrame.Name:SetPoint("TOPRIGHT", self.ItemFrame, "TOPRIGHT", self.Favorite:IsShown() and -20 or 0, 0);
 				end
 			</OnUpdate>
+			<OnSizeChanged>
+				self.Favorite:SetPoint("LEFT", self.ItemFrame.Name, "LEFT", math.min(self.ItemFrame:GetWidth() - 57, self.ItemFrame.Name:GetStringWidth()), 0);
+			</OnSizeChanged>
 		</Scripts>
 	</Frame>
 	<Frame name="LootReserveLootBlindHint" virtual="true" setAllPoints="true">
@@ -160,6 +217,14 @@
 						<Anchor point="BOTTOMRIGHT" />
 					</Anchors>
 				</FontString>
+			</Layer>
+		</Layers>
+	</Frame>
+	<Frame name="LootReserveLootFavoritesHeader" virtual="true">
+		<Size y="16" />
+		<Layers>
+			<Layer>
+				<FontString parentKey="Text" inherits="GameFontNormal" setAllPoints="true" />
 			</Layer>
 		</Layers>
 	</Frame>

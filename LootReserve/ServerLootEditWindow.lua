@@ -229,7 +229,7 @@ function LootReserve.Server.LootEdit:UpdateCategories()
         end
         if category.Children then
             for i, child in ipairs(category.Children) do
-                if not child.Reserves then
+                if not child.Reserves and not child.Favorites then
                     createCategoryButtonsRecursively(id, child);
                 end
             end

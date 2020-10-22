@@ -13,6 +13,10 @@ LootReserve.EventFrame:Show();
 
 LootReserveCharacterSave =
 {
+    Client =
+    {
+        CharacterFavorites = nil,
+    },
     Server =
     {
         CurrentSession = nil,
@@ -26,6 +30,7 @@ LootReserveGlobalSave =
     Client =
     {
         Settings = nil,
+        GlobalFavorites = nil,
     },
     Server =
     {
