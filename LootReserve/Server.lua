@@ -33,6 +33,8 @@ LootReserve.Server =
         RollFinishOnAllReservingRolled = false,
         RollFinishOnRaidRoll = false,
         RollSkipNotContested = false,
+        RollMasterLoot = false,
+        MasterLooting = false,
     },
     RequestedRoll = nil,
     RollHistory = { },
@@ -43,6 +45,7 @@ LootReserve.Server =
     MembersEdit = { },
     Import = { },
     Export = { },
+    PendingMasterLoot = nil,
 
     ReservableItems = { },
     ItemNames = { },
@@ -57,6 +60,7 @@ LootReserve.Server =
     AllItemNamesCached = false,
     StartupAwaitingAuthority = false,
     StartupAwaitingAuthorityRegistered = false,
+    MasterLootListUpdateRegistered = false,
 };
 
 StaticPopupDialogs["LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE"] =
@@ -1387,6 +1391,14 @@ function LootReserve.Server:FinishRollRequest(item, soleReserver)
                 end
             end
             Announce();
+
+            if self.Settings.MasterLooting and self.Settings.RollMasterLoot then
+                if #players == 1 then
+                    self:MasterLootItem(item, players[1]);
+                else
+                    LootReserve:ShowError("%s was not automatically masterlooted: more than one candidate", select(2, GetItemInfo(pending.Item)) or tostring(pending.Item));
+                end
+            end
         elseif soleReserver and not self.RequestedRoll.Custom and next(self.RequestedRoll.Players) then
             local player = next(self.RequestedRoll.Players);
             local category = self.CurrentSession and LootReserve.Data.Categories[self.CurrentSession.Settings.LootCategory] or nil;
@@ -1405,6 +1417,10 @@ function LootReserve.Server:FinishRollRequest(item, soleReserver)
                 end
             end
             Announce();
+
+            if self.Settings.MasterLooting and self.Settings.RollMasterLoot then
+                self:MasterLootItem(item, player);
+            end
         end
 
         self:CancelRollRequest(item);
@@ -1779,6 +1795,85 @@ function LootReserve.Server:DeleteRoll(player, item)
     self:UpdateRollListRolls();
 
     self:TryFinishRoll();
+end
+
+function LootReserve.Server:MasterLootItem(item, player)
+    if not item or not player then return; end
+
+    local name, link, quality = GetItemInfo(item);
+    if not name or not link or not quality then return; end
+
+    if not self.Settings.MasterLooting or not self.Settings.RollMasterLoot then
+        -- LootReserve:ShowError("Failed to masterloot %s to %s: masterlooting not enabled in LootReserve settings", link, LootReserve:ColoredPlayer(player));
+        return;
+    end
+
+    if not IsMasterLooter() or GetLootMethod() ~= "master" then
+        -- LootReserve:ShowError("Failed to masterloot %s to %s: not master looter", link, LootReserve:ColoredPlayer(player));
+        return;
+    end
+
+    local itemIndex = LootReserve:IsLootingItem(item);
+    if not itemIndex then
+        -- LootReserve:ShowError("Failed to masterloot %s to %s: item not found in the current loot", link, LootReserve:ColoredPlayer(player));
+        return;
+    end
+
+    if quality < GetLootThreshold() then
+        -- LootReserve:ShowError("Failed to masterloot %s to %s: item quality below masterloot threshold", link, LootReserve:ColoredPlayer(player));
+        return;
+    end
+
+    if not self.MasterLootListUpdateRegistered then
+        self.MasterLootListUpdateRegistered = true;
+        LootReserve:RegisterEvent("OPEN_MASTER_LOOT_LIST", "UPDATE_MASTER_LOOT_LIST", function()
+            local pending = self.PendingMasterLoot;
+            self.PendingMasterLoot = nil;
+            if pending and pending.ItemIndex == LootReserve:IsLootingItem(pending.Item) and pending.Timeout >= time() then
+                for playerIndex = 1, MAX_RAID_MEMBERS do
+                    if GetMasterLootCandidate(pending.ItemIndex, playerIndex) == pending.Player then
+                        GiveMasterLoot(pending.ItemIndex, playerIndex);
+                        MasterLooterFrame:Hide();
+                        return;
+                    end
+                end
+                LootReserve:ShowError("Failed to masterloot %s to %s: player was not found in the list of masterloot candidates", link, LootReserve:ColoredPlayer(pending.Player));
+            end
+        end);
+    end
+
+    -- Prevent duplicate request. Hopefully...
+    if self.PendingMasterLoot and self.PendingMasterLoot.Item == item and self.PendingMasterLoot.Timeout >= time() then
+        LootReserve:ShowError("Failed to masterloot %s to %s: there's another master loot attempt in progress. Try again in 5 seconds", link, LootReserve:ColoredPlayer(player));
+        return;
+    end
+
+    self.PendingMasterLoot =
+    {
+        Item = item,
+        ItemIndex = itemIndex,
+        Player = player,
+        Timeout = time() + 5,
+    };
+
+    --LootSlot(itemIndex); -- Can't do it this way, LootFrame breaks due to some crucial variables not being filled
+    local numItemsPerPage = LOOTFRAME_NUMBUTTONS;
+    local numLootItems = LootFrame.numLootItems or 0;
+    if numLootItems > LOOTFRAME_NUMBUTTONS then
+        numItemsPerPage = numItemsPerPage - 1;
+    end
+    for page = 1, math.ceil(numLootItems / numItemsPerPage) do
+        LootFrame.page = page;
+        LootFrame_Update();
+        for index = 1, numItemsPerPage do
+            local button = _G["LootButton" .. index];
+            if button and button:IsShown() and button.slot == itemIndex then
+                LootButton_OnClick(button, "LeftButton"); -- Now wait for OPEN_MASTER_LOOT_LIST/UPDATE_MASTER_LOOT_LIST
+                return;
+            end
+        end
+    end
+    LootReserve:ShowError("Failed to masterloot %s to %s: looting UI is closed or the item was not found in the loot", link, LootReserve:ColoredPlayer(player));
 end
 
 function LootReserve.Server:WhisperAllWithoutReserves()

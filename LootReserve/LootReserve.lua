@@ -366,11 +366,10 @@ function LootReserve:IsLootingItem(item)
         if link then
             local id = tonumber(link:match("item:(%d+)"));
             if id and id == item then
-                return true;
+                return i;
             end
         end
     end
-    return false;
 end
 
 function LootReserve:TransformSearchText(text)
