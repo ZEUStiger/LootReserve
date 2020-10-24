@@ -236,7 +236,7 @@
 					SecureUnitButton_OnLoad(self, nil, function()
 						local unit = self:GetAttribute("unit");
 						if unit then
-							UIDropDownMenu_Initialize(self.DropDown, function(self) UnitPopup_ShowMenu(UIDROPDOWNMENU_OPEN_MENU or self, "PLAYER", unit); end, "MENU");
+							UIDropDownMenu_Initialize(self.DropDown, function(self) UnitPopup_ShowMenu(self, "PLAYER", unit); end, "MENU");
 							ToggleDropDownMenu(nil, nil, self.DropDown, "cursor", 0, 0);
 						end
 					end);
