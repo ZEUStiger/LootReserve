@@ -11,7 +11,7 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
     frame:Hide();
 
     if not self.Settings.RollRequestShow then return; end
-    if not LootReserve:Contains(players, Ambiguate(UnitName("player"), "short")) then return; end
+    if not LootReserve:Contains(players, LootReserve:Me()) then return; end
     if custom and not self.Settings.RollRequestShowUnusable and LootReserve:IsItemUsable(item) == false then return; end -- Need to check for false, returns nil if item not loaded
 
     self.RollRequest =

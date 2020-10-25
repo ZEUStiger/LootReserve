@@ -38,7 +38,7 @@ function LootReserve.Comm:StartListening()
                         print("[DEBUG] Received: " .. text:gsub("|", "||"));
                     end
 
-                    sender = Ambiguate(sender, "short");
+                    sender = LootReserve:Player(sender);
                     LootReserve.Server:SetAddonUser(sender, true);
                     handler(sender, strsplit("|", message));
                 end
@@ -179,7 +179,7 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
     local session = LootReserve.Server.CurrentSession;
     if not session then return; end
 
-    target = target and Ambiguate(target, "short");
+    target = target and LootReserve:Player(target);
     if target and not session.Members[target] then return; end
 
     local membersInfo = "";
@@ -241,7 +241,7 @@ LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, star
         membersInfo = { strsplit(";", membersInfo) };
         for _, infoStr in ipairs(membersInfo) do
             local player, info = strsplit("=", infoStr, 2);
-            if player == Ambiguate(UnitName("player"), "short") then
+            if LootReserve:IsMe(player) then
                 local remainingReserves = strsplit(",", info);
                 LootReserve.Client.RemainingReserves = tonumber(remainingReserves) or 0;
                 LootReserve.Client.Locked = remainingReserves == "#";

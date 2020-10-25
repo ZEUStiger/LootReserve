@@ -248,6 +248,18 @@ function LootReserve:GetClassInfo(classID)
     end
 end
 
+function LootReserve:Player(player)
+    return Ambiguate(player, "short");
+end
+
+function LootReserve:Me()
+    return self:Player(UnitName("player"));
+end
+
+function LootReserve:IsMe(player)
+    return self:Me() == self:Player(player);
+end
+
 function LootReserve:IsPlayerOnline(player)
     for i = 1, MAX_RAID_MEMBERS do
         local name, _, _, _, _, _, _, online = GetRaidRosterInfo(i);
@@ -257,7 +269,7 @@ function LootReserve:IsPlayerOnline(player)
             online = true;
         end
 
-        if name and Ambiguate(name, "short") == player then
+        if name and LootReserve:Player(name) == player then
             return online or false;
         end
     end
@@ -277,12 +289,12 @@ end
 function LootReserve:GetRaidUnitID(player)
     for i = 1, MAX_RAID_MEMBERS do
         local unit = UnitName("raid" .. i);
-        if unit and Ambiguate(unit, "short") == player then
+        if unit and LootReserve:Player(unit) == player then
             return "raid" .. i;
         end
     end
 
-    if self.Comm.SoloDebug and Ambiguate(UnitName("player"), "short") == player then
+    if self.Comm.SoloDebug and LootReserve:IsMe(player) then
         return "player";
     end
 end
@@ -290,12 +302,12 @@ end
 function LootReserve:GetPartyUnitID(player)
     for i = 1, MAX_PARTY_MEMBERS do
         local unit = UnitName("party" .. i);
-        if unit and Ambiguate(unit, "short") == player then
+        if unit and LootReserve:Player(unit) == player then
             return "party" .. i;
         end
     end
 
-    if Ambiguate(UnitName("player"), "short") == player then
+    if LootReserve:IsMe(player) then
         return "player";
     end
 end

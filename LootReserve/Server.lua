@@ -205,7 +205,7 @@ function LootReserve.Server:HasRelevantRecentChat(chat, player)
 end
 
 function LootReserve.Server:IsAddonUser(player)
-    return player == UnitName("player") or self.AddonUsers[player] or false;
+    return LootReserve:IsMe(player) or self.AddonUsers[player] or false;
 end
 
 function LootReserve.Server:SetAddonUser(player, isUser)
@@ -378,7 +378,7 @@ function LootReserve.Server:PrepareLootTracking()
             end
         end
 
-        looter = Ambiguate(looter, "short");
+        looter = LootReserve:Player(looter);
         item = tonumber(item:match("item:(%d+)"));
         count = tonumber(count);
         if looter and item and count then
@@ -413,7 +413,7 @@ function LootReserve.Server:PrepareGuildTracking()
         for i = 1, GetNumGuildMembers() do
             local name = GetGuildRosterInfo(i);
             if name then
-                name = Ambiguate(name, "short");
+                name = LootReserve:Player(name);
                 table.insert(self.GuildMembers, name);
             end
         end
@@ -488,7 +488,7 @@ function LootReserve.Server:PrepareSession()
                 for i = 1, MAX_RAID_MEMBERS do
                     local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
                     if name then
-                        name = Ambiguate(name, "short");
+                        name = LootReserve:Player(name);
                         if not self.CurrentSession.Members[name] then
                             self.CurrentSession.Members[name] =
                             {
@@ -544,7 +544,7 @@ function LootReserve.Server:PrepareSession()
         local prefixB = "!res";
 
         local function ProcessChat(text, sender)
-            sender = Ambiguate(sender, "short");
+            sender = LootReserve:Player(sender);
             if not self.CurrentSession then return; end;
 
             local member = self.CurrentSession.Members[sender];
@@ -797,7 +797,7 @@ function LootReserve.Server:StartSession()
             name = UnitName("player");
         end
         if name then
-            name = Ambiguate(name, "short");
+            name = LootReserve:Player(name);
             self.CurrentSession.Members[name] =
             {
                 ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
@@ -1479,7 +1479,7 @@ function LootReserve.Server:CanRoll(player)
     -- Player must be allowed to roll if the roll is limited to specific players
     if roll.AllowedPlayers and not LootReserve:Contains(roll.AllowedPlayers, player) then return false; end
     -- Only raid roll creator is allowed to re-roll the raid-roll
-    if roll.RaidRoll then return player == Ambiguate(UnitName("player"), "short"); end
+    if roll.RaidRoll then return LootReserve:IsMe(player); end
     -- Player must have reserved the item if the roll is for a reserved item
     if not self.RequestedRoll.Custom and not self.RequestedRoll.Players[player] then return false; end
     -- Player cannot roll if they had rolled previously, but are allowed to roll if they passed on the item
@@ -1533,7 +1533,7 @@ function LootReserve.Server:PrepareRequestRoll()
                         for i = 1, MAX_RAID_MEMBERS do
                             local name, _, subgroup, _, _, _, _, online = GetRaidRosterInfo(i);
                             if name and subgroup then
-                                table.insert(subgroups[subgroup], Ambiguate(name, "short"));
+                                table.insert(subgroups[subgroup], LootReserve:Player(name));
                             end
                         end
                         local raid = { };
@@ -1579,7 +1579,7 @@ function LootReserve.Server:PrepareRequestRoll()
             local savedType = type:gsub("CHAT_MSG_", "");
             LootReserve:RegisterEvent(type, function(text, sender)
                 if self.RequestedRoll then
-                    local player = Ambiguate(sender, "short");
+                    local player = LootReserve:Player(sender);
                     self.RequestedRoll.Chat = self.RequestedRoll.Chat or { };
                     self.RequestedRoll.Chat[player] = self.RequestedRoll.Chat[player] or { };
                     table.insert(self.RequestedRoll.Chat[player], format("%d|%s|%s", time(), savedType, text));
@@ -1690,8 +1690,7 @@ function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPla
                 online = true;
             end
             if name and online then
-                name = Ambiguate(name, "short");
-                table.insert(players, name);
+                table.insert(players, LootReserve:Player(name));
             end
         end
     end
@@ -1740,7 +1739,7 @@ function LootReserve.Server:RaidRoll(item)
         StartTime = time(),
         RaidRoll = true,
         Players = { },
-        AllowedPlayers = { Ambiguate(UnitName("player"), "short") },
+        AllowedPlayers = { LootReserve:Me() },
     };
     self.SaveProfile.RequestedRoll = self.RequestedRoll;
 

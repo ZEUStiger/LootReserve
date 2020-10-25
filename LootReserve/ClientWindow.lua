@@ -165,7 +165,7 @@ function LootReserve.Client:UpdateLootList()
                         if favorites == self.CharacterFavorites then
                             if not list.CharacterFavoritesHeader then
                                 list.CharacterFavoritesHeader = CreateFrame("Frame", nil, list, "LootReserveLootFavoritesHeader");
-                                list.CharacterFavoritesHeader.Text:SetText(format("%s's Favorites", LootReserve:ColoredPlayer(Ambiguate(UnitName("player"), "short"))));
+                                list.CharacterFavoritesHeader.Text:SetText(format("%s's Favorites", LootReserve:ColoredPlayer(LootReserve:Me())));
                             end
                             list.CharacterFavoritesHeader:Show();
                             list.CharacterFavoritesHeader:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -list.ContentHeight);
