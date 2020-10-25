@@ -140,8 +140,16 @@ function LootReserve.Client:UpdateLootList()
         return false;
     end
 
+    local function sortByItemName(_, _, aItem, bItem)
+        local aName = GetItemInfo(aItem);
+        local bName = GetItemInfo(bItem);
+        if not aName then return false; end
+        if not bName then return true; end
+        return aName < bName;
+    end
+
     if self.SelectedCategory and self.SelectedCategory.Reserves and self.SessionServer then
-        for item in pairs(self.ItemReserves) do
+        for item in LootReserve:Ordered(self.ItemReserves, sortByItemName) do
             if self.SelectedCategory.Reserves == "my" and self:IsItemReservedByMe(item) then
                 createFrame(item);
             elseif self.SelectedCategory.Reserves == "all" and self:IsItemReserved(item) and not self.Blind then
@@ -151,13 +159,7 @@ function LootReserve.Client:UpdateLootList()
     elseif self.SelectedCategory and self.SelectedCategory.Favorites then
         for _, favorites in ipairs({ self.CharacterFavorites, self.GlobalFavorites }) do
             local first = true;
-            for item in LootReserve:Ordered(favorites, function(_, _, aItem, bItem)
-                local aName = GetItemInfo(aItem);
-                local bName = GetItemInfo(bItem);
-                if not aName then return false; end
-                if not bName then return true; end
-                return aName < bName;
-            end) do
+            for item in LootReserve:Ordered(favorites, sortByItemName) do
                 local conditions = self.ItemConditions[item];
                 if item ~= 0 and (not self.LootCategory or LootReserve.Data:IsItemInCategory(item, self.LootCategory) or conditions and conditions.Custom == self.LootCategory) and LootReserve.ItemConditions:TestPlayer("player", item, false) then
                     if first then

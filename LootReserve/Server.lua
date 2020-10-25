@@ -1229,7 +1229,15 @@ function LootReserve.Server:SendReservesList(player, chat, force)
         local function Announce()
             local list = { };
 
-            for item, reserve in pairs(self.CurrentSession.ItemReserves) do
+            local function sortByItemName(_, _, aItem, bItem)
+                local aName = GetItemInfo(aItem);
+                local bName = GetItemInfo(bItem);
+                if not aName then return false; end
+                if not bName then return true; end
+                return aName < bName;
+            end
+
+            for item, reserve in LootReserve:Ordered(self.CurrentSession.ItemReserves, sortByItemName) do
                 if --[[LootReserve.ItemConditions:TestPlayer(player, item, true)]]true then
                     local name, link = GetItemInfo(item);
                     if not name or not link then
