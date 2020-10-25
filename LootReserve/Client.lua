@@ -30,6 +30,7 @@ LootReserve.Client =
     ServerSearchTimeoutTime = nil,
     DurationUpdateRegistered = false,
     SessionEventsRegistered = false,
+    CategoryFlashing = false,
 
     SelectedCategory = nil,
 };
@@ -69,6 +70,7 @@ function LootReserve.Client:SetFavorite(item, enabled)
 
     local favorites = bindType == 1 and self.CharacterFavorites or self.GlobalFavorites;
     favorites[item] = enabled and true or nil;
+    self:FlashCategory("Favorites");
 end
 
 function LootReserve.Client:SearchForServer(startup)
@@ -79,7 +81,7 @@ function LootReserve.Client:SearchForServer(startup)
 end
 
 function LootReserve.Client:StartSession(server, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration, blind)
-    self:ResetSession();
+    self:ResetSession(true);
     self.SessionServer = server;
     self.StartTime = startTime;
     self.AcceptingReserves = acceptingReserves;
@@ -135,13 +137,17 @@ function LootReserve.Client:StopSession()
     self.AcceptingReserves = false;
 end
 
-function LootReserve.Client:ResetSession()
+function LootReserve.Client:ResetSession(refresh)
     self.SessionServer = nil;
     self.RemainingReserves = 0;
     self.LootCategory = nil;
     self.ItemReserves = { };
     self.ItemConditions = { };
     self.PendingItems = { };
+
+    if not refresh then
+        self:StopCategoryFlashing();
+    end
 end
 
 function LootReserve.Client:GetRemainingReserves()

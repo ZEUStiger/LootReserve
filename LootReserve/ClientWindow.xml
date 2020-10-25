@@ -3,13 +3,16 @@
 	<CheckButton name="LootReserveCategoryListButtonTemplate" virtual="true">
 		<Size y="18" />
 		<Layers>
-			<Layer>
+			<Layer level="ARTWORK">
 				<FontString parentKey="Text" inherits="GameFontWhite" justifyH="LEFT">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="5" />
 						<Anchor point="BOTTOMRIGHT" x="-5" />
 					</Anchors>
 				</FontString>
+			</Layer>
+			<Layer level="OVERLAY">
+				<Texture parentKey="Flash" file="Interface\QUESTFRAME\UI-QuestTitleHighlight" desaturated="true" alpha="0" alphaMode="ADD" setAllPoints="true" />
 			</Layer>
 		</Layers>
 		<HighlightTexture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" />

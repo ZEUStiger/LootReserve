@@ -348,7 +348,6 @@ function LootReserve.Client:UpdateCategories()
 end
 
 function LootReserve.Client:OnCategoryClick(button)
-    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
     if not button.Category.Search then
         self.Window.Search:ClearFocus();
     end
@@ -366,9 +365,37 @@ function LootReserve.Client:OnCategoryClick(button)
         end
     end
 
+    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+    self:StopCategoryFlashing(button);
+
     self.SelectedCategory = button.Category;
     self.Window.Loot.Scroll:SetVerticalScroll(0);
     self:UpdateLootList();
+end
+
+function LootReserve.Client:FlashCategory(categoryField, value, continuously)
+    for _, button in pairs(self.Window.Categories.Scroll.Container.Frames) do
+        if button:IsShown() and button.Flash and button.Category and button.Category[categoryField] and (value == nil or button.Category[categoryField] == value) then
+            button.Flash:SetAlpha(1);
+            button.ContinuousFlashing = (button.ContinuousFlashing or continuously) and 0 or nil;
+            self.CategoryFlashing = true;
+        end
+    end
+end
+
+function LootReserve.Client:StopCategoryFlashing(button)
+    if button then
+        button.Flash:SetAlpha(0);
+        button.ContinuousFlashing = nil;
+    else
+        self.CategoryFlashing = false;
+        for _, button in pairs(self.Window.Categories.Scroll.Container.Frames) do
+            if button:IsShown() and button.Flash then
+                button.Flash:SetAlpha(0);
+                button.ContinuousFlashing = nil;
+            end
+        end
+    end
 end
 
 function LootReserve.Client:OnWindowLoad(window)
@@ -380,6 +407,21 @@ function LootReserve.Client:OnWindowLoad(window)
     self:UpdateCategories();
     self:UpdateReserveStatus();
     LootReserve:RegisterUpdate(function(elapsed)
+        if self.CategoryFlashing and self.Window:IsShown() then
+            self.CategoryFlashing = false;
+            for _, button in pairs(self.Window.Categories.Scroll.Container.Frames) do
+                if button:IsShown() and button.Flash and (button.Flash:GetAlpha() > 0 or button.ContinuousFlashing) then
+                    if button.ContinuousFlashing then
+                        button.ContinuousFlashing = (button.ContinuousFlashing + elapsed) % 1;
+                        button.Flash:SetAlpha(0.5 + 0.25 * (1 + math.cos(button.ContinuousFlashing * 2 * 3.14159265)));
+                    else
+                        button.Flash:SetAlpha(math.max(0, button.Flash:GetAlpha() - elapsed));
+                    end
+                    self.CategoryFlashing = true;
+                end
+            end
+        end
+
         if not self.SessionServer then
         elseif not self.AcceptingReserves or self.Locked then
             local r, g, b, a = self.Window.RemainingTextGlow:GetVertexColor();

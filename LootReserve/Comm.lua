@@ -291,7 +291,7 @@ function LootReserve.Comm:SendSessionReset()
 end
 LootReserve.Comm.Handlers[Opcodes.SessionReset] = function(sender)
     if LootReserve.Client.SessionServer == sender then
-        LootReserve.Client:ResetSession(sender);
+        LootReserve.Client:ResetSession();
         LootReserve.Client:UpdateCategories();
         LootReserve.Client:UpdateLootList();
     end
@@ -366,6 +366,8 @@ LootReserve.Comm.Handlers[Opcodes.ReserveInfo] = function(sender, item, players)
     item = tonumber(item);
 
     if LootReserve.Client.SessionServer == sender then
+        local wasReserver = LootReserve.Client:IsItemReservedByMe(item);
+
         if #players > 0 then
             players = { strsplit(",", players) };
         else
@@ -377,6 +379,12 @@ LootReserve.Comm.Handlers[Opcodes.ReserveInfo] = function(sender, item, players)
             LootReserve.Client:UpdateLootList();
         else
             LootReserve.Client:UpdateReserveStatus();
+        end
+        LootReserve.Client:FlashCategory("Reserves", "all");
+        local isReserver = LootReserve.Client:IsItemReservedByMe(item);
+        if wasReserver or isReserver then
+            local isViewingMyReserves = LootReserve.Client.SelectedCategory and LootReserve.Client.SelectedCategory.Reserves == "my";
+            LootReserve.Client:FlashCategory("Reserves", "my", wasReserver == isReserver and not isViewingMyReserves);
         end
     end
 end
