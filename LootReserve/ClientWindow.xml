@@ -206,8 +206,8 @@
 	</Frame>
 	<Frame name="LootReserveLootBlindHint" virtual="true" setAllPoints="true">
 		<Anchors>
-			<Anchor point="TOPLEFT" />
-			<Anchor point="BOTTOMRIGHT" />
+			<Anchor point="TOPLEFT" relativeKey="$parent.$parent" />
+			<Anchor point="BOTTOMRIGHT" relativeKey="$parent.$parent" />
 		</Anchors>
 		<Layers>
 			<Layer>
