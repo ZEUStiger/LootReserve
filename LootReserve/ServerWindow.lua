@@ -402,8 +402,29 @@ function LootReserve.Server:UpdateRollList(lockdown)
         list.HistoryHeader = CreateFrame("Frame", nil, list, "LootReserveRollHistoryHeader");
     end
     list.HistoryHeader:Hide();
+    local historicalDisplayed = 0;
+    local firstHistoricalHidden = true;
+    if not list.HistoryShowMore then
+        list.HistoryShowMore = CreateFrame("Frame", nil, list, "LootReserveRollHistoryShowMore");
+    end
+    list.HistoryShowMore:Hide();
 
     local function createFrame(item, roll, historical)
+        if historical then
+            historicalDisplayed = historicalDisplayed + 1;
+            if historicalDisplayed > self.RollHistoryDisplayLimit then
+                if firstHistoricalHidden then
+                    firstHistoricalHidden = false;
+                    list.HistoryShowMore.Button:SetText(format("Show %d more", self.Settings.RollHistoryDisplayLimit));
+                    list.HistoryShowMore:Show();
+                    list.HistoryShowMore:SetPoint("TOPLEFT", list, "TOPLEFT", 0, -list.ContentHeight);
+                    list.HistoryShowMore:SetPoint("TOPRIGHT", list, "TOPRIGHT", 0, -list.ContentHeight);
+                    list.ContentHeight = list.ContentHeight + list.HistoryShowMore:GetHeight();
+                end
+                return;
+            end
+        end
+
         list.LastIndex = list.LastIndex + 1;
         local frame = list.Frames[list.LastIndex];
         while not frame do
@@ -602,6 +623,7 @@ function LootReserve.Server:SetWindowTab(tab)
         if not InCombatLockdown() then
             self.Window.PanelRolls:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -48);
         end
+        self.RollHistoryDisplayLimit = self.Settings.RollHistoryDisplayLimit;
     end
 
     for i, panel in ipairs(self.Window.Panels) do

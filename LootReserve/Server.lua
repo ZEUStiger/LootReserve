@@ -33,6 +33,7 @@ LootReserve.Server =
         RollFinishOnAllReservingRolled = false,
         RollFinishOnRaidRoll = false,
         RollSkipNotContested = false,
+        RollHistoryDisplayLimit = 5,
         RollMasterLoot = false,
         MasterLooting = false,
     },
@@ -61,6 +62,7 @@ LootReserve.Server =
     StartupAwaitingAuthority = false,
     StartupAwaitingAuthorityRegistered = false,
     MasterLootListUpdateRegistered = false,
+    RollHistoryDisplayLimit = 0,
 };
 
 StaticPopupDialogs["LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE"] =

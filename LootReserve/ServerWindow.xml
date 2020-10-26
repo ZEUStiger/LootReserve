@@ -1144,12 +1144,31 @@
 					<OnClick>
 						local menu =
 						{
+							{ text = "Display Limit", isTitle = true },
+							LootReserve:MakeMenuSeparator(),
 							{ text = "Clear History", func = function()
 								table.wipe(LootReserve.Server.RollHistory);
 								LootReserve.Server:UpdateRollList();
 							end },
-							{ text = "Cancel" },
+							LootReserve:MakeMenuSeparator(),
+							{ text = "Close" },
 						};
+						for i, limit in ipairs({ 5, 10, 25, 50, 100 }) do
+							table.insert(menu, 1 + i,
+							{
+								text = format("%d |4roll:rolls;", limit),
+								arg1 = limit,
+								func = function(info, limit)
+									LootReserve.Server.Settings.RollHistoryDisplayLimit = limit;
+									LootReserve.Server.RollHistoryDisplayLimit = limit;
+									LootReserve.Server:UpdateRollList();
+									CloseMenus();
+									self:Click();
+								end,
+								checked = LootReserve.Server.Settings.RollHistoryDisplayLimit == limit,
+								notCheckable = false,
+							});
+						end
 						LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
 					</OnClick>
 				</Scripts>
@@ -1161,6 +1180,23 @@
 				self.MenuButton:SetShown(self:IsMouseOver() or UIDROPDOWNMENU_OPEN_MENU == self.Menu);
 			</OnUpdate>
 		</Scripts>
+	</Frame>
+	<Frame name="LootReserveRollHistoryShowMore" virtual="true" enableMouse="true">
+		<Size y="32" />
+		<Frames>
+			<Button parentKey="Button" inherits="UIMenuButtonStretchTemplate">
+				<Size x="100" y="24" />
+				<Anchors>
+					<Anchor point="CENTER" />
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						LootReserve.Server.RollHistoryDisplayLimit = LootReserve.Server.RollHistoryDisplayLimit + LootReserve.Server.Settings.RollHistoryDisplayLimit;
+						LootReserve.Server:UpdateRollList();
+					</OnClick>
+				</Scripts>
+			</Button>
+		</Frames>
 	</Frame>
 	<Frame name="LootReserveServerWindow" inherits="BasicFrameTemplateWithInset" parent="UIParent" toplevel="true" movable="true" resizable="true" enableMouse="true" clampedToScreen="true" hidden="true">
 		<Size x="230" y="360" />
