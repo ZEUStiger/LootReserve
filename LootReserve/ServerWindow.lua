@@ -189,7 +189,11 @@ function LootReserve.Server:UpdateReserveList(lockdown)
             last = i;
         end
         for i = last + 1, #frame.ReservesFrame.Players do
-            frame.ReservesFrame.Players[i]:Hide();
+            local button = frame.ReservesFrame.Players[i];
+            button:Hide();
+            if not lockdown then
+                button:SetAttribute("unit", nil);
+            end
         end
 
         frame:SetHeight(44 + durationHeight + reservesHeight);
@@ -294,7 +298,13 @@ function LootReserve.Server:UpdateReserveList(lockdown)
         end
     end
     for i = list.LastIndex + 1, #list.Frames do
-        list.Frames[i]:Hide();
+        local frame = list.Frames[i];
+        frame:Hide();
+        if not lockdown then
+            for _, button in ipairs(frame.ReservesFrame.Players) do
+                button:SetAttribute("unit", nil);
+            end
+        end
     end
 
     list:GetParent():UpdateScrollChildRect();
@@ -505,7 +515,11 @@ function LootReserve.Server:UpdateRollList(lockdown)
                 reservesHeight = reservesHeight + button:GetHeight();
             end
             for i = last + 1, #frame.ReservesFrame.Players do
-                frame.ReservesFrame.Players[i]:Hide();
+                local button = frame.ReservesFrame.Players[i];
+                button:Hide();
+                if not lockdown then
+                    button:SetAttribute("unit", nil);
+                end
             end
 
             frame.ReservesFrame.HeaderPlayer:SetText(roll.RaidRoll and "Raid-rolled to" or roll.Custom and format("Rolled%s by", roll.Phases and format(" for |cFF00FF00%s|r", roll.Phases[1] or "") or "") or "Reserved by");
@@ -573,7 +587,13 @@ function LootReserve.Server:UpdateRollList(lockdown)
         end
     end
     for i = list.LastIndex + 1, #list.Frames do
-        list.Frames[i]:Hide();
+        local frame = list.Frames[i];
+        frame:Hide();
+        if not lockdown then
+            for _, button in ipairs(frame.ReservesFrame.Players) do
+                button:SetAttribute("unit", nil);
+            end
+        end
     end
 
     list:GetParent():UpdateScrollChildRect();
