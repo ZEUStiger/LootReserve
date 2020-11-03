@@ -1006,6 +1006,7 @@
 										if missing then
 											C_Timer.After(0.25, function()
 												if UIDROPDOWNMENU_OPEN_MENU == self:GetParent().Menu and not CursorHasItem() and not frame.Item then
+													CloseMenus();
 													self:DropHandler();
 												end
 											end);
