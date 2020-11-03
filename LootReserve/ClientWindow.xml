@@ -355,7 +355,7 @@
 			<OnHide>
 				CloseMenus();
 				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_CLOSE);
-				DEFAULT_CHAT_FRAME:AddMessage("Loot Reserve window can be reopened by typing |cFFFFD200/reserve|r", 1, 1, 1);
+				LootReserve:PrintMessage("Window can be reopened by typing |cFFFFD200/reserve|r");
 			</OnHide>
 		</Scripts>
 	</Frame>

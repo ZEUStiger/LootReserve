@@ -79,7 +79,7 @@ function LootReserve:OpenServerWindow(rolls)
                 end
             end);
         end
-        DEFAULT_CHAT_FRAME:AddMessage("Loot Reserve Server window will open once you're out of combat", 1, 1, 1);
+        self:PrintMessage("Server window will open once you're out of combat");
         return;
     end
 
@@ -129,6 +129,10 @@ end
 
 function LootReserve:PrintError(fmt, ...)
     DEFAULT_CHAT_FRAME:AddMessage("|cFFFFD200LootReserve: |r" .. format(fmt, ...), 1, 0, 0);
+end
+
+function LootReserve:PrintMessage(fmt, ...)
+    DEFAULT_CHAT_FRAME:AddMessage("|cFFFFD200LootReserve: |r" .. format(fmt, ...), 1, 1, 1);
 end
 
 function LootReserve:RegisterUpdate(handler)
