@@ -380,7 +380,9 @@ LootReserve.Comm.Handlers[Opcodes.ReserveInfo] = function(sender, item, players)
         else
             LootReserve.Client:UpdateReserveStatus();
         end
-        LootReserve.Client:FlashCategory("Reserves", "all");
+        if not LootReserve.Client.Blind then
+            LootReserve.Client:FlashCategory("Reserves", "all");
+        end
         local isReserver = LootReserve.Client:IsItemReservedByMe(item);
         if wasReserver or isReserver then
             local isViewingMyReserves = LootReserve.Client.SelectedCategory and LootReserve.Client.SelectedCategory.Reserves == "my";
