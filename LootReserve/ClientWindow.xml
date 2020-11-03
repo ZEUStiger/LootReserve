@@ -183,6 +183,7 @@
 							<OnEnter>
 								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 								GameTooltip:SetText("Remove from Favorites");
+								GameTooltip:AddLine("Favorite items are saved for your current character if they're BoP, and for your entire account otherwise.", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
 								GameTooltip:Show();
 							</OnEnter>
 							<OnLeave function="GameTooltip_Hide" />
