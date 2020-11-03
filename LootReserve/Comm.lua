@@ -386,6 +386,30 @@ LootReserve.Comm.Handlers[Opcodes.ReserveInfo] = function(sender, item, players)
             local isViewingMyReserves = LootReserve.Client.SelectedCategory and LootReserve.Client.SelectedCategory.Reserves == "my";
             LootReserve.Client:FlashCategory("Reserves", "my", wasReserver == isReserver and not isViewingMyReserves);
         end
+        if wasReserver and isReserver then
+            local others = LootReserve:Deepcopy(players);
+            LootReserve:TableRemove(others, LootReserve:Me());
+            for i, player in ipairs(others) do
+                others[i] = LootReserve:ColoredPlayer(player);
+            end
+            local function Print()
+                local name, link = GetItemInfo(item);
+                if name and link then
+                    if #others == 0 then
+                        LootReserve:PrintMessage("You are now the only contender for %s.", link);
+                    else
+                        LootReserve:PrintMessage("There %s now %d |4contender:contenders; for %s you reserved: %s.",
+                            #others == 1 and "is" or "are",
+                            #others,
+                            link,
+                            strjoin(", ", unpack(others)));
+                    end
+                else
+                    C_Timer.After(0.25, Print);
+                end
+            end
+            Print();
+        end
     end
 end
 
