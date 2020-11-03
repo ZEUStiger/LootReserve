@@ -1866,6 +1866,7 @@ function LootReserve.Server:MasterLootItem(item, player)
     };
 
     --LootSlot(itemIndex); -- Can't do it this way, LootFrame breaks due to some crucial variables not being filled
+    --[[ Can't do it this way either, addons that change LootFrame and unhook its event handlers won't work
     local numItemsPerPage = LOOTFRAME_NUMBUTTONS;
     local numLootItems = LootFrame.numLootItems or 0;
     if numLootItems > LOOTFRAME_NUMBUTTONS then
@@ -1883,6 +1884,14 @@ function LootReserve.Server:MasterLootItem(item, player)
         end
     end
     LootReserve:ShowError("Failed to masterloot %s to %s: looting UI is closed or the item was not found in the loot", link, LootReserve:ColoredPlayer(player));
+    ]]
+    local lootIcon, lootName, lootQuantity, _, lootQuality = GetLootSlotInfo(itemIndex);
+    local fake = LootReserveRollFakeMasterLoot;
+    fake.slot = itemIndex;
+    fake.quality = lootQuality;
+    fake.Text:SetText(lootName); -- May differ from item record name due to RandomProperties and RandomSuffix
+    fake.IconTexture:SetTexture(lootIcon);
+    LootButton_OnClick(fake, "LeftButton"); -- Now wait for OPEN_MASTER_LOOT_LIST/UPDATE_MASTER_LOOT_LIST
 end
 
 function LootReserve.Server:WhisperAllWithoutReserves()

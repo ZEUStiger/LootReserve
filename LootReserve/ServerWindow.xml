@@ -1076,6 +1076,18 @@
 					</OnClick>
 				</Scripts>
 			</Button>
+			<Frame name="LootReserveRollFakeMasterLoot" hidden="true">
+				<Size x="0" y="0" />
+				<Anchors>
+					<Anchor point="TOPLEFT" relativeKey="$parent.ItemFrame" relativePoint="BOTTOMLEFT" />
+				</Anchors>
+				<Layers>
+					<Layer>
+						<FontString name="$parentText" parentKey="Text" inherits="GameFontNormal" hidden="true" />
+						<Texture name="$parentIconTexture" parentKey="IconTexture" hidden="true" />
+					</Layer>
+				</Layers>
+			</Frame>
 		</Frames>
 		<Scripts>
 			<OnLoad>
