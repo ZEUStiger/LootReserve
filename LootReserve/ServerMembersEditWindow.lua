@@ -12,6 +12,8 @@ function LootReserve.Server.MembersEdit:UpdateMembersList()
         frame:Hide();
     end
 
+    local missing = false;
+
     self.Window.NoSession:SetShown(not LootReserve.Server.CurrentSession and not next(LootReserve.Server.NewSessionSettings.ImportedMembers));
     self.Window.Header.LockedIcon:SetShown(LootReserve.Server.CurrentSession);
     self.Window.ImportExportButton:SetText(LootReserve.Server.CurrentSession and "Export" or "Import/Export");
@@ -38,12 +40,24 @@ function LootReserve.Server.MembersEdit:UpdateMembersList()
         frame.Member = member;
         frame:Show();
 
-        local maxCount = LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.Settings.MaxReservesPerPlayer or LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer;
-        local count = member.ReservesLeft and (maxCount - member.ReservesLeft) or #member.ReservedItems;
-
         frame.Alt:SetShown(list.LastIndex % 2 == 0);
         frame.Name:SetText(format("%s%s%s", LootReserve:ColoredPlayer(player), not LootReserve.Server.CurrentSession and "|cFF808080 (imported)|r" or "", LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or LootReserve:IsPlayerOnline(player) == false and "|cFF808080 (offline)|r" or ""));
         frame.ButtonWhisper:SetPoint("LEFT", frame.Name, "LEFT", math.min(frame.Name:GetWidth(), frame.Name:GetStringWidth()), 0);
+
+        local won = LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.Members[player] and LootReserve.Server.CurrentSession.Members[player].WonRolls;
+        local wonMaxQuality = 0;
+        if won then
+            for _, roll in ipairs(won) do
+                local quality = C_Item.GetItemQualityByID(roll.Item);
+                if quality then
+                    wonMaxQuality = math.max(wonMaxQuality, quality);
+                else
+                    missing = true;
+                end
+            end
+        end
+        frame.WonRolls:SetText(format("|c%s%d|r", wonMaxQuality > 0 and select(4, GetItemQualityColor(wonMaxQuality)) or "FF404040", won and #won or 0));
+
         if LootReserve.Server.CurrentSession then
             frame.CheckButtonLocked:Show();
             frame.CheckButtonLocked:SetChecked(member.Locked);
@@ -52,7 +66,10 @@ function LootReserve.Server.MembersEdit:UpdateMembersList()
         else
             frame.CheckButtonLocked:Hide();
         end
-        frame.Count:SetText(format("|c%s%d", count >= maxCount and "FF00FF00" or count > 0 and "FFFFD200" or "FFFF0000", count));
+
+        local maxCount = LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.Settings.MaxReservesPerPlayer or LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer;
+        local count = member.ReservesLeft and (maxCount - member.ReservesLeft) or #member.ReservedItems;
+        frame.Count:SetText(format("|c%s%d|r", count >= maxCount and "FF00FF00" or count > 0 and "FFFFD200" or "FFFF0000", count));
 
         local last = 0;
         frame.ReservesFrame.Items = frame.ReservesFrame.Items or { };
@@ -96,6 +113,12 @@ function LootReserve.Server.MembersEdit:UpdateMembersList()
     end
 
     list:GetParent():UpdateScrollChildRect();
+
+    if missing then
+        C_Timer.After(0.25, function()
+            self:UpdateMembersList();
+        end);
+    end
 end
 
 function LootReserve.Server.MembersEdit:ClearImported()
@@ -109,7 +132,7 @@ function LootReserve.Server.MembersEdit:OnWindowLoad(window)
     self.Window = window;
     self.Window.TopLeftCorner:SetSize(32, 32); -- Blizzard UI bug?
     self.Window.TitleText:SetText("Loot Reserve Server - Players");
-    self.Window:SetMinResize(450, 150);
+    self.Window:SetMinResize(482, 150);
     self:UpdateMembersList();
     LootReserve:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(item, success)
         if success then

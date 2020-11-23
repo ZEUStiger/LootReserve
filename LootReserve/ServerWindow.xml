@@ -162,14 +162,12 @@
 				<Scripts>
 					<OnLoad>
 						self.UpdateTooltip = function(self)
-							local session = LootReserve.Server.CurrentSession;
-							if not session then return; end
 							local player = self:GetParent().Player;
-							local won = session.Members[player] and session.Members[player].WonRolls;
+							local won = LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.Members[player] and LootReserve.Server.CurrentSession.Members[player].WonRolls;
 							if won then
 								local missing = false;
 								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-								GameTooltip:SetText("Won in Current Session");
+								GameTooltip:SetText("Won in the Current Session");
 								local width = 0;
 								for i, roll in ipairs(won) do
 									local name, link, _, _, _, _, _, _, _, texture = GetItemInfo(roll.Item);

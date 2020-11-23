@@ -1454,6 +1454,7 @@ function LootReserve.Server:FinishRollRequest(item, soleReserver)
 
     self:UpdateReserveListButtons();
     self:UpdateRollListButtons();
+    self.MembersEdit:UpdateMembersList();
 end
 
 function LootReserve.Server:AdvanceRollPhase(item)
