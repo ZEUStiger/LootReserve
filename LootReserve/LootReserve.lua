@@ -320,6 +320,21 @@ function LootReserve:ColoredPlayer(player)
     return format("|c%s%s|r", self:GetPlayerClassColor(player), player);
 end
 
+function LootReserve:ForEachRaider(func)
+    if LootReserve.Comm.SoloDebug then
+        local className, classFilename = UnitClass("player");
+        func(self:Me(), 0, 1, UnitLevel("player"), className, classFilename, nil, true, UnitIsDead("player"));
+        return;
+    end
+
+    for i = 1, MAX_RAID_MEMBERS do
+        local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
+        if name then
+            func(LootReserve:Player(name), rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole);
+        end
+    end
+end
+
 function LootReserve:IsItemSoulboundTradeable(bag, slot)
     if not self.TooltipScanner then
         self.TooltipScanner = CreateFrame("GameTooltip", "LootReserveTooltipScanner", UIParent, "GameTooltipTemplate");

@@ -239,7 +239,7 @@
 				</Anchors>
 				<Frames>
 					<Frame parentKey="Input">
-						<Size x="140" />
+						<Size x="150" />
 						<Anchors>
 							<Anchor point="TOPLEFT" y="-12" />
 							<Anchor point="BOTTOMLEFT" />
@@ -285,6 +285,22 @@
 									</OnClick>
 								</Scripts>
 							</CheckButton>
+							<CheckButton parentKey="MatchNames" inherits="LootReserveCheckBoxTemplate">
+								<KeyValues>
+									<KeyValue key="text" value="Best Name Match" type="string" />
+									<KeyValue key="tooltipText" value="Best Name Match" type="string" />
+									<KeyValue key="tooltipSubtext" value="Attempt to ignore special character in player names (e.g. treat Ø as O) and try to match imported names to current raid members." type="string" />
+								</KeyValues>
+								<Anchors>
+									<Anchor point="TOPLEFT" relativeKey="$parent.UseHeaders" relativePoint="BOTTOMLEFT" />
+								</Anchors>
+								<Scripts>
+									<OnClick inherit="prepend">
+										LootReserve.Server.Import.MatchNames = self:GetChecked();
+										LootReserve.Server.Import:SessionSettingsUpdated();
+									</OnClick>
+								</Scripts>
+							</CheckButton>
 							<CheckButton parentKey="SkipNotInRaid" inherits="LootReserveCheckBoxTemplate">
 								<KeyValues>
 									<KeyValue key="text" value="Skip Not In Raid" type="string" />
@@ -292,7 +308,7 @@
 									<KeyValue key="tooltipSubtext" value="Only import reserves of players who are currently in the raid." type="string" />
 								</KeyValues>
 								<Anchors>
-									<Anchor point="TOPLEFT" relativeKey="$parent.UseHeaders" relativePoint="BOTTOMLEFT" />
+									<Anchor point="TOPLEFT" relativeKey="$parent.MatchNames" relativePoint="BOTTOMLEFT" />
 								</Anchors>
 								<Scripts>
 									<OnClick inherit="prepend">
