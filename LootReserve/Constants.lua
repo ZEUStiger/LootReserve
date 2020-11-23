@@ -53,4 +53,9 @@ LootReserve.Constants =
         "Looks",
         "Vendor",
     },
+    WonRollPhase =
+    {
+        Reserve = 1,
+        RaidRoll = 2,
+    },
 };

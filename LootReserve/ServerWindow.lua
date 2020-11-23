@@ -46,10 +46,10 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
         end
     end
 
-    self:UpdateReserveListChat(lockdown);
+    self:UpdateReserveListButtons(lockdown);
 end
 
-function LootReserve.Server:UpdateReserveListChat(lockdown)
+function LootReserve.Server:UpdateReserveListButtons(lockdown)
     if not self.Window:IsShown() then return; end
 
     lockdown = lockdown or InCombatLockdown();
@@ -63,12 +63,9 @@ function LootReserve.Server:UpdateReserveListChat(lockdown)
 
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    if frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player) then
-                        button.RecentChat:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth() + 2, 0);
-                        button.RecentChat:Show();
-                    else
-                        button.RecentChat:Hide();
-                    end
+                    button.WonRolls:SetShown(self.CurrentSession and self.CurrentSession.Members[button.Player] and self.CurrentSession.Members[button.Player].WonRolls);
+                    button.WonRolls:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth() + 2 - (button.WonRolls:IsShown() and 0 or 12), 0);
+                    button.RecentChat:SetShown(frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player));
                 end
             end
         end
@@ -360,10 +357,10 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
         end
     end
 
-    self:UpdateRollListChat(lockdown);
+    self:UpdateRollListButtons(lockdown);
 end
 
-function LootReserve.Server:UpdateRollListChat(lockdown)
+function LootReserve.Server:UpdateRollListButtons(lockdown)
     if not self.Window:IsShown() then return; end
 
     lockdown = lockdown or InCombatLockdown();
@@ -375,12 +372,9 @@ function LootReserve.Server:UpdateRollListChat(lockdown)
         if frame:IsShown() and frame.ReservesFrame then
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    if frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player) then
-                        button.RecentChat:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth() + 2, 0);
-                        button.RecentChat:Show();
-                    else
-                        button.RecentChat:Hide();
-                    end
+                    button.WonRolls:SetShown(self.CurrentSession and self.CurrentSession.Members[button.Player] and self.CurrentSession.Members[button.Player].WonRolls);
+                    button.WonRolls:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth() + 2 - (button.WonRolls:IsShown() and 0 or 12), 0);
+                    button.RecentChat:SetShown(frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player));
                 end
             end
         end
@@ -504,12 +498,6 @@ function LootReserve.Server:UpdateRollList(lockdown)
                 button.Name:SetText(format("%s%s", LootReserve:ColoredPlayer(player), historical and "" or LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or LootReserve:IsPlayerOnline(player) == false and "|cFF808080 (offline)|r" or ""));
                 button.Roll:SetText("");
                 button.WinnerHighlight:Hide();
-                if not historical and self.RecentChat and self.RecentChat[player] and #self.RecentChat[player] > 1 then
-                    button.RecentChat:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth(), 0);
-                    button.RecentChat:Show();
-                else
-                    button.RecentChat:Hide();
-                end
                 button:SetPoint("TOPLEFT", frame.ReservesFrame, "TOPLEFT", 0, 5 - reservesHeight);
                 button:SetPoint("TOPRIGHT", frame.ReservesFrame, "TOPRIGHT", 0, 5 - reservesHeight);
                 reservesHeight = reservesHeight + button:GetHeight();

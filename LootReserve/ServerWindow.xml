@@ -157,8 +157,79 @@
 				<HighlightTexture file="Interface\Buttons\UI-RefreshButton" alpha="0.5" alphaMode="ADD" />
 				<PushedTexture file="Interface\Buttons\UI-RefreshButton" alpha="0.5" />
 			</Button>
+			<Button parentKey="WonRolls" hidden="true">
+				<Size x="12" y="12" />
+				<Scripts>
+					<OnLoad>
+						self.UpdateTooltip = function(self)
+							local session = LootReserve.Server.CurrentSession;
+							if not session then return; end
+							local player = self:GetParent().Player;
+							local won = session.Members[player] and session.Members[player].WonRolls;
+							if won then
+								local missing = false;
+								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								GameTooltip:SetText("Won in Current Session");
+								local width = 0;
+								for i, roll in ipairs(won) do
+									local name, link, _, _, _, _, _, _, _, texture = GetItemInfo(roll.Item);
+									if not link then
+										missing = true;
+									end
+
+									local phaseText;
+									local phaseColor;
+									if roll.Phase == LootReserve.Constants.WonRollPhase.Reserve then
+										phaseText = "Reserved";
+										phaseColor = NORMAL_FONT_COLOR;
+									elseif roll.Phase == LootReserve.Constants.WonRollPhase.RaidRoll then
+										phaseText = "Raid-Roll";
+										phaseColor = GRAY_FONT_COLOR;
+									elseif type(roll.Phase) == "string" then
+										phaseText = roll.Phase;
+										phaseColor = GREEN_FONT_COLOR;
+									else
+										phaseText = "Custom Roll";
+										phaseColor = HIGHLIGHT_FONT_COLOR;
+									end
+
+									local timeText;
+									local age = time() - roll.Time;
+									if age >= 3600 then
+										timeText = format("%d |4hour:hours; %d |4min:mins; ago", math.floor(age / 3600), math.floor((age % 3600) / 60));
+									elseif age >= 60 then
+										timeText = format("%d |4min:mins; ago", math.floor(age / 60));
+									else
+										timeText = "&lt;1 min ago";
+									end
+
+									GameTooltip:AddDoubleLine(format("|T%d:0|t %s|cFF808080 (%s)|r", texture, (link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""), timeText), phaseText, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, phaseColor.r, phaseColor.g, phaseColor.b);
+								end
+								GameTooltip:Show();
+								
+								if missing then
+									C_Timer.After(0.25, function()
+										if GameTooltip:IsOwned(self) then
+											self:UpdateTooltip();
+										end
+									end);
+								end
+							end
+						end
+					</OnLoad>
+					<OnEnter>
+						self:UpdateTooltip();
+					</OnEnter>
+					<OnLeave function="GameTooltip_Hide" />
+				</Scripts>
+				<NormalTexture file="Interface\GossipFrame\VendorGossipIcon" alpha="0.5" />
+				<HighlightTexture file="Interface\GossipFrame\VendorGossipIcon" alpha="0.75" alphaMode="ADD" />
+			</Button>
 			<Button parentKey="RecentChat" hidden="true">
 				<Size x="12" y="12" />
+				<Anchors>
+					<Anchor point="LEFT" relativeKey="$parent.WonRolls" relativePoint="RIGHT" />
+				</Anchors>
 				<Scripts>
 					<OnEnter>
 						local player = self:GetParent().Player;

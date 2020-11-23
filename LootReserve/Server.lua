@@ -924,6 +924,7 @@ function LootReserve.Server:ResetSession()
     self.SaveProfile.CurrentSession = self.CurrentSession;
 
     self:UpdateReserveList();
+    self:UpdateRollListButtons();
     self.MembersEdit:UpdateMembersList();
 
     self:SessionReset();
@@ -1366,12 +1367,40 @@ function LootReserve.Server:ResolveRollTie(item)
 end
 
 function LootReserve.Server:FinishRollRequest(item, soleReserver)
+    local function RecordRollWinner(player, item, phase)
+        if self.CurrentSession then
+            local member = self.CurrentSession.Members[player];
+            if member then
+                if not member.WonRolls then member.WonRolls = { }; end
+                table.insert(member.WonRolls,
+                {
+                    Item = item,
+                    Phase = phase,
+                    Time = time(),
+                });
+            end
+        end
+    end
+
     if self:IsRolling(item) then
         local roll, players = self:GetWinningRollAndPlayers();
         if roll and players then
             local raidroll = self.RequestedRoll.RaidRoll;
             local phases = LootReserve:Deepcopy(self.RequestedRoll.Phases);
             local category = self.CurrentSession and LootReserve.Data.Categories[self.CurrentSession.Settings.LootCategory] or nil;
+
+            local recordPhase;
+            if self.RequestedRoll.RaidRoll then
+                recordPhase = LootReserve.Constants.WonRollPhase.RaidRoll;
+            elseif self.RequestedRoll.Custom then
+                recordPhase = phases and phases[1];
+            else
+                recordPhase = LootReserve.Constants.WonRollPhase.Reserve;
+            end
+            for _, player in ipairs(players) do
+                RecordRollWinner(player, item, recordPhase);
+            end
+
             local function Announce()
                 local name, link, quality = GetItemInfo(item);
                 if not name or not link then
@@ -1400,6 +1429,8 @@ function LootReserve.Server:FinishRollRequest(item, soleReserver)
             end
         elseif soleReserver and not self.RequestedRoll.Custom and next(self.RequestedRoll.Players) then
             local player = next(self.RequestedRoll.Players);
+            RecordRollWinner(player, item, LootReserve.Constants.WonRollPhase.Reserve);
+
             local category = self.CurrentSession and LootReserve.Data.Categories[self.CurrentSession.Settings.LootCategory] or nil;
             local function Announce()
                 local name, link, quality = GetItemInfo(item);
@@ -1424,6 +1455,9 @@ function LootReserve.Server:FinishRollRequest(item, soleReserver)
 
         self:CancelRollRequest(item);
     end
+
+    self:UpdateReserveListButtons();
+    self:UpdateRollListButtons();
 end
 
 function LootReserve.Server:AdvanceRollPhase(item)
@@ -1581,8 +1615,8 @@ function LootReserve.Server:PrepareRequestRoll()
                     self.RequestedRoll.Chat = self.RequestedRoll.Chat or { };
                     self.RequestedRoll.Chat[player] = self.RequestedRoll.Chat[player] or { };
                     table.insert(self.RequestedRoll.Chat[player], format("%d|%s|%s", time(), savedType, text));
-                    self:UpdateReserveListChat();
-                    self:UpdateRollListChat();
+                    self:UpdateReserveListButtons();
+                    self:UpdateRollListButtons();
                 end
             end);
         end
