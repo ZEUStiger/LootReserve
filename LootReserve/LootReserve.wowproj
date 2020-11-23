@@ -42,6 +42,16 @@
       <SubType>Frame</SubType>
     </Content>
     <Content Include="Libs\LibCustomGlow-1.0\README.md" />
+    <Content Include="Libs\UTF8\Changelog-UTF8-v1.1.txt" />
+    <Content Include="Libs\UTF8\utf8.lua">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="Libs\UTF8\UTF8.toc">
+      <SubType>TableOfContents</SubType>
+    </Content>
+    <Content Include="Libs\UTF8\utf8data.lua">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="LootReserve.toc">
       <SubType>TableOfContents</SubType>
     </Content>
@@ -133,6 +143,7 @@
     <Folder Include="Libs\AceComm-3.0\" />
     <Folder Include="Libs\LibCustomGlow-1.0\" />
     <Folder Include="Libs\LibStub\" />
+    <Folder Include="Libs\UTF8\" />
     <Folder Include="Textures\" />
   </ItemGroup>
   <Import Project="$(DevEnvDir)\Extensions\Tools\MSBuild\AddonStudio\Wow\3.0\WowAddonStudio.targets" />
