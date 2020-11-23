@@ -1421,11 +1421,7 @@ function LootReserve.Server:FinishRollRequest(item, soleReserver)
             Announce();
 
             if self.Settings.MasterLooting and self.Settings.RollMasterLoot then
-                if #players == 1 then
-                    self:MasterLootItem(item, players[1]);
-                else
-                    LootReserve:ShowError("%s was not automatically masterlooted: more than one candidate", select(2, GetItemInfo(pending.Item)) or tostring(pending.Item));
-                end
+                self:MasterLootItem(item, players[1], #players > 1);
             end
         elseif soleReserver and not self.RequestedRoll.Custom and next(self.RequestedRoll.Players) then
             local player = next(self.RequestedRoll.Players);
@@ -1823,7 +1819,7 @@ function LootReserve.Server:DeleteRoll(player, item)
     self:TryFinishRoll();
 end
 
-function LootReserve.Server:MasterLootItem(item, player)
+function LootReserve.Server:MasterLootItem(item, player, multipleWinners)
     if not item or not player then return; end
 
     local name, link, quality = GetItemInfo(item);
@@ -1847,6 +1843,11 @@ function LootReserve.Server:MasterLootItem(item, player)
 
     if quality < GetLootThreshold() then
         -- LootReserve:ShowError("Failed to masterloot %s to %s: item quality below masterloot threshold", link, LootReserve:ColoredPlayer(player));
+        return;
+    end
+
+    if multipleWinners then
+        LootReserve:ShowError("%s was not automatically masterlooted: more than one candidate", link);
         return;
     end
 
