@@ -487,21 +487,17 @@ function LootReserve.Server:PrepareSession()
                 ]]
 
                 -- Add member info for players who joined
-                for i = 1, MAX_RAID_MEMBERS do
-                    local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
-                    if name then
-                        name = LootReserve:Player(name);
-                        if not self.CurrentSession.Members[name] then
-                            self.CurrentSession.Members[name] =
-                            {
-                                ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
-                                ReservedItems = { },
-                                Locked = nil,
-                            };
-                            self.MembersEdit:UpdateMembersList();
-                        end
+                LootReserve:ForEachRaider(function(name)
+                    if not self.CurrentSession.Members[name] then
+                        self.CurrentSession.Members[name] =
+                        {
+                            ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
+                            ReservedItems = { },
+                            Locked = nil,
+                        };
+                        self.MembersEdit:UpdateMembersList();
                     end
-                end
+                end);
             end
             self:UpdateReserveList();
             self:UpdateRollList();
@@ -793,20 +789,13 @@ function LootReserve.Server:StartSession()
     };
     self.SaveProfile.CurrentSession = self.CurrentSession;
 
-    for i = 1, MAX_RAID_MEMBERS do
-        local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
-        if LootReserve.Comm.SoloDebug and i == 1 then
-            name = UnitName("player");
-        end
-        if name then
-            name = LootReserve:Player(name);
-            self.CurrentSession.Members[name] =
-            {
-                ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
-                ReservedItems = { },
-            };
-        end
-    end
+    LootReserve:ForEachRaider(function(name)
+        self.CurrentSession.Members[name] =
+        {
+            ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
+            ReservedItems = { },
+        };
+    end);
 
     self:PrepareSession();
 
@@ -1540,12 +1529,11 @@ function LootReserve.Server:PrepareRequestRoll()
                         for i = 1, NUM_RAID_GROUPS do
                             subgroups[i] = { };
                         end
-                        for i = 1, MAX_RAID_MEMBERS do
-                            local name, _, subgroup, _, _, _, _, online = GetRaidRosterInfo(i);
-                            if name and subgroup then
-                                table.insert(subgroups[subgroup], LootReserve:Player(name));
+                        LootReserve:ForEachRaider(function(name, _, subgroup)
+                            if subgroup then
+                                table.insert(subgroups[subgroup], name);
                             end
-                        end
+                        end);
                         local raid = { };
                         for _, subgroup in ipairs(subgroups) do
                             for _, player in ipairs(subgroup) do
@@ -1693,16 +1681,11 @@ function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPla
 
     local players = allowedPlayers or { };
     if not allowedPlayers then
-        for i = 1, MAX_RAID_MEMBERS do
-            local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
-            if LootReserve.Comm.SoloDebug and i == 1 then
-                name = UnitName("player");
-                online = true;
+        LootReserve:ForEachRaider(function(name, _, _, _, _, _, _, online)
+            if online then
+                table.insert(players, name);
             end
-            if name and online then
-                table.insert(players, LootReserve:Player(name));
-            end
-        end
+        end);
     end
 
     LootReserve.Comm:BroadcastRequestRoll(item, players, true, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration, self.RequestedRoll.Phases and self.RequestedRoll.Phases[1] or "");

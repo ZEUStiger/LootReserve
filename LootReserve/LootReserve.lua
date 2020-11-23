@@ -265,18 +265,11 @@ function LootReserve:IsMe(player)
 end
 
 function LootReserve:IsPlayerOnline(player)
-    for i = 1, MAX_RAID_MEMBERS do
-        local name, _, _, _, _, _, _, online = GetRaidRosterInfo(i);
-
-        if LootReserve.Comm.SoloDebug and i == 1 then
-            name = UnitName("player");
-            online = true;
-        end
-
-        if name and LootReserve:Player(name) == player then
+    return self:ForEachRaider(function(name, _, _, _, _, _, _, online)
+        if name == player then
             return online or false;
         end
-    end
+    end);
 end
 
 function LootReserve:GetPlayerClassColor(player)
@@ -323,14 +316,16 @@ end
 function LootReserve:ForEachRaider(func)
     if LootReserve.Comm.SoloDebug then
         local className, classFilename = UnitClass("player");
-        func(self:Me(), 0, 1, UnitLevel("player"), className, classFilename, nil, true, UnitIsDead("player"));
-        return;
+        return func(self:Me(), 0, 1, UnitLevel("player"), className, classFilename, nil, true, UnitIsDead("player"));
     end
 
     for i = 1, MAX_RAID_MEMBERS do
         local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
         if name then
-            func(LootReserve:Player(name), rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole);
+            local result = func(LootReserve:Player(name), rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole);
+            if result ~= nil then
+                return result;
+            end
         end
     end
 end
