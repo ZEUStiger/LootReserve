@@ -769,7 +769,7 @@
 							return format("%d:%02d", math.floor(time / 60), time % 60);
 						end
 						local durationMenu = { };
-						for _, time in ipairs({ 10, 20, 30, 45, 60, 90, 120, 180, 240, 300, 600 }) do
+						for _, time in ipairs({ 10, 15, 20, 30, 45, 60, 90, 120, 180, 240, 300, 600 }) do
 							table.insert(durationMenu,
 							{
 								text = FormatTime(time),
