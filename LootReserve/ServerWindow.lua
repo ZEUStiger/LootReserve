@@ -697,6 +697,11 @@ function LootReserve.Server:OnWindowLoad(window)
         self:UpdateRollList(true);
         self.Window.PanelRollsLockdown.Scroll:UpdateScrollChildRect();
         self.Window.PanelRollsLockdown.Scroll:SetVerticalScroll(self.Window.PanelRolls.Scroll:GetVerticalScroll());
+        local list = self.Window.PanelRolls.Scroll.Container;
+        local listLockdown = self.Window.PanelRollsLockdown.Scroll.Container;
+        if list and list.Frames and list.Frames[1] and listLockdown and listLockdown.Frames and listLockdown.Frames[1] then
+            listLockdown.Frames[1]:SetItem(list.Frames[1].Item);
+        end
     end);
     LootReserve:RegisterEvent("PLAYER_REGEN_ENABLED", function()
         -- Restore original panels
@@ -708,6 +713,11 @@ function LootReserve.Server:OnWindowLoad(window)
         self:UpdateRollList();
         self.Window.PanelRolls.Scroll:UpdateScrollChildRect();
         self.Window.PanelRolls.Scroll:SetVerticalScroll(self.Window.PanelRollsLockdown.Scroll:GetVerticalScroll());
+        local list = self.Window.PanelRolls.Scroll.Container;
+        local listLockdown = self.Window.PanelRollsLockdown.Scroll.Container;
+        if list and list.Frames and list.Frames[1] and listLockdown and listLockdown.Frames and listLockdown.Frames[1] then
+            list.Frames[1]:SetItem(listLockdown.Frames[1].Item);
+        end
     end);
     LootReserve:RegisterEvent("LOOT_READY", "LOOT_CLOSED", "LOOT_SLOT_CHANGED", "LOOT_SLOT_CLEARED", function()
         self:UpdateReserveList();
