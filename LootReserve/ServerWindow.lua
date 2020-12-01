@@ -597,7 +597,9 @@ function LootReserve.Server:OnWindowTabClick(tab)
     PlaySound(SOUNDKIT.IG_CHARACTER_INFO_TAB);
 end
 
-function LootReserve.Server:SetWindowTab(tab)
+function LootReserve.Server:SetWindowTab(tab, lockdown)
+    lockdown = lockdown or InCombatLockdown();
+
     if tab == 1 then
         self.Window.InsetBg:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 4, -24);
         self.Window.Duration:Hide();
@@ -611,15 +613,11 @@ function LootReserve.Server:SetWindowTab(tab)
         if self.Window.Duration:IsShown() then
             self.Window.Search:SetPoint("TOPLEFT", self.Window.Duration, "BOTTOMLEFT", 3, -3);
             self.Window.Search:SetPoint("TOPRIGHT", self.Window.Duration, "BOTTOMRIGHT", 3 - 80, -3);
-            if not InCombatLockdown() then
-                self.Window.PanelReserves:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -61);
-            end
+            (lockdown and self.Window.PanelReservesLockdown or self.Window.PanelReserves):SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -61);
         else
             self.Window.Search:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 10, -25);
             self.Window.Search:SetPoint("TOPRIGHT", self.Window, "TOPRIGHT", -7 - 80, -25);
-            if not InCombatLockdown() then
-                self.Window.PanelReserves:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -48);
-            end
+            (lockdown and self.Window.PanelReservesLockdown or self.Window.PanelReserves):SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -48);
         end
     elseif tab == 3 then
         self.Window.InsetBg:SetPoint("TOPLEFT", self.Window.Search, "BOTTOMLEFT", -6, 0);
@@ -628,22 +626,33 @@ function LootReserve.Server:SetWindowTab(tab)
         self.Window.ButtonMenu:Hide();
         self.Window.Search:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 10, -25);
         self.Window.Search:SetPoint("TOPRIGHT", self.Window, "TOPRIGHT", -7, -25);
-        if not InCombatLockdown() then
-            self.Window.PanelRolls:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -48);
-        end
+        (lockdown and self.Window.PanelRollsLockdown or self.Window.PanelRolls):SetPoint("TOPLEFT", self.Window, "TOPLEFT", 7, -48);
         self.RollHistoryDisplayLimit = self.Settings.RollHistoryDisplayLimit;
     end
 
     for i, panel in ipairs(self.Window.Panels) do
-        if panel == self.Window.PanelReserves and InCombatLockdown() then
-            panel = self.Window.PanelReservesLockdown;
-        end
-        if panel == self.Window.PanelRolls and InCombatLockdown() then
-            panel = self.Window.PanelRollsLockdown;
+        if panel.Lockdown then
+            if lockdown then
+                if panel:IsShown() then
+                    panel:Hide();
+                end
+                panel = panel.Lockdown;
+            else
+                panel.Lockdown:Hide();
+            end
         end
         panel:SetShown(i == tab);
     end
     self:UpdateServerAuthority();
+end
+
+function LootReserve.Server:RefreshWindowTab(lockdown)
+    for i, panel in ipairs(self.Window.Panels) do
+        if panel:IsShown() or panel.Lockdown and panel.Lockdown:IsShown() then
+            self:SetWindowTab(i, lockdown or InCombatLockdown());
+            return;
+        end
+    end
 end
 
 function LootReserve.Server:OnWindowLoad(window)
@@ -680,14 +689,7 @@ function LootReserve.Server:OnWindowLoad(window)
     end);
     LootReserve:RegisterEvent("PLAYER_REGEN_DISABLED", function()
         -- Swap out the real (tainted) reserves and rolls panels for slightly less functional ones, but ones that don't have taint
-        if self.Window.PanelReserves:IsShown() then
-            self.Window.PanelReserves:Hide();
-            self.Window.PanelReservesLockdown:Show();
-        end
-        if self.Window.PanelRolls:IsShown() then
-            self.Window.PanelRolls:Hide();
-            self.Window.PanelRollsLockdown:Show();
-        end
+        self:RefreshWindowTab(true);
         -- Sync changes between real and lockdown panels
         self:UpdateReserveList(true);
         self.Window.PanelReservesLockdown.Scroll:UpdateScrollChildRect();
@@ -697,15 +699,8 @@ function LootReserve.Server:OnWindowLoad(window)
         self.Window.PanelRollsLockdown.Scroll:SetVerticalScroll(self.Window.PanelRolls.Scroll:GetVerticalScroll());
     end);
     LootReserve:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-        -- Restore original reserves panel
-        if self.Window.PanelReservesLockdown:IsShown() then
-            self.Window.PanelReservesLockdown:Hide();
-            self.Window.PanelReserves:Show();
-        end
-        if self.Window.PanelRollsLockdown:IsShown() then
-            self.Window.PanelRollsLockdown:Hide();
-            self.Window.PanelRolls:Show();
-        end
+        -- Restore original panels
+        self:RefreshWindowTab();
         -- Sync changes between real and lockdown panels
         self:UpdateReserveList();
         self.Window.PanelReserves.Scroll:UpdateScrollChildRect();
@@ -779,12 +774,7 @@ function LootReserve.Server:SessionStopped()
     self.Window.PanelSession.ButtonStartSession:Show();
     self.Window.PanelSession.ButtonStopSession:Hide();
     self.Window.PanelSession.ButtonResetSession:Show();
-    if self.Window.PanelReserves:IsShown() or self.Window.PanelReservesLockdown:IsShown() then
-        LootReserve.Server:SetWindowTab(2);
-    end
-    if self.Window.PanelRolls:IsShown() or self.Window.PanelRollsLockdown:IsShown() then
-        LootReserve.Server:SetWindowTab(3);
-    end
+    self:RefreshWindowTab();
     self:UpdateServerAuthority();
     self:UpdateRollList();
 end

@@ -1920,6 +1920,11 @@
 						</Anchors>
 					</ScrollFrame>
 				</Frames>
+				<Scripts>
+					<OnLoad>
+						self:GetParent().Panels[2].Lockdown = self;
+					</OnLoad>
+				</Scripts>
 			</Frame>
 			<Frame parentKey="PanelRolls" parentArray="Panels" hidden="true">
 				<Anchors>
@@ -1948,6 +1953,11 @@
 						</Anchors>
 					</ScrollFrame>
 				</Frames>
+				<Scripts>
+					<OnLoad>
+						self:GetParent().Panels[3].Lockdown = self;
+					</OnLoad>
+				</Scripts>
 			</Frame>
 		</Frames>
 		<Scripts>
