@@ -95,11 +95,24 @@
 								self.Update = function(self)
 									local item = self:GetParent():GetParent().Item;
 									local conditions = LootReserve.ItemConditions:Get(item, true);
-									self.faction = conditions and conditions.Faction and not LootReserve.ItemConditions:TestFaction(conditions.Faction);
-									self.hidden = conditions and conditions.Hidden;
-									self.custom = conditions and conditions.Custom;
-									self:SetShown(not self.faction and not self.custom and self:GetParent():GetParent().hovered or self.hidden and not self.custom);
-									self:SetText(self.hidden and "|cFFFF0000Hidden|r" or "Visible");
+									self.shown = false;
+									self.disabled = false;
+									if not conditions then
+										self:SetText("Visible");
+									elseif conditions.Custom then
+										self:SetText("Delete");
+									elseif conditions.Hidden then
+										self:SetText("|cFFFF0000Hidden|r");
+										self.shown = true;
+									elseif conditions.Faction and not LootReserve.ItemConditions:TestFaction(conditions.Faction) then
+										self:SetText(format("|cFFFF0000%s-only|r", conditions.Faction));
+										self.shown = true;
+										self.disabled = true;
+									else
+										self:SetText("Visible");
+									end
+									self:SetShown(self.shown);
+									self:SetEnabled(self.enabled);
 									self:SetWidth(10 + self.Text:GetStringWidth() + 10);
 									if self:GetParent().Update then
 										self:GetParent():Update();
@@ -110,61 +123,12 @@
 							<OnClick>
 								local item = self:GetParent():GetParent().Item;
 								local conditions = LootReserve.ItemConditions:Make(item, true);
-								conditions.Hidden = not conditions.Hidden;
-								LootReserve.ItemConditions:Save(item, true);
-								LootReserve.Server.LootEdit:UpdateLootList();
-								LootReserve.Server.Import:SessionSettingsUpdated();
-							</OnClick>
-						</Scripts>
-					</Button>
-					<Button parentKey="Faction" inherits="UIMenuButtonStretchTemplate">
-						<Size y="20" />
-						<Anchors>
-							<Anchor point="BOTTOMRIGHT" relativeKey="$parent.State" />
-						</Anchors>
-						<Scripts>
-							<OnLoad>
-								self:Disable();
-								self.Update = function(self)
-									local item = self:GetParent():GetParent().Item;
-									local conditions = LootReserve.ItemConditions:Get(item, true);
-									if conditions and conditions.Faction and not LootReserve.ItemConditions:TestFaction(conditions.Faction) and not conditions.Hidden then
-										self:SetText(format("|cFFFF0000%s-only|r", conditions.Faction));
-										self:Show();
-									else
-										self:Hide();
-									end
-									self:SetWidth(10 + self.Text:GetStringWidth() + 10);
-									if self:GetParent().Update then
-										self:GetParent():Update();
-									end
-								end;
-								self:Update();
-							</OnLoad>
-						</Scripts>
-					</Button>
-					<Button parentKey="Custom" inherits="UIMenuButtonStretchTemplate" text="Delete">
-						<Size y="20" />
-						<Anchors>
-							<Anchor point="BOTTOMRIGHT" relativeKey="$parent.State" />
-						</Anchors>
-						<Scripts>
-							<OnLoad>
-								self.Update = function(self)
-									local item = self:GetParent():GetParent().Item;
-									local conditions = LootReserve.ItemConditions:Get(item, true);
-									self.custom = conditions and conditions.Custom;
-									self:SetShown(self.custom and self:GetParent():GetParent().hovered);
-									self:SetWidth(10 + self.Text:GetStringWidth() + 10);
-									if self:GetParent().Update then
-										self:GetParent():Update();
-									end
-								end;
-								self:Update();
-							</OnLoad>
-							<OnClick>
-								local item = self:GetParent():GetParent().Item;
-								LootReserve.ItemConditions:Delete(item, true);
+								if conditions.Custom then
+									LootReserve.ItemConditions:Delete(item, true);
+								else
+									conditions.Hidden = not conditions.Hidden;
+									LootReserve.ItemConditions:Save(item, true);
+								end
 								LootReserve.Server.LootEdit:UpdateLootList();
 								LootReserve.Server.Import:SessionSettingsUpdated();
 							</OnClick>
@@ -174,7 +138,7 @@
 				<Scripts>
 					<OnLoad>
 						self.Update = function(self)
-							self:SetWidth(math.max(math.max(self.State:GetWidth(), math.max(self.Faction:IsShown() and self.Faction:GetWidth() or 0, self.Custom:IsShown() and self.Custom:GetWidth() or 0)), self.ClassMask:GetWidth()) - 6);
+							self:SetWidth(math.max(self.State:GetWidth(), self.ClassMask:GetWidth()) - 6);
 						end
 					</OnLoad>
 				</Scripts>
@@ -209,9 +173,8 @@
 					self:SetBackdropBorderColor(r, g, b, hovered and 1 or 0);
 					self.ConditionsFrame.ClassMask:SetEnabled(hovered);
 					self.ConditionsFrame.ClassMask:SetShown(hovered or not self.ConditionsFrame.ClassMask.any);
-					self.ConditionsFrame.State:SetEnabled(hovered);
-					self.ConditionsFrame.State:SetShown(not self.ConditionsFrame.State.faction and not self.ConditionsFrame.State.custom and hovered or self.ConditionsFrame.State.hidden and not self.ConditionsFrame.State.custom);
-					self.ConditionsFrame.Custom:SetShown(self.ConditionsFrame.Custom.custom and hovered);
+					self.ConditionsFrame.State:SetEnabled(hovered and not self.ConditionsFrame.State.disabled);
+					self.ConditionsFrame.State:SetShown(hovered or self.ConditionsFrame.State.shown);
 					for _, part in ipairs(self.ConditionBackgrounds) do
 						part:SetShown(hovered);
 					end

@@ -72,9 +72,7 @@ function LootReserve.Server.LootEdit:UpdateLootList()
             local conditions = LootReserve.ItemConditions:Get(item, true);
             frame.ItemFrame:SetAlpha(conditions and (conditions.Hidden or conditions.Faction and not LootReserve.ItemConditions:TestFaction(conditions.Faction)) and 0.25 or 1);
             frame.ConditionsFrame.ClassMask:Update();
-            frame.ConditionsFrame.Faction:Update();
             frame.ConditionsFrame.State:Update();
-            frame.ConditionsFrame.Custom:Update();
         end
 
         list.ContentHeight = list.ContentHeight + frame:GetHeight();
