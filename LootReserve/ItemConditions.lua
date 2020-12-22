@@ -5,8 +5,9 @@ local DefaultConditions =
 {
     Hidden = nil,
     Custom = nil,
-    ClassMask = nil,
     Faction = nil,
+    ClassMask = nil,
+    Limit = nil,
 };
 
 function LootReserve.ItemConditions:Get(item, server)
@@ -52,6 +53,9 @@ function LootReserve.ItemConditions:Save(item, server)
             if conditions.Hidden == false then
                 conditions.Hidden = nil;
             end
+            if conditions.Limit and conditions.Limit <= 0 then
+                conditions.Limit = nil;
+            end
         end
 
         -- If conditions are no different from the default - delete the table
@@ -82,6 +86,9 @@ function LootReserve.ItemConditions:Save(item, server)
                 LootReserve.Server.NewSessionSettings.ItemConditions[item] = nil;
             end
         end
+
+        LootReserve.Server.LootEdit:UpdateLootList();
+        LootReserve.Server.Import:SessionSettingsUpdated();
     else
         LootReserve:ShowError("Cannot edit loot on client");
     end
@@ -92,6 +99,9 @@ function LootReserve.ItemConditions:Delete(item, server)
         LootReserve:ShowError("Cannot edit loot during an active session");
     elseif server then
         LootReserve.Server.NewSessionSettings.ItemConditions[item] = nil;
+
+        LootReserve.Server.LootEdit:UpdateLootList();
+        LootReserve.Server.Import:SessionSettingsUpdated();
     else
         LootReserve:ShowError("Cannot edit loot on client");
     end
@@ -114,6 +124,9 @@ function LootReserve.ItemConditions:Clear(category, server)
         else
             table.wipe(LootReserve.Server.NewSessionSettings.ItemConditions);
         end
+
+        LootReserve.Server.LootEdit:UpdateLootList();
+        LootReserve.Server.Import:SessionSettingsUpdated();
     else
         LootReserve:ShowError("Cannot edit loot on client");
     end
@@ -147,6 +160,30 @@ function LootReserve.ItemConditions:TestFaction(faction)
     return faction and UnitFactionGroup("player") == faction;
 end
 
+function LootReserve.ItemConditions:TestLimit(limit, item, player, server)
+    if limit <= 0 then
+        -- Has no limiton the number of reserves
+        return true;
+    end
+
+    if server then
+        local reserves = LootReserve.Server.CurrentSession.ItemReserves[item];
+        if not reserves then
+            -- Not reserved by anyone yet
+            return true;
+        end
+
+        if LootReserve:Contains(reserves.Players, player) then
+            -- Player is already reserving the item - allow them to cancel
+            return true;
+        end
+
+        return #reserves.Players < limit;
+    else
+        return LootReserve.Client:IsItemReservedByMe(item) or #LootReserve.Client:GetItemReservers(item) < limit;
+    end
+end
+
 function LootReserve.ItemConditions:TestPlayer(player, item, server)
     if not server and not LootReserve.Client.SessionServer then
         -- Show all items until connected to a server
@@ -171,6 +208,9 @@ function LootReserve.ItemConditions:TestPlayer(player, item, server)
         if conditions.Faction and not self:TestFaction(conditions.Faction) then
             return false;
         end
+        if conditions.Limit and not self:TestLimit(conditions.Limit, item, player, server) then
+            return false, true;
+        end
     end
     return true;
 end
@@ -194,6 +234,16 @@ function LootReserve.ItemConditions:TestServer(item)
     return true;
 end
 
+function LootReserve.ItemConditions:IsItemVisibleOnClient(item)
+    local canReserve, overrideShow = self:TestPlayer("player", item, false);
+    return canReserve and overrideShow ~= false or overrideShow == true;
+end
+
+function LootReserve.ItemConditions:IsItemReservableOnClient(item)
+    local canReserve, overrideShow = self:TestPlayer("player", item, false);
+    return canReserve;
+end
+
 function LootReserve.ItemConditions:Pack(conditions)
     local text = "";
     if conditions.Hidden then
@@ -208,6 +258,9 @@ function LootReserve.ItemConditions:Pack(conditions)
     end
     if conditions.ClassMask and conditions.ClassMask ~= 0 then
         text = text .. "C" .. conditions.ClassMask;
+    end
+    if conditions.Limit and conditions.Limit ~= 0 then
+        text = text .. "L" .. conditions.Limit;
     end
     -- TODO: Remove in the next mandatory version
     return #text > 0 and text or "*";
@@ -232,6 +285,15 @@ function LootReserve.ItemConditions:Unpack(text, category)
                 local mask = text:sub(i + 1, i + len);
                 if tonumber(mask) then
                     conditions.ClassMask = tonumber(mask);
+                else
+                    break;
+                end
+            end
+        elseif char == "L" then
+            for len = 1, 10 do
+                local limit = text:sub(i + 1, i + len);
+                if tonumber(limit) then
+                    conditions.Limit = tonumber(limit);
                 else
                     break;
                 end

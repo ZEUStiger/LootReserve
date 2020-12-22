@@ -69,8 +69,6 @@
 												local conditions = LootReserve.ItemConditions:Make(item, true);
 												conditions.ClassMask = checked and bit.bor(conditions.ClassMask or 0, bit.lshift(1, id - 1)) or bit.band(conditions.ClassMask or 0, bit.bnot(bit.lshift(1, id - 1)));
 												LootReserve.ItemConditions:Save(item, true);
-												LootReserve.Server.LootEdit:UpdateLootList();
-												LootReserve.Server.Import:SessionSettingsUpdated();
 											end
 										});
 									end
@@ -85,7 +83,7 @@
 							<KeyValue key="relativePoint" type="string" value="BOTTOMRIGHT" />
 						</KeyValues>
 					</Frame>
-					<Button parentKey="State" inherits="UIMenuButtonStretchTemplate" text="Hide">
+					<Button parentKey="State" inherits="UIMenuButtonStretchTemplate">
 						<Size y="20" />
 						<Anchors>
 							<Anchor point="BOTTOMRIGHT" x="3" y="-3" />
@@ -98,7 +96,7 @@
 									self.shown = false;
 									self.disabled = false;
 									if not conditions then
-										self:SetText("Visible");
+										self:SetText("Reservable");
 									elseif conditions.Custom then
 										self:SetText("Delete");
 									elseif conditions.Hidden then
@@ -109,7 +107,7 @@
 										self.shown = true;
 										self.disabled = true;
 									else
-										self:SetText("Visible");
+										self:SetText("Reservable");
 									end
 									self:SetShown(self.shown);
 									self:SetEnabled(self.enabled);
@@ -129,16 +127,152 @@
 									conditions.Hidden = not conditions.Hidden;
 									LootReserve.ItemConditions:Save(item, true);
 								end
-								LootReserve.Server.LootEdit:UpdateLootList();
-								LootReserve.Server.Import:SessionSettingsUpdated();
 							</OnClick>
 						</Scripts>
 					</Button>
+					<Frame parentKey="Limit">
+						<Size x="90" y="20" />
+						<Anchors>
+							<Anchor point="RIGHT" relativeKey="$parent.State" relativePoint="LEFT" />
+						</Anchors>
+						<Layers>
+							<Layer>
+								<FontString parentKey="Label" inherits="GameFontWhiteSmall" text="Max ">
+									<Size y="20" />
+									<Anchors>
+										<Anchor point="LEFT" />
+									</Anchors>
+								</FontString>
+							</Layer>
+						</Layers>
+						<Frames>
+							<Button parentKey="Decrement" inherits="UIMenuButtonStretchTemplate" text="−">
+								<Size x="20" y="20" />
+								<Anchors>
+									<Anchor point="LEFT" relativeKey="$parent.Label" relativePoint="RIGHT" />
+								</Anchors>
+								<Scripts>
+									<OnClick>
+										self:GetParent().EditBox:ClearFocus();
+										local item = self:GetParent():GetParent():GetParent().Item;
+										local conditions = LootReserve.ItemConditions:Make(item, true);
+										if conditions.Limit and conditions.Limit > 1 then
+											conditions.Limit = conditions.Limit - 1;
+										else
+											conditions.Limit = nil;
+										end
+										LootReserve.ItemConditions:Save(item, true);
+									</OnClick>
+								</Scripts>
+							</Button>
+							<Button parentKey="Increment" inherits="UIMenuButtonStretchTemplate" text="+">
+								<Size x="20" y="20" />
+								<Anchors>
+									<Anchor point="RIGHT" />
+								</Anchors>
+								<Scripts>
+									<OnClick>
+										self:GetParent().EditBox:ClearFocus();
+										local item = self:GetParent():GetParent():GetParent().Item;
+										local conditions = LootReserve.ItemConditions:Make(item, true);
+										conditions.Limit = math.min(40, (conditions.Limit or 0) + 1);
+										LootReserve.ItemConditions:Save(item, true);
+									</OnClick>
+								</Scripts>
+							</Button>
+							<EditBox parentKey="EditBox" inherits="InputBoxTemplate" autoFocus="false">
+								<Size y="20" />
+								<Anchors>
+									<Anchor point="LEFT" relativeKey="$parent.Decrement" relativePoint="RIGHT" x="-2" />
+									<Anchor point="RIGHT" relativeKey="$parent.Increment" relativePoint="LEFT" x="2" />
+								</Anchors>
+								<Scripts>
+									<OnTextChanged>
+										local item = self:GetParent():GetParent():GetParent().Item;
+										local conditions = LootReserve.ItemConditions:Make(item, true);
+										conditions.Limit = tonumber(self:GetText()) and math.min(40, tonumber(self:GetText()));
+										LootReserve.ItemConditions:Save(item, true);
+									</OnTextChanged>
+									<OnEnterPressed function="EditBox_ClearFocus" />
+									<OnEditFocusGained inherit="prepend">
+										LootReserve.Server.LootEdit.FocusedEditBox = self;
+									</OnEditFocusGained>
+									<OnEditFocusLost inherit="prepend">
+										if LootReserve.Server.LootEdit.FocusedEditBox == self then
+											LootReserve.Server.LootEdit.FocusedEditBox = nil;
+										end
+									</OnEditFocusLost>
+								</Scripts>
+							</EditBox>
+						</Frames>
+						<Scripts>
+							<OnLoad>
+								self.Label:SetWidth(self.Label:GetStringWidth());
+								self.EditBox:SetJustifyH("CENTER");
+								self.EditBox.Left:SetPoint("LEFT", self.EditBox, "LEFT", 0, 0);
+								self.Update = function(self)
+									local item = self:GetParent():GetParent().Item;
+									local conditions = LootReserve.ItemConditions:Get(item, true);
+
+									self.Decrement:SetEnabled(conditions and conditions.Limit and conditions.Limit > 0);
+									self.Increment:SetEnabled(not conditions or not conditions.Limit or conditions.Limit &lt; 40);
+									local text = conditions and conditions.Limit and conditions.Limit > 0 and tostring(conditions.Limit) or "∞";
+									if self.EditBox:GetText() ~= text then
+										self.EditBox:SetText(text);
+									end
+									if self.EditBox:HasFocus() and not tonumber(self.EditBox:GetText()) then
+										self.EditBox:HighlightText();
+									end
+									self.shown = not conditions or not conditions.Hidden;
+
+									if self:GetParent().Update then
+										self:GetParent():Update();
+									end
+								end;
+								self:Update();
+							</OnLoad>
+						</Scripts>
+					</Frame>
+					<Frame parentKey="LimitNoHover">
+						<Size y="20" />
+						<Anchors>
+							<Anchor point="RIGHT" relativeKey="$parent.State" x="-10" />
+						</Anchors>
+						<Layers>
+							<Layer>
+								<FontString parentKey="Label" inherits="GameFontWhiteSmall" setAllPoints="true">
+									<Size y="20" />
+								</FontString>
+							</Layer>
+						</Layers>
+						<Scripts>
+							<OnLoad>
+								self.Update = function(self)
+									local item = self:GetParent():GetParent().Item;
+									local conditions = LootReserve.ItemConditions:Get(item, true);
+									if conditions and conditions.Limit and conditions.Limit > 0 and not conditions.Hidden then
+										self.Label:SetText(format("Max %d", conditions.Limit));
+										self:SetWidth(self.Label:GetStringWidth());
+										self.shown = true;
+									else
+										self:SetWidth(0.00001);
+										self.shown = false;
+									end
+									self:SetShown(self.shown);
+
+									if self:GetParent().Update then
+										self:GetParent():Update();
+									end
+								end;
+								self:Update();
+							</OnLoad>
+						</Scripts>
+					</Frame>
 				</Frames>
 				<Scripts>
 					<OnLoad>
 						self.Update = function(self)
-							self:SetWidth(math.max(self.State:GetWidth(), self.ClassMask:GetWidth()) - 6);
+							self:SetWidth(math.max(self.ClassMask:IsShown() and self.ClassMask:GetWidth() or 0, (self.State:IsShown() and self.State:GetWidth() or 0) + math.max(self.Limit:IsShown() and self.Limit:GetWidth() or 0, self.LimitNoHover:GetWidth() + 10)) - 6);
 						end
 					</OnLoad>
 				</Scripts>
@@ -166,7 +300,9 @@
 				end
 			</OnLoad>
 			<OnUpdate>
-				local hovered = self:IsMouseOver() and self:GetParent():GetParent():IsMouseOver() and not UIDROPDOWNMENU_OPEN_MENU or UIDROPDOWNMENU_OPEN_MENU == self.ConditionsFrame.ClassMaskMenu;
+				local hovered = self:IsMouseOver() and self:GetParent():GetParent():IsMouseOver() and not UIDROPDOWNMENU_OPEN_MENU and not LootReserve.Server.LootEdit.FocusedEditBox
+				                or UIDROPDOWNMENU_OPEN_MENU == self.ConditionsFrame.ClassMaskMenu
+				                or self.ConditionsFrame.Limit.EditBox:HasFocus();
 				if self.hovered ~= hovered then
 					self.hovered = hovered;
 					local r, g, b = self:GetBackdropBorderColor();
@@ -175,6 +311,9 @@
 					self.ConditionsFrame.ClassMask:SetShown(hovered or not self.ConditionsFrame.ClassMask.any);
 					self.ConditionsFrame.State:SetEnabled(hovered and not self.ConditionsFrame.State.disabled);
 					self.ConditionsFrame.State:SetShown(hovered or self.ConditionsFrame.State.shown);
+					self.ConditionsFrame.Limit:SetShown(hovered and self.ConditionsFrame.Limit.shown and not self.ConditionsFrame.State.disabled);
+					self.ConditionsFrame.LimitNoHover:SetShown(not hovered and self.ConditionsFrame.LimitNoHover.shown and not self.ConditionsFrame.State.disabled);
+					self.ConditionsFrame:Update();
 					for _, part in ipairs(self.ConditionBackgrounds) do
 						part:SetShown(hovered);
 					end
@@ -193,8 +332,6 @@
 				<Scripts>
 					<OnClick>
 						LootReserve.ItemConditions:Clear(LootReserve.Server.NewSessionSettings.LootCategory, true);
-						LootReserve.Server.LootEdit:UpdateLootList();
-						LootReserve.Server.Import:SessionSettingsUpdated();
 					</OnClick>
 				</Scripts>
 			</Button>
@@ -293,8 +430,6 @@
 									local conditions = LootReserve.ItemConditions:Make(frame.Item, true);
 									conditions.Custom = LootReserve.Server.NewSessionSettings.LootCategory;
 									LootReserve.ItemConditions:Save(frame.Item, true);
-									LootReserve.Server.LootEdit:UpdateLootList();
-									LootReserve.Server.Import:SessionSettingsUpdated();
 									frame:SetItem(nil);
 								end
 							</OnClick>

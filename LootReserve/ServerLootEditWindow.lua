@@ -27,6 +27,13 @@ function LootReserve.Server.LootEdit:UpdateLootList()
         list.AddCustomFrame = CreateFrame("Frame", nil, list, "LootReserveLootEditAddCustomFrame");
     end
     list.AddCustomFrame:Hide();
+
+    local function cleanupFrame(frame)
+        if UIDROPDOWNMENU_OPEN_MENU == frame.ConditionsFrame.ClassMaskMenu then
+            CloseMenus();
+        end
+        frame.ConditionsFrame.Limit.EditBox:ClearFocus();
+    end
     
     local function createFrame(item, source)
         list.LastIndex = list.LastIndex + 1;
@@ -43,6 +50,10 @@ function LootReserve.Server.LootEdit:UpdateLootList()
             end
             table.insert(list.Frames, frame);
             frame = list.Frames[list.LastIndex];
+        end
+
+        if frame.Item ~= item then
+            cleanupFrame(frame);
         end
 
         frame.Item = item;
@@ -73,6 +84,9 @@ function LootReserve.Server.LootEdit:UpdateLootList()
             frame.ItemFrame:SetAlpha(conditions and (conditions.Hidden or conditions.Faction and not LootReserve.ItemConditions:TestFaction(conditions.Faction)) and 0.25 or 1);
             frame.ConditionsFrame.ClassMask:Update();
             frame.ConditionsFrame.State:Update();
+            frame.ConditionsFrame.Limit:Update();
+            frame.ConditionsFrame.LimitNoHover:Update();
+            frame.hovered = nil;
         end
 
         list.ContentHeight = list.ContentHeight + frame:GetHeight();
@@ -163,6 +177,7 @@ function LootReserve.Server.LootEdit:UpdateLootList()
     end
 
     for i = list.LastIndex + 1, #list.Frames do
+        cleanupFrame(list.Frames[i]);
         list.Frames[i]:Hide();
     end
 
@@ -259,6 +274,9 @@ end
 
 function LootReserve.Server.LootEdit:OnCategoryClick(button)
     CloseMenus();
+    if self.FocusedEditBox then
+        self.FocusedEditBox:ClearFocus();
+    end
     PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
     if not button.Category.Search then
         self.Window.Search:ClearFocus();

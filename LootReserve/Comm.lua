@@ -35,7 +35,7 @@ function LootReserve.Comm:StartListening()
                 local handler = self.Handlers[tonumber(opcode)];
                 if handler then
                     if self.Debug then
-                        print("[DEBUG] Received: " .. text:gsub("|", "||"));
+                        print("[DEBUG] Received from " .. sender .. ": " .. text:gsub("|", "||"));
                     end
 
                     sender = LootReserve:Player(sender);

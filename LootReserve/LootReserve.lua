@@ -115,6 +115,10 @@ function LootReserve:OnInitialize()
     -- Load client and server after UI reload
     -- This should be the only case when a player is already detected to be in a group at the time of addon loading
     Startup();
+
+    if LootReserve.Comm.Debug then
+        SlashCmdList.LOOTRESERVE("server");
+    end
 end
 
 function LootReserve:OnEnable()

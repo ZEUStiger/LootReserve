@@ -337,6 +337,8 @@ function LootReserve.Server.Import:SessionSettingsUpdated()
             end);
         end
 
+        local itemReserveCount = { };
+
         for _, row in ipairs(self.Rows) do
             for _, playerColumn in ipairs(playerColumns) do
                 for _, itemColumn in ipairs(itemColumns) do
@@ -393,6 +395,7 @@ function LootReserve.Server.Import:SessionSettingsUpdated()
                         end
                         if not LootReserve:Contains(member.ReservedItems, item) then
                             table.insert(member.ReservedItems, item);
+                            itemReserveCount[item] = (itemReserveCount[item] or 0) + 1;
                             local conditions = LootReserve.Server.NewSessionSettings.ItemConditions[item];
                             local class = select(3, UnitClass(player));
                             if item == 0 then
@@ -400,7 +403,9 @@ function LootReserve.Server.Import:SessionSettingsUpdated()
                             elseif not (LootReserve.Data:IsItemInCategory(item, LootReserve.Server.NewSessionSettings.LootCategory) or conditions and conditions.Custom == LootReserve.Server.NewSessionSettings.LootCategory) or not LootReserve.ItemConditions:TestServer(item) then
                                 member.InvalidReasons[#member.ReservedItems] = "Item can't be reserved due to session settings.|nChange to the appropriate raid map or add this item as a custom item.";
                             elseif conditions and conditions.ClassMask and class and not LootReserve.ItemConditions:TestClassMask(conditions.ClassMask, class) then
-                                member.InvalidReasons[#member.ReservedItems] = player .. "'s class cannot reserve this item.|nChange the class restrictions on this item, or it will not be imported.";
+                                member.InvalidReasons[#member.ReservedItems] = player .. "'s class cannot reserve this item.|nEdit the raid loot to change the class restrictions on this item, or it will not be imported.";
+                            elseif conditions and conditions.Limit and itemReserveCount[item] > conditions.Limit then
+                                member.InvalidReasons[#member.ReservedItems] = "This item has hit the limit of how many times it can be reserved.|nEdit the raid loot to increase or remove the limit on this item, or it will not be imported.";
                             elseif #member.ReservedItems > LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer then
                                 member.InvalidReasons[#member.ReservedItems] = "Player has more reserved items than allowed by the session settings.|nIncrease the number of allowed reserves, or this item will not be imported.";
                             end

@@ -92,9 +92,24 @@
 								<Texture parentKey="One" setAllPoints="true" file="Interface\RAIDFRAME\ReadyCheck-Ready" />
 								<Texture parentKey="Many" setAllPoints="true" file="Interface\BUTTONS\UI-GroupLoot-Dice-Up" />
 								<FontString parentKey="Number" inherits="GameFontNormalLarge" setAllPoints="true" />
+								<FontString parentKey="NumberLimit" inherits="GameFontNormal">
+									<Anchors>
+										<Anchor point="TOP" />
+										<Anchor point="BOTTOM" />
+										<Anchor point="LEFT" x="-5" />
+										<Anchor point="RIGHT" x="5" />
+									</Anchors>
+								</FontString>
 							</Layer>
 							<Layer level="OVERLAY">
-								<FontString parentKey="NumberMany" inherits="GameFontNormal" justifyV="BOTTOM" justifyH="RIGHT" setAllPoints="true" />
+								<FontString parentKey="NumberMany" inherits="GameFontNormal" justifyV="BOTTOM" justifyH="RIGHT">
+									<Anchors>
+										<Anchor point="TOP" />
+										<Anchor point="BOTTOM" />
+										<Anchor point="LEFT" x="-10" />
+										<Anchor point="RIGHT" />
+									</Anchors>
+								</FontString>
 							</Layer>
 						</Layers>
 						<Scripts>
