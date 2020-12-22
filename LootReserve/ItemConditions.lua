@@ -262,9 +262,7 @@ function LootReserve.ItemConditions:Pack(conditions)
     if conditions.Limit and conditions.Limit ~= 0 then
         text = text .. "L" .. conditions.Limit;
     end
-    -- TODO: Remove in the next mandatory version
-    return #text > 0 and text or "*";
-    --return text;
+    return text;
 end
 
 function LootReserve.ItemConditions:Unpack(text, category)
