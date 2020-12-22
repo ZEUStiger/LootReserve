@@ -1,6 +1,6 @@
 ## Interface: 11305
 ## Title: LootReserve
-## Version: 2020-11-03
+## Version: 2020-12-22
 ## Author: Tagar-NethergardeKeep
 ## SavedVariables: LootReserveGlobalSave
 ## SavedVariablesPerCharacter: LootReserveCharacterSave
