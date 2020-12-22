@@ -345,6 +345,10 @@ function LootReserve.Server.Import:SessionSettingsUpdated()
                     local player = row[playerColumn];
                     local item = row[itemColumn];
 
+                    if type(player) ~= "string" then
+                        player = nil;
+                    end
+
                     local nameMatchResult = nil;
                     if player and #player > 0 then
                         player = NormalizeName(player);
