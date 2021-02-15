@@ -12,9 +12,9 @@ local DefaultConditions =
 
 function LootReserve.ItemConditions:Get(item, server)
     if server and LootReserve.Server.CurrentSession then
-        return LootReserve.Server.CurrentSession.Settings.ItemConditions[item] or LootReserve.Data.ItemConditions[item];
+        return LootReserve.Server.CurrentSession.ItemConditions[item] or LootReserve.Data.ItemConditions[item];
     elseif server then
-        return LootReserve.Server.NewSessionSettings.ItemConditions[item] or LootReserve.Data.ItemConditions[item];
+        return LootReserve.Server:GetNewSessionItemConditions()[item] or LootReserve.Data.ItemConditions[item];
     else
         return LootReserve.Client.ItemConditions[item] or LootReserve.Data.ItemConditions[item];
     end
@@ -25,13 +25,14 @@ function LootReserve.ItemConditions:Make(item, server)
         LootReserve:ShowError("Cannot edit loot during an active session");
         return nil;
     elseif server then
-        local conditions = LootReserve.Server.NewSessionSettings.ItemConditions[item];
+        local container = LootReserve.Server:GetNewSessionItemConditions();
+        local conditions = container[item];
         if not conditions then
             conditions = LootReserve:Deepcopy(LootReserve.Data.ItemConditions[item]);
             if not conditions then
                 conditions = LootReserve:Deepcopy(DefaultConditions);
             end
-            LootReserve.Server.NewSessionSettings.ItemConditions[item] = conditions;
+            container[item] = conditions;
         end
         return conditions;
     else
@@ -44,7 +45,8 @@ function LootReserve.ItemConditions:Save(item, server)
     if server and LootReserve.Server.CurrentSession then
         LootReserve:ShowError("Cannot edit loot during an active session");
     elseif server then
-        local conditions = LootReserve.Server.NewSessionSettings.ItemConditions[item];
+        local container = LootReserve.Server:GetNewSessionItemConditions();
+        local conditions = container[item];
         if conditions then
             -- Coerce conditions
             if conditions.ClassMask == 0 then
@@ -52,6 +54,9 @@ function LootReserve.ItemConditions:Save(item, server)
             end
             if conditions.Hidden == false then
                 conditions.Hidden = nil;
+            end
+            if conditions.Custom == false then
+                conditions.Custom = nil;
             end
             if conditions.Limit and conditions.Limit <= 0 then
                 conditions.Limit = nil;
@@ -83,7 +88,7 @@ function LootReserve.ItemConditions:Save(item, server)
 
             if not different then
                 conditions = nil;
-                LootReserve.Server.NewSessionSettings.ItemConditions[item] = nil;
+                container[item] = nil;
             end
         end
 
@@ -98,7 +103,7 @@ function LootReserve.ItemConditions:Delete(item, server)
     if server and LootReserve.Server.CurrentSession then
         LootReserve:ShowError("Cannot edit loot during an active session");
     elseif server then
-        LootReserve.Server.NewSessionSettings.ItemConditions[item] = nil;
+        LootReserve.Server:GetNewSessionItemConditions()[item] = nil;
 
         LootReserve.Server.LootEdit:UpdateLootList();
         LootReserve.Server.Import:SessionSettingsUpdated();
@@ -111,19 +116,7 @@ function LootReserve.ItemConditions:Clear(category, server)
     if server and LootReserve.Server.CurrentSession then
         LootReserve:ShowError("Cannot edit loot during an active session");
     elseif server then
-        if category then
-            local toRemove = { };
-            for item, conditions in pairs(LootReserve.Server.NewSessionSettings.ItemConditions) do
-                if LootReserve.Data:IsItemInCategory(item, category) or conditions.Custom == category then
-                    table.insert(toRemove, item);
-                end
-            end
-            for _, item in ipairs(toRemove) do
-                LootReserve.Server.NewSessionSettings.ItemConditions[item] = nil;
-            end
-        else
-            table.wipe(LootReserve.Server.NewSessionSettings.ItemConditions);
-        end
+        table.wipe(LootReserve.Server:GetNewSessionItemConditions());
 
         LootReserve.Server.LootEdit:UpdateLootList();
         LootReserve.Server.Import:SessionSettingsUpdated();
@@ -135,9 +128,9 @@ end
 function LootReserve.ItemConditions:HasCustom(server)
     local container;
     if server and LootReserve.Server.CurrentSession then
-        container = LootReserve.Server.CurrentSession.Settings.ItemConditions
+        container = LootReserve.Server.CurrentSession.ItemConditions
     elseif server then
-        container = LootReserve.Server.NewSessionSettings.ItemConditions;
+        container = LootReserve.Server:GetNewSessionItemConditions();
     else
         container = LootReserve.Client.ItemConditions;
     end
@@ -195,13 +188,6 @@ function LootReserve.ItemConditions:TestPlayer(player, item, server)
         if conditions.Hidden then
             return false;
         end
-        if conditions.Custom then
-            if server and conditions.Custom ~= LootReserve.Server.CurrentSession.Settings.LootCategory then
-                return false;
-            elseif not server and conditions.Custom ~= LootReserve.Client.LootCategory then
-                return false;
-            end
-        end
         if conditions.ClassMask and not self:TestClassMask(conditions.ClassMask, select(3, UnitClass(player))) then
             return false;
         end
@@ -219,12 +205,6 @@ function LootReserve.ItemConditions:TestServer(item)
     local conditions = self:Get(item, true);
     if conditions then
         if conditions.Hidden then
-            return false;
-        end
-        if conditions.Custom and LootReserve.Server.CurrentSession and conditions.Custom ~= LootReserve.Server.CurrentSession.Settings.LootCategory then
-            return false;
-        end
-        if conditions.Custom and not LootReserve.Server.CurrentSession and conditions.Custom ~= LootReserve.Server.NewSessionSettings.LootCategory then
             return false;
         end
         if conditions.Faction and not self:TestFaction(conditions.Faction) then
@@ -265,7 +245,7 @@ function LootReserve.ItemConditions:Pack(conditions)
     return text;
 end
 
-function LootReserve.ItemConditions:Unpack(text, category)
+function LootReserve.ItemConditions:Unpack(text)
     local conditions = LootReserve:Deepcopy(DefaultConditions);
 
     for i = 1, #text do
@@ -273,7 +253,7 @@ function LootReserve.ItemConditions:Unpack(text, category)
         if char == "-" then
             conditions.Hidden = true;
         elseif char == "+" then
-            conditions.Custom = category;
+            conditions.Custom = true;
         elseif char == "A" then
             conditions.Faction = "Alliance";
         elseif char == "H" then

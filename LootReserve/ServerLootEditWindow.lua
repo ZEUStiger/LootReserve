@@ -1,10 +1,8 @@
 function LootReserve.Server.LootEdit:UpdateLootList()
     LootReserveServerButtonLootEdit:SetGlow(false);
-    for item, conditions in pairs(LootReserve.Server.NewSessionSettings.ItemConditions) do
-        if not LootReserve.Server.NewSessionSettings.LootCategory or LootReserve.Data:IsItemInCategory(item, LootReserve.Server.NewSessionSettings.LootCategory) or conditions.Custom == LootReserve.Server.NewSessionSettings.LootCategory then
-            LootReserveServerButtonLootEdit:SetGlow(true);
-            break;
-        end
+    for item, conditions in pairs(LootReserve.Server:GetNewSessionItemConditions()) do
+        LootReserveServerButtonLootEdit:SetGlow(true);
+        break;
     end
 
     if not self.Window:IsShown() then return; end
@@ -111,16 +109,14 @@ function LootReserve.Server.LootEdit:UpdateLootList()
     end
 
     if self.SelectedCategory and self.SelectedCategory.Edited then
-        for item, conditions in pairs(LootReserve.Server.NewSessionSettings.ItemConditions) do
-            if not LootReserve.Server.NewSessionSettings.LootCategory or LootReserve.Data:IsItemInCategory(item, LootReserve.Server.NewSessionSettings.LootCategory) or conditions.Custom == LootReserve.Server.NewSessionSettings.LootCategory then
-                createFrame(item);
-            end
+        for item, conditions in pairs(LootReserve.Server:GetNewSessionItemConditions()) do
+            createFrame(item);
         end
     elseif self.SelectedCategory and self.SelectedCategory.Search and filter then
         local missing = false;
         local uniqueItems = { };
-        for item, conditions in pairs(LootReserve.Server.NewSessionSettings.ItemConditions) do
-            if item ~= 0 and conditions.Custom and (not LootReserve.Server.NewSessionSettings.LootCategory or conditions.Custom == LootReserve.Server.NewSessionSettings.LootCategory) and not uniqueItems[item] then
+        for item, conditions in pairs(LootReserve.Server:GetNewSessionItemConditions()) do
+            if item ~= 0 and conditions.Custom and not uniqueItems[item] then
                 uniqueItems[item] = true;
                 local match = matchesFilter(item, filter);
                 if match then
@@ -155,8 +151,8 @@ function LootReserve.Server.LootEdit:UpdateLootList()
             end);
         end
     elseif self.SelectedCategory and self.SelectedCategory.Custom then
-        for item, conditions in pairs(LootReserve.Server.NewSessionSettings.ItemConditions) do
-            if item ~= 0 and conditions.Custom and (not LootReserve.Server.NewSessionSettings.LootCategory or conditions.Custom == LootReserve.Server.NewSessionSettings.LootCategory) then
+        for item, conditions in pairs(LootReserve.Server:GetNewSessionItemConditions()) do
+            if item ~= 0 and conditions.Custom then
                 createFrame(item);
             end
         end
@@ -186,11 +182,9 @@ end
 
 function LootReserve.Server.LootEdit:UpdateCategories()
     LootReserveServerButtonLootEdit:SetGlow(false);
-    for item, conditions in pairs(LootReserve.Server.NewSessionSettings.ItemConditions) do
-        if not LootReserve.Server.NewSessionSettings.LootCategory or LootReserve.Data:IsItemInCategory(item, LootReserve.Server.NewSessionSettings.LootCategory) or conditions.Custom == LootReserve.Server.NewSessionSettings.LootCategory then
-            LootReserveServerButtonLootEdit:SetGlow(true);
-            break;
-        end
+    for item, conditions in pairs(LootReserve.Server:GetNewSessionItemConditions()) do
+        LootReserveServerButtonLootEdit:SetGlow(true);
+        break;
     end
 
     if not self.Window:IsShown() then return; end
@@ -310,8 +304,8 @@ function LootReserve.Server.LootEdit:OnWindowLoad(window)
         if not item or not self.SelectedCategory then return; end
 
         if self.SelectedCategory.Edited or self.SelectedCategory.Custom then
-            local conditions = LootReserve.Server.NewSessionSettings.ItemConditions[item];
-            if conditions and (not self.SelectedCategory.Custom or conditions.Custom == LootReserve.Server.NewSessionSettings.LootCategory) then
+            local conditions = LootReserve.Server:GetNewSessionItemConditions()[item];
+            if conditions and (not self.SelectedCategory.Custom or conditions.Custom) then
                 self:UpdateLootList();
             end
         elseif self.SelectedCategory.Loot then

@@ -1077,3 +1077,13 @@ function LootReserve.Data:IsItemInCategory(item, category)
 
     return false;
 end
+
+function LootReserve.Data:GetItemCategories(item)
+    local categories = { };
+    for category in pairs(self.Categories) do
+        if self:IsItemInCategory(item, category) then
+            table.insert(categories, category);
+        end
+    end
+    return categories;
+end

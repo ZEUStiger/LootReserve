@@ -178,7 +178,7 @@ function LootReserve.Client:UpdateLootList()
             local first = true;
             for item in LootReserve:Ordered(favorites, sortByItemName) do
                 local conditions = self.ItemConditions[item];
-                if item ~= 0 and (not self.LootCategory or LootReserve.Data:IsItemInCategory(item, self.LootCategory) or conditions and conditions.Custom == self.LootCategory) and LootReserve.ItemConditions:IsItemVisibleOnClient(item) then
+                if item ~= 0 and (not self.LootCategory or LootReserve.Data:IsItemInCategory(item, self.LootCategory) or conditions and conditions.Custom) and LootReserve.ItemConditions:IsItemVisibleOnClient(item) then
                     if first then
                         first = false;
                         if favorites == self.CharacterFavorites then
@@ -209,7 +209,7 @@ function LootReserve.Client:UpdateLootList()
         local missing = false;
         local uniqueItems = { };
         for item, conditions in pairs(self.ItemConditions) do
-            if item ~= 0 and conditions.Custom and (not self.LootCategory or conditions.Custom == self.LootCategory) and not uniqueItems[item] and LootReserve.ItemConditions:IsItemVisibleOnClient(item) then
+            if item ~= 0 and conditions.Custom and not uniqueItems[item] and LootReserve.ItemConditions:IsItemVisibleOnClient(item) then
                 uniqueItems[item] = true;
                 local match = matchesFilter(item, filter);
                 if match then
@@ -245,7 +245,7 @@ function LootReserve.Client:UpdateLootList()
         end
     elseif self.SelectedCategory and self.SelectedCategory.Custom then
         for item, conditions in pairs(self.ItemConditions) do
-            if item ~= 0 and conditions.Custom and (not self.LootCategory or conditions.Custom == self.LootCategory) and LootReserve.ItemConditions:IsItemVisibleOnClient(item) then
+            if item ~= 0 and conditions.Custom and LootReserve.ItemConditions:IsItemVisibleOnClient(item) then
                 createFrame(item);
             end
         end
@@ -458,7 +458,12 @@ function LootReserve.Client:OnWindowLoad(window)
     LootReserve:RegisterEvent("GET_ITEM_INFO_RECEIVED", function(item, success)
         if not item or not self.SelectedCategory then return; end
 
-        if self.SelectedCategory.Loot then
+        if self.SelectedCategory.Custom then
+            local conditions = LootReserve.ItemConditions:Get(item, false);
+            if conditions and conditions.Custom then
+                self:UpdateLootList();
+            end
+        elseif self.SelectedCategory.Loot then
             for _, loot in ipairs(self.SelectedCategory.Loot) do
                 if item == loot then
                     self:UpdateLootList();

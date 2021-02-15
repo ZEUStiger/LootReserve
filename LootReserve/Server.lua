@@ -8,7 +8,6 @@ LootReserve.Server =
         MaxReservesPerPlayer = 1,
         Duration = 300,
         ChatFallback = true,
-        ItemConditions = { },
         Blind = false,
         Lock = false,
         ImportedMembers = { },
@@ -36,6 +35,7 @@ LootReserve.Server =
         RollHistoryDisplayLimit = 5,
         RollMasterLoot = false,
         MasterLooting = false,
+        ItemConditions = { },
     },
     RequestedRoll = nil,
     RollHistory = { },
@@ -217,6 +217,20 @@ function LootReserve.Server:SetAddonUser(player, isUser)
     end
 end
 
+function LootReserve.Server:GetSavedItemConditions(category)
+    if not category then return { }; end
+    local container = self.Settings.ItemConditions[category];
+    if not container then
+        container = { };
+        self.Settings.ItemConditions[category] = container;
+    end
+    return container;
+end
+
+function LootReserve.Server:GetNewSessionItemConditions()
+    return self:GetSavedItemConditions(self.NewSessionSettings.LootCategory);
+end
+
 function LootReserve.Server:Load()
     LootReserveCharacterSave.Server = LootReserveCharacterSave.Server or { };
     LootReserveGlobalSave.Server = LootReserveGlobalSave.Server or { };
@@ -253,6 +267,41 @@ function LootReserve.Server:Load()
     for name, key in pairs(LootReserve.Constants.ChatAnnouncement) do
         if self.Settings.ChatAsRaidWarning[key] == nil then
             self.Settings.ChatAsRaidWarning[key] = true;
+        end
+    end
+
+    -- 2012-02-12: Upgrade item conditions
+    if self.NewSessionSettings.ItemConditions then
+        for item, conditions in pairs(self.NewSessionSettings.ItemConditions) do
+            local category = conditions.Custom;
+            conditions.Custom = conditions.Custom and true or nil;
+
+            if category then
+                self.Settings.ItemConditions[category] = self.Settings.ItemConditions[category] or { };
+                self.Settings.ItemConditions[category][item] = LootReserve:Deepcopy(conditions);
+            end
+            for _, category in ipairs(LootReserve.Data:GetItemCategories(item)) do
+                self.Settings.ItemConditions[category] = self.Settings.ItemConditions[category] or { };
+                self.Settings.ItemConditions[category][item] = LootReserve:Deepcopy(conditions);
+            end
+        end
+        self.NewSessionSettings.ItemConditions = nil;
+    end
+    if self.CurrentSession then
+        if not self.CurrentSession.ItemConditions then
+            self.CurrentSession.ItemConditions = { };
+        end
+
+        if self.CurrentSession.Settings.ItemConditions then
+            for item, conditions in pairs(self.CurrentSession.Settings.ItemConditions) do
+                local category = conditions.Custom;
+                conditions.Custom = conditions.Custom and true or nil;
+
+                if category == self.CurrentSession.Settings.LootCategory or LootReserve.Data:IsItemInCategory(item, self.CurrentSession.Settings.LootCategory) then
+                    self.CurrentSession.ItemConditions[item] = LootReserve:Deepcopy(conditions);
+                end
+            end
+            self.CurrentSession.Settings.ItemConditions = nil;
         end
     end
 
@@ -661,7 +710,7 @@ function LootReserve.Server:PrepareSession()
 
     -- Cache the list of items players can reserve
     table.wipe(self.ReservableItems);
-    for item, conditions in pairs(self.CurrentSession.Settings.ItemConditions) do
+    for item, conditions in pairs(self.CurrentSession.ItemConditions) do
         if item ~= 0 and conditions.Custom and LootReserve.ItemConditions:TestServer(item) then
             self.ReservableItems[item] = true;
         end
@@ -685,7 +734,7 @@ function LootReserve.Server:UpdateItemNameCache()
     if self.AllItemNamesCached then return self.AllItemNamesCached; end
 
     self.AllItemNamesCached = true;
-    for item, conditions in pairs(self.NewSessionSettings.ItemConditions) do
+    for item, conditions in pairs(self:GetNewSessionItemConditions()) do
         if item ~= 0 and conditions.Custom then
             local name = GetItemInfo(item);
             if name then
@@ -696,7 +745,7 @@ function LootReserve.Server:UpdateItemNameCache()
         end
     end
     if self.CurrentSession then
-        for item, conditions in pairs(self.CurrentSession.Settings.ItemConditions) do
+        for item, conditions in pairs(self.CurrentSession.ItemConditions) do
             if item ~= 0 and conditions.Custom then
                 local name = GetItemInfo(item);
                 if name then
@@ -748,6 +797,7 @@ function LootReserve.Server:StartSession()
     {
         AcceptingReserves = true,
         Settings = LootReserve:Deepcopy(self.NewSessionSettings),
+        ItemConditions = LootReserve:Deepcopy(self:GetNewSessionItemConditions()),
         StartTime = time(),
         Duration = self.NewSessionSettings.Duration,
         DurationEndTimestamp = time() + self.NewSessionSettings.Duration, -- Used to resume the session after relog or UI reload

@@ -234,7 +234,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
     end
     local function getSortingSource(reserve)
         local customIndex = 0;
-        for item, conditions in pairs(self.CurrentSession.Settings.ItemConditions) do
+        for item, conditions in pairs(self.CurrentSession.ItemConditions) do
             if conditions.Custom then
                 customIndex = customIndex + 1;
                 if item == reserve.Item then

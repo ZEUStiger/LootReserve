@@ -428,7 +428,7 @@
 								local frame = self:GetParent():GetParent();
 								if frame.Item then
 									local conditions = LootReserve.ItemConditions:Make(frame.Item, true);
-									conditions.Custom = LootReserve.Server.NewSessionSettings.LootCategory;
+									conditions.Custom = true;
 									LootReserve.ItemConditions:Save(frame.Item, true);
 									frame:SetItem(nil);
 								end
