@@ -1,6 +1,6 @@
 local LibCustomGlow = LibStub("LibCustomGlow-1.0");
 
-function LootReserve.Client:RollRequested(sender, item, players, custom, duration, maxDuration, phase)
+function LootReserve.Client:RollRequested(sender, item, players, custom, duration, maxDuration, phase, example)
     local frame = LootReserveRollRequestWindow;
 
     if LibCustomGlow then
@@ -10,9 +10,11 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
     self.RollRequest = nil;
     frame:Hide();
 
-    if not self.Settings.RollRequestShow then return; end
-    if not LootReserve:Contains(players, LootReserve:Me()) then return; end
-    if custom and not self.Settings.RollRequestShowUnusable and LootReserve:IsItemUsable(item) == false then return; end -- Need to check for false, returns nil if item not loaded
+    if not example then
+        if not self.Settings.RollRequestShow then return; end
+        if not LootReserve:Contains(players, LootReserve:Me()) then return; end
+        if custom and not self.Settings.RollRequestShowUnusable and LootReserve:IsItemUsable(item) == false then return; end -- Need to check for false, returns nil if item not loaded
+    end
 
     self.RollRequest =
     {
@@ -22,6 +24,7 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
         Duration = duration and duration > 0 and duration or nil,
         MaxDuration = maxDuration and maxDuration > 0 and maxDuration or nil,
         Phase = phase,
+        Example = example,
     };
     local roll = self.RollRequest;
 
@@ -80,10 +83,12 @@ function LootReserve.Client:RespondToRollRequest(response)
 
     if not self.RollRequest then return; end
 
-    if response then
-        RandomRoll(1, 100);
-    else
-        LootReserve.Comm:SendPassRoll(self.RollRequest.Item);
+    if not self.RollRequest.Example then
+        if response then
+            RandomRoll(1, 100);
+        else
+            LootReserve.Comm:SendPassRoll(self.RollRequest.Item);
+        end
     end
     self.RollRequest = nil;
 end

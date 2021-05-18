@@ -335,6 +335,7 @@
 							{ text = "Show Popup", checked = LootReserve.Client.Settings.RollRequestShow, notCheckable = false, keepShownOnClick = true, func = function() LootReserve.Client.Settings.RollRequestShow = not LootReserve.Client.Settings.RollRequestShow; end },
 							{ text = "Show For Unusable Items", checked = LootReserve.Client.Settings.RollRequestShowUnusable, notCheckable = false, keepShownOnClick = true, func = function() LootReserve.Client.Settings.RollRequestShowUnusable = not LootReserve.Client.Settings.RollRequestShowUnusable; end },
 							{ text = "Glow Only For Reserved Items", checked = LootReserve.Client.Settings.RollRequestGlowOnlyReserved, notCheckable = false, keepShownOnClick = true, func = function() LootReserve.Client.Settings.RollRequestGlowOnlyReserved = not LootReserve.Client.Settings.RollRequestGlowOnlyReserved; end },
+							{ text = "Open Example Popup", notCheckable = true, func = function() LootReserve.Client:RollRequested(LootReserve:Me(), 19019, { LootReserve:Me() }, true, 30, 30, "Swag-Spec", true); end },
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Close" },
 						};
