@@ -32,6 +32,12 @@
     <Content Include="ItemSearch.lua">
       <SubType>Code</SubType>
     </Content>
+    <Content Include="Libs\CallbackHandler-1.0\CallbackHandler-1.0.lua">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="Libs\CallbackHandler-1.0\CallbackHandler-1.0.xml">
+      <SubType>Frame</SubType>
+    </Content>
     <Content Include="Libs\LibCustomGlow-1.0\LibCustomGlow-1.0.lua">
       <SubType>Code</SubType>
     </Content>
@@ -42,6 +48,15 @@
       <SubType>Frame</SubType>
     </Content>
     <Content Include="Libs\LibCustomGlow-1.0\README.md" />
+    <Content Include="Libs\LibDataBroker-1.1\LibDataBroker-1.1.lua">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="Libs\LibDBIcon-1.0\lib.xml">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="Libs\UTF8\Changelog-UTF8-v1.1.txt" />
     <Content Include="Libs\UTF8\utf8.lua">
       <SubType>Code</SubType>
@@ -116,6 +131,7 @@
     <Content Include="Textures\FavoriteSet.tga" />
     <Content Include="Textures\FavoriteUnset.tga" />
     <Content Include="Textures\FavoriteWhite.tga" />
+    <Content Include="Textures\Icon.tga" />
   </ItemGroup>
   <ItemGroup>
     <Content Include="Libs/LibStub/LibStub.lua">
@@ -141,7 +157,10 @@
     <Folder Include="Libs\" />
     <Folder Include="Libs\AceAddon-3.0\" />
     <Folder Include="Libs\AceComm-3.0\" />
+    <Folder Include="Libs\CallbackHandler-1.0\" />
     <Folder Include="Libs\LibCustomGlow-1.0\" />
+    <Folder Include="Libs\LibDataBroker-1.1\" />
+    <Folder Include="Libs\LibDBIcon-1.0\" />
     <Folder Include="Libs\LibStub\" />
     <Folder Include="Libs\UTF8\" />
     <Folder Include="Textures\" />

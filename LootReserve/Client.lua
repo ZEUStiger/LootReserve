@@ -24,6 +24,8 @@ LootReserve.Client =
         RollRequestGlowOnlyReserved = false,
         CollapsedExpansions = { },
         CollapsedCategories = { },
+        SwapLDBButtons = false,
+        LibDBIcon = { }
     },
     CharacterFavorites = { },
     GlobalFavorites = { },
@@ -58,6 +60,27 @@ function LootReserve.Client:Load()
     loadInto(self, LootReserveGlobalSave.Client, "Settings");
     loadInto(self, LootReserveCharacterSave.Client, "CharacterFavorites");
     loadInto(self, LootReserveGlobalSave.Client, "GlobalFavorites");
+
+    LibStub("LibDBIcon-1.0").RegisterCallback("LootReserve", "LibDBIcon_IconCreated", function(event, button, name)
+        if name == "LootReserve" then
+            button.icon:SetTexture("Interface\\AddOns\\LootReserve\\Textures\\Icon");
+        end
+    end);
+    LibStub("LibDBIcon-1.0"):Register("LootReserve", LibStub("LibDataBroker-1.1"):NewDataObject("LootReserve", {
+        type = "launcher",
+        text = "LootReserve",
+        icon = "Interface\\Buttons\\UI-GroupLoot-Dice-Up",
+        OnClick = function(ldb, button)
+            if button == "LeftButton" or button == "RightButton" then
+                SlashCmdList.LOOTRESERVE(((button == "LeftButton") == self.Settings.SwapLDBButtons) and "server" or "");
+            end
+        end,
+        OnTooltipShow = function(tooltip)
+            tooltip:SetText("LootReserve", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1);
+            tooltip:AddLine(format("Left-Click: Open %s Window", self.Settings.SwapLDBButtons and "Server" or "Client"));
+            tooltip:AddLine(format("Right-Click: Open %s Window", self.Settings.SwapLDBButtons and "Client" or "Server"));
+        end,
+    }), self.Settings.LibDBIcon);
 end
 
 function LootReserve.Client:IsFavorite(item)
