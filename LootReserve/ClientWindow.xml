@@ -340,6 +340,11 @@
 							{ text = "Show Popup", checked = LootReserve.Client.Settings.RollRequestShow, notCheckable = false, keepShownOnClick = true, func = function() LootReserve.Client.Settings.RollRequestShow = not LootReserve.Client.Settings.RollRequestShow; end },
 							{ text = "Show For Unusable Items", checked = LootReserve.Client.Settings.RollRequestShowUnusable, notCheckable = false, keepShownOnClick = true, func = function() LootReserve.Client.Settings.RollRequestShowUnusable = not LootReserve.Client.Settings.RollRequestShowUnusable; end },
 							{ text = "Glow Only For Reserved Items", checked = LootReserve.Client.Settings.RollRequestGlowOnlyReserved, notCheckable = false, keepShownOnClick = true, func = function() LootReserve.Client.Settings.RollRequestGlowOnlyReserved = not LootReserve.Client.Settings.RollRequestGlowOnlyReserved; end },
+							{ text = "Open Example Popup", notCheckable = true, func = function() LootReserve.Client:RollRequested(LootReserve:Me(), 19019, { LootReserve:Me() }, true, 30, 30, "Swag-Spec", true); end },
+							LootReserve:MakeMenuSeparator(),
+							{ text = "Data Broker", isTitle = true },
+							{ text = "Show Minimap Icon", checked = not LootReserve.Client.Settings.LibDBIcon.hide, notCheckable = false, keepShownOnClick = true, func = function() LootReserve.Client.Settings.LibDBIcon.hide = not LootReserve.Client.Settings.LibDBIcon.hide; if LootReserve.Client.Settings.LibDBIcon.hide then LibStub("LibDBIcon-1.0"):Hide("LootReserve"); else LibStub("LibDBIcon-1.0"):Show("LootReserve") end end },
+							{ text = "Swap Button Functions", tooltipTitle = "Swap Button Functions", tooltipText = "Enable to make left-clicking the LDB/minimap icon open the server window instead.", tooltipOnButton = true, checked = LootReserve.Client.Settings.SwapLDBButtons, notCheckable = false, keepShownOnClick = true, func = function() LootReserve.Client.Settings.SwapLDBButtons = not LootReserve.Client.Settings.SwapLDBButtons; end },
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Close" },
 						};
