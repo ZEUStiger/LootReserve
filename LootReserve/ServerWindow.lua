@@ -242,8 +242,8 @@ function LootReserve.Server:UpdateReserveList(lockdown)
                 end
             end
         end
-        for id, category in LootReserve:Ordered(LootReserve.Data.Categories) do
-            if category.Children and (not self.CurrentSession or id == self.CurrentSession.Settings.LootCategory) then
+        for id, category in LootReserve:Ordered(LootReserve.Data.Categories, LootReserve.Data.CategorySorter) do
+            if category.Children and (not self.CurrentSession or id == self.CurrentSession.Settings.LootCategory) and LootReserve.Data:IsCategoryVisible(category) then
                 for childIndex, child in ipairs(category.Children) do
                     if child.Loot then
                         for lootIndex, loot in ipairs(child.Loot) do

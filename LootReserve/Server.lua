@@ -716,7 +716,7 @@ function LootReserve.Server:PrepareSession()
         end
     end
     for id, category in pairs(LootReserve.Data.Categories) do
-        if category.Children and (not self.CurrentSession.Settings.LootCategory or id == self.CurrentSession.Settings.LootCategory) then
+        if category.Children and (not self.CurrentSession.Settings.LootCategory or id == self.CurrentSession.Settings.LootCategory) and LootReserve.Data:IsCategoryVisible(category) then
             for _, child in ipairs(category.Children) do
                 if child.Loot then
                     for _, item in ipairs(child.Loot) do
@@ -757,7 +757,7 @@ function LootReserve.Server:UpdateItemNameCache()
         end
     end
     for id, category in pairs(LootReserve.Data.Categories) do
-        if category.Children then
+        if category.Children and LootReserve.Data:IsCategoryVisible(category) then
             for _, child in ipairs(category.Children) do
                 if child.Loot then
                     for _, item in ipairs(child.Loot) do

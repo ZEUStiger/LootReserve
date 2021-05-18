@@ -126,8 +126,8 @@ function LootReserve.Server.LootEdit:UpdateLootList()
                 end
             end
         end
-        for id, category in LootReserve:Ordered(LootReserve.Data.Categories) do
-            if category.Children and (not LootReserve.Server.NewSessionSettings.LootCategory or id == LootReserve.Server.NewSessionSettings.LootCategory) then
+        for id, category in LootReserve:Ordered(LootReserve.Data.Categories, LootReserve.Data.CategorySorter) do
+            if category.Children and (not LootReserve.Server.NewSessionSettings.LootCategory or id == LootReserve.Server.NewSessionSettings.LootCategory) and LootReserve.Data:IsCategoryVisible(category) then
                 for _, child in ipairs(category.Children) do
                     if child.Loot then
                         for _, item in ipairs(child.Loot) do
@@ -200,6 +200,7 @@ function LootReserve.Server.LootEdit:UpdateCategories()
             frame = CreateFrame("CheckButton", nil, list,
                 category.Separator and "LootReserveCategoryListSeparatorTemplate" or
                 category.Children and "LootReserveCategoryListHeaderTemplate" or
+                category.Header and "LootReserveCategoryListSubheaderTemplate" or
                 "LootReserveCategoryListButtonTemplate");
 
             if #list.Frames == 0 then
@@ -221,7 +222,7 @@ function LootReserve.Server.LootEdit:UpdateCategories()
             frame:EnableMouse(false);
         else
             frame.Text:SetText(category.Name);
-            if category.Children then
+            if category.Children or category.Header then
                 frame:EnableMouse(false);
             else
                 frame:RegisterForClicks("LeftButtonDown");
@@ -243,8 +244,10 @@ function LootReserve.Server.LootEdit:UpdateCategories()
         end
     end
     
-    for id, category in LootReserve:Ordered(LootReserve.Data.Categories) do
-        createCategoryButtonsRecursively(id, category);
+    for id, category in LootReserve:Ordered(LootReserve.Data.Categories, LootReserve.Data.CategorySorter) do
+        if LootReserve.Data:IsCategoryVisible(category) then
+            createCategoryButtonsRecursively(id, category);
+        end
     end
 
     for i, frame in ipairs(list.Frames) do
@@ -271,7 +274,7 @@ function LootReserve.Server.LootEdit:OnCategoryClick(button)
     if self.FocusedEditBox then
         self.FocusedEditBox:ClearFocus();
     end
-    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+
     if not button.Category.Search then
         self.Window.Search:ClearFocus();
     end
@@ -288,6 +291,8 @@ function LootReserve.Server.LootEdit:OnCategoryClick(button)
             b:SetChecked(false);
         end
     end
+
+    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
 
     self.SelectedCategory = button.Category;
     self.Window.Loot.Scroll:SetVerticalScroll(0);

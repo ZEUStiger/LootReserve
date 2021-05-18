@@ -22,6 +22,8 @@ LootReserve.Client =
         RollRequestShow = true,
         RollRequestShowUnusable = false,
         RollRequestGlowOnlyReserved = false,
+        CollapsedExpansions = { },
+        CollapsedCategories = { },
     },
     CharacterFavorites = { },
     GlobalFavorites = { },

@@ -245,6 +245,12 @@ function LootReserve:SendChatMessage(text, channel, target)
     end
 end
 
+function LootReserve:GetCurrentExpansion()
+    local version = GetBuildInfo();
+    local expansion, major, minor = strsplit(".", version);
+    return tonumber(expansion) - 1;
+end
+
 function LootReserve:GetNumClasses()
     return 11;
 end

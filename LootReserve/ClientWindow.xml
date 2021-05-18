@@ -18,13 +18,47 @@
 		<HighlightTexture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" />
 		<CheckedTexture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" />
 	</CheckButton>
+	<CheckButton name="LootReserveCategoryListExpansionTemplate" virtual="true">
+		<Size y="28" />
+		<Layers>
+			<Layer>
+				<FontString parentKey="Text" inherits="GameFontHighlightMedium">
+					<Anchors>
+						<Anchor point="TOPLEFT" y="-5" />
+						<Anchor point="BOTTOMRIGHT" />
+					</Anchors>
+				</FontString>
+				<Texture parentKey="GlowLeft" alpha="0.5" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD">
+					<Size y="16" />
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent" relativePoint="BOTTOMLEFT" x="-16" />
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent" relativePoint="BOTTOM" />
+					</Anchors>
+					<TexCoords left="0" right="0.25" top="0" bottom="1" />
+					<Color r="1" g="0.82" b="0" />
+				</Texture>
+				<Texture parentKey="GlowRight" alpha="0.5" file="Interface\CHATFRAME\ChatFrameTab-NewMessage" alphaMode="ADD">
+					<Size y="16" />
+					<Anchors>
+						<Anchor point="BOTTOMLEFT" relativeKey="$parent" relativePoint="BOTTOM" />
+						<Anchor point="BOTTOMRIGHT" relativeKey="$parent" relativePoint="BOTTOMRIGHT" x="16" />
+					</Anchors>
+					<TexCoords left="0.75" right="1" top="0" bottom="1" />
+					<Color r="1" g="0.82" b="0" />
+				</Texture>
+			</Layer>
+		</Layers>
+		<HighlightTexture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" />
+		<CheckedTexture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" />
+	</CheckButton>
 	<CheckButton name="LootReserveCategoryListHeaderTemplate" virtual="true">
 		<Size y="28" />
 		<Layers>
 			<Layer>
 				<FontString parentKey="Text" inherits="GameFontNormal">
+					<Size y="18" />
 					<Anchors>
-						<Anchor point="TOPLEFT" x="5" y="-10" />
+						<Anchor point="BOTTOMLEFT" x="5" />
 						<Anchor point="BOTTOMRIGHT" x="-5" />
 					</Anchors>
 				</FontString>
@@ -32,6 +66,19 @@
 		</Layers>
 		<HighlightTexture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" />
 		<CheckedTexture file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" />
+	</CheckButton>
+	<CheckButton name="LootReserveCategoryListSubheaderTemplate" virtual="true">
+		<Size y="18" />
+		<Layers>
+			<Layer level="ARTWORK">
+				<FontString parentKey="Text" inherits="GameFontWhite" justifyH="LEFT" alpha="0.5">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="5" />
+						<Anchor point="BOTTOMRIGHT" x="-5" />
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
 	</CheckButton>
 	<CheckButton name="LootReserveCategoryListSeparatorTemplate" virtual="true">
 		<Size y="6" />
@@ -314,8 +361,9 @@
 					<OnTextChanged inherit="prepend">
 						if #self:GetText() > 0 then
 							for _, frame in ipairs(self:GetParent().Categories.Scroll.Container.Frames) do
-								if frame.Category.Search then
+								if frame.Category and frame.Category.Search then
 									frame:Click();
+									break;
 								end
 							end
 						end
@@ -367,6 +415,10 @@
 			</OnLoad>
 			<OnShow>
 				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN);
+				if not self.openedOnce then
+					self.openedOnce = true;
+					LootReserve.Client:UpdateCategories(); -- Needed to update collapsed state after settings are loaded
+				end
 			</OnShow>
 			<OnHide>
 				CloseMenus();

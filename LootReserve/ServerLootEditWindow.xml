@@ -621,6 +621,7 @@
 							for _, frame in ipairs(self:GetParent().Categories.Scroll.Container.Frames) do
 								if frame.Category.Search then
 									frame:Click();
+									break;
 								end
 							end
 						end

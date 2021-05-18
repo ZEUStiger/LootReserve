@@ -219,8 +219,8 @@ function LootReserve.Client:UpdateLootList()
                 end
             end
         end
-        for id, category in LootReserve:Ordered(LootReserve.Data.Categories) do
-            if category.Children and (not self.LootCategory or id == self.LootCategory) then
+        for id, category in LootReserve:Ordered(LootReserve.Data.Categories, LootReserve.Data.CategorySorter) do
+            if category.Children and (not self.LootCategory or id == self.LootCategory) and LootReserve.Data:IsCategoryVisible(category) then
                 for _, child in ipairs(category.Children) do
                     if child.Loot then
                         for _, item in ipairs(child.Loot) do
@@ -277,13 +277,15 @@ function LootReserve.Client:UpdateCategories()
     list.Frames = list.Frames or { };
     list.LastIndex = 0;
     
-    local function createButton(id, category)
+    local function createButton(id, category, expansion)
         list.LastIndex = list.LastIndex + 1;
         local frame = list.Frames[list.LastIndex];
         while not frame do
             frame = CreateFrame("CheckButton", nil, list,
+                not category and "LootReserveCategoryListExpansionTemplate" or
                 category.Separator and "LootReserveCategoryListSeparatorTemplate" or
                 category.Children and "LootReserveCategoryListHeaderTemplate" or
+                category.Header and "LootReserveCategoryListSubheaderTemplate" or
                 "LootReserveCategoryListButtonTemplate");
 
             if #list.Frames == 0 then
@@ -299,24 +301,49 @@ function LootReserve.Client:UpdateCategories()
 
         frame.CategoryID = id;
         frame.Category = category;
+        frame.Expansion = expansion;
         frame.DefaultHeight = frame.DefaultHeight or frame:GetHeight();
 
-        if category.Separator then
+        if not category then
+            frame.Text:SetText(format(self.Settings.CollapsedExpansions[frame.Expansion] and "|cFF404040%s|r" or "|cFFFFD200%s|r", _G["EXPANSION_NAME"..expansion]));
+            frame.GlowLeft:SetShown(not self.Settings.CollapsedExpansions[frame.Expansion]);
+            frame.GlowRight:SetShown(not self.Settings.CollapsedExpansions[frame.Expansion]);
+            frame:RegisterForClicks("LeftButtonDown");
+            frame:SetScript("OnClick", function(frame) self:OnExpansionToggle(frame); end);
+        elseif category.Separator then
             frame:EnableMouse(false);
-        else
+        elseif category.Header then
             frame.Text:SetText(category.Name);
-            if category.Children then
+            frame:EnableMouse(false);
+        elseif category.Children then
+            local categoryCollapsed = self.Settings.CollapsedCategories[frame.CategoryID];
+            if frame.CategoryID < 0 or self.LootCategory and frame.CategoryID == self.LootCategory then
+                categoryCollapsed = false;
                 frame:EnableMouse(false);
             else
+                frame:EnableMouse(true);
                 frame:RegisterForClicks("LeftButtonDown");
-                frame:SetScript("OnClick", function(frame) self:OnCategoryClick(frame); end);
+                frame:SetScript("OnClick", function(frame) self:OnCategoryToggle(frame); end);
             end
+            frame.Text:SetText(format(categoryCollapsed and "|cFF806900%s|r" or "%s", category.Name));
+        else
+            frame.Text:SetText(category.Name);
+            frame:RegisterForClicks("LeftButtonDown");
+            frame:SetScript("OnClick", function(frame) self:OnCategoryClick(frame); end);
         end
     end
-    
+
+    local lastExpansion = nil;
+
     local function createCategoryButtonsRecursively(id, category)
+        if category.Expansion and category.Expansion ~= lastExpansion then
+            lastExpansion = category.Expansion;
+            if LootReserve:GetCurrentExpansion() > 0 then
+                createButton(nil, nil, lastExpansion);
+            end
+        end
         if category.Name or category.Separator then
-            createButton(id, category);
+            createButton(id, category, lastExpansion);
         end
         if category.Children then
             for i, child in ipairs(category.Children) do
@@ -326,15 +353,34 @@ function LootReserve.Client:UpdateCategories()
             end
         end
     end
-    
-    for id, category in LootReserve:Ordered(LootReserve.Data.Categories) do
-        createCategoryButtonsRecursively(id, category);
+
+    for id, category in LootReserve:Ordered(LootReserve.Data.Categories, LootReserve.Data.CategorySorter) do
+        if LootReserve.Data:IsCategoryVisible(category) then
+            createCategoryButtonsRecursively(id, category);
+        end
     end
 
     local needsSelect = not self.SelectedCategory;
     for i, frame in ipairs(list.Frames) do
-        if i <= list.LastIndex and (frame.CategoryID < 0 or not self.LootCategory or frame.CategoryID == self.LootCategory) and (not frame.Category.Custom or LootReserve.ItemConditions:HasCustom(false)) then
-            frame:SetHeight(frame.DefaultHeight);
+        local expansionCollapsed = self.Settings.CollapsedExpansions[frame.Expansion];
+        local categoryCollapsed = self.Settings.CollapsedCategories[frame.CategoryID];
+        if self.LootCategory and frame.CategoryID == self.LootCategory then
+            expansionCollapsed = false;
+            categoryCollapsed = false;
+        end
+
+        if i <= list.LastIndex
+            and (not self.LootCategory or not frame.CategoryID or frame.CategoryID < 0 or frame.CategoryID == self.LootCategory)
+            and (not frame.Category or not frame.Category.Custom or LootReserve.ItemConditions:HasCustom(false))
+            and (not categoryCollapsed or not frame.Category or frame.Category.Children)
+            and (not expansionCollapsed or not frame.Category)
+            and (not frame.Expansion or frame.Category or not self.LootCategory)
+            then
+            if categoryCollapsed and frame.Category and frame.Category.Children then
+                frame:SetHeight(frame.DefaultHeight - 7);
+            else
+                frame:SetHeight(frame.DefaultHeight);
+            end
             frame:Show();
         else
             frame:Hide();
@@ -350,7 +396,7 @@ function LootReserve.Client:UpdateCategories()
         for i, frame in ipairs(list.Frames) do
             if i <= list.LastIndex then
                 if selected == nil then
-                    if frame.CategoryID > 0 and self.LootCategory and frame.CategoryID == self.LootCategory then
+                    if frame.CategoryID and frame.CategoryID > 0 and self.LootCategory and frame.CategoryID == self.LootCategory then
                         selected = false;
                     end
                 elseif selected == false then
@@ -390,9 +436,23 @@ function LootReserve.Client:OnCategoryClick(button)
     self:UpdateLootList();
 end
 
+function LootReserve.Client:OnCategoryToggle(button)
+    button:SetChecked(false);
+    self.Settings.CollapsedCategories[button.CategoryID] = not self.Settings.CollapsedCategories[button.CategoryID] or nil;
+    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+    self:UpdateCategories();
+end
+
+function LootReserve.Client:OnExpansionToggle(button)
+    button:SetChecked(false);
+    self.Settings.CollapsedExpansions[button.Expansion] = not self.Settings.CollapsedExpansions[button.Expansion] or nil;
+    PlaySound(SOUNDKIT.IG_MAINMENU_OPTION_CHECKBOX_ON);
+    self:UpdateCategories();
+end
+
 function LootReserve.Client:FlashCategory(categoryField, value, continuously)
     for _, button in pairs(self.Window.Categories.Scroll.Container.Frames) do
-        if button:IsShown() and button.Flash and button.Category and button.Category[categoryField] and (value == nil or button.Category[categoryField] == value) then
+        if button:IsShown() and button.Flash and not button.Expansion and button.Category and button.Category[categoryField] and (value == nil or button.Category[categoryField] == value) then
             button.Flash:SetAlpha(1);
             button.ContinuousFlashing = (button.ContinuousFlashing or continuously) and 0 or nil;
             self.CategoryFlashing = true;

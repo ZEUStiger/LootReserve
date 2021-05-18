@@ -1,3 +1,6 @@
+local classicAlliance = LootReserve:GetCurrentExpansion() == 0 and "Alliance" or nil;
+local classicHorde = LootReserve:GetCurrentExpansion() == 0 and "Horde" or nil
+
 LootReserve.Data =
 {
     Categories =
@@ -20,8 +23,10 @@ LootReserve.Data =
                 { Name = "Custom Items", Custom = true },
             },
         },
+        -- Classic
         [100] = {
             Name = "Molten Core",
+            Expansion = 0,
             Children =
             {
                 {
@@ -137,6 +142,7 @@ LootReserve.Data =
         },
         [200] = {
             Name = "Onyxia",
+            Expansion = 0,
             Children =
             {
                 {
@@ -154,6 +160,7 @@ LootReserve.Data =
         },
         [300] = {
             Name = "Blackwing Lair",
+            Expansion = 0,
             Children =
             {
                 {
@@ -250,6 +257,7 @@ LootReserve.Data =
         },
         [400] = {
             Name = "Zul'Gurub",
+            Expansion = 0,
             Children =
             {
                 {
@@ -393,6 +401,7 @@ LootReserve.Data =
         },
         [500] = {
             Name = "Ruins of Ahn'Qiraj",
+            Expansion = 0,
             Children =
             {
                 {
@@ -485,6 +494,7 @@ LootReserve.Data =
         },
         [600] = {
             Name = "Temple of Ahn'Qiraj",
+            Expansion = 0,
             Children =
             {
                 {
@@ -611,6 +621,7 @@ LootReserve.Data =
         },
         [700] = {
             Name = "Naxxramas",
+            Expansion = 0,
             Children =
             {
                 {
@@ -826,14 +837,14 @@ LootReserve.Data =
         [16834] = { ClassMask = 1024 },
         [16835] = { ClassMask = 1024 },
         [16836] = { ClassMask = 1024 },
-        [16837] = { ClassMask = 64, Faction = "Horde" },
-        [16838] = { ClassMask = 64, Faction = "Horde" },
-        [16839] = { ClassMask = 64, Faction = "Horde" },
-        [16840] = { ClassMask = 64, Faction = "Horde" },
-        [16841] = { ClassMask = 64, Faction = "Horde" },
-        [16842] = { ClassMask = 64, Faction = "Horde" },
-        [16843] = { ClassMask = 64, Faction = "Horde" },
-        [16844] = { ClassMask = 64, Faction = "Horde" },
+        [16837] = { ClassMask = 64, Faction = classicHorde },
+        [16838] = { ClassMask = 64, Faction = classicHorde },
+        [16839] = { ClassMask = 64, Faction = classicHorde },
+        [16840] = { ClassMask = 64, Faction = classicHorde },
+        [16841] = { ClassMask = 64, Faction = classicHorde },
+        [16842] = { ClassMask = 64, Faction = classicHorde },
+        [16843] = { ClassMask = 64, Faction = classicHorde },
+        [16844] = { ClassMask = 64, Faction = classicHorde },
         [16845] = { ClassMask = 4 },
         [16846] = { ClassMask = 4 },
         [16847] = { ClassMask = 4 },
@@ -842,14 +853,14 @@ LootReserve.Data =
         [16850] = { ClassMask = 4 },
         [16851] = { ClassMask = 4 },
         [16852] = { ClassMask = 4 },
-        [16853] = { ClassMask = 2, Faction = "Alliance" },
-        [16854] = { ClassMask = 2, Faction = "Alliance" },
-        [16855] = { ClassMask = 2, Faction = "Alliance" },
-        [16856] = { ClassMask = 2, Faction = "Alliance" },
-        [16857] = { ClassMask = 2, Faction = "Alliance" },
-        [16858] = { ClassMask = 2, Faction = "Alliance" },
-        [16859] = { ClassMask = 2, Faction = "Alliance" },
-        [16860] = { ClassMask = 2, Faction = "Alliance" },
+        [16853] = { ClassMask = 2, Faction = classicAlliance },
+        [16854] = { ClassMask = 2, Faction = classicAlliance },
+        [16855] = { ClassMask = 2, Faction = classicAlliance },
+        [16856] = { ClassMask = 2, Faction = classicAlliance },
+        [16857] = { ClassMask = 2, Faction = classicAlliance },
+        [16858] = { ClassMask = 2, Faction = classicAlliance },
+        [16859] = { ClassMask = 2, Faction = classicAlliance },
+        [16860] = { ClassMask = 2, Faction = classicAlliance },
         [16861] = { ClassMask = 1 },
         [16862] = { ClassMask = 1 },
         [16863] = { ClassMask = 1 },
@@ -904,22 +915,22 @@ LootReserve.Data =
         [16940] = { ClassMask = 4 },
         [16941] = { ClassMask = 4 },
         [16942] = { ClassMask = 4 },
-        [16943] = { ClassMask = 64, Faction = "Horde" },
-        [16944] = { ClassMask = 64, Faction = "Horde" },
-        [16945] = { ClassMask = 64, Faction = "Horde" },
-        [16946] = { ClassMask = 64, Faction = "Horde" },
-        [16947] = { ClassMask = 64, Faction = "Horde" },
-        [16948] = { ClassMask = 64, Faction = "Horde" },
-        [16949] = { ClassMask = 64, Faction = "Horde" },
-        [16950] = { ClassMask = 64, Faction = "Horde" },
-        [16951] = { ClassMask = 2, Faction = "Alliance" },
-        [16952] = { ClassMask = 2, Faction = "Alliance" },
-        [16953] = { ClassMask = 2, Faction = "Alliance" },
-        [16954] = { ClassMask = 2, Faction = "Alliance" },
-        [16955] = { ClassMask = 2, Faction = "Alliance" },
-        [16956] = { ClassMask = 2, Faction = "Alliance" },
-        [16957] = { ClassMask = 2, Faction = "Alliance" },
-        [16958] = { ClassMask = 2, Faction = "Alliance" },
+        [16943] = { ClassMask = 64, Faction = classicHorde },
+        [16944] = { ClassMask = 64, Faction = classicHorde },
+        [16945] = { ClassMask = 64, Faction = classicHorde },
+        [16946] = { ClassMask = 64, Faction = classicHorde },
+        [16947] = { ClassMask = 64, Faction = classicHorde },
+        [16948] = { ClassMask = 64, Faction = classicHorde },
+        [16949] = { ClassMask = 64, Faction = classicHorde },
+        [16950] = { ClassMask = 64, Faction = classicHorde },
+        [16951] = { ClassMask = 2, Faction = classicAlliance },
+        [16952] = { ClassMask = 2, Faction = classicAlliance },
+        [16953] = { ClassMask = 2, Faction = classicAlliance },
+        [16954] = { ClassMask = 2, Faction = classicAlliance },
+        [16955] = { ClassMask = 2, Faction = classicAlliance },
+        [16956] = { ClassMask = 2, Faction = classicAlliance },
+        [16957] = { ClassMask = 2, Faction = classicAlliance },
+        [16958] = { ClassMask = 2, Faction = classicAlliance },
         [16959] = { ClassMask = 1 },
         [16960] = { ClassMask = 1 },
         [16961] = { ClassMask = 1 },
@@ -937,8 +948,8 @@ LootReserve.Data =
         [19340] = { ClassMask = 1024 },
         [19341] = { ClassMask = 1 },
         [19342] = { ClassMask = 8 },
-        [19343] = { ClassMask = 2, Faction = "Alliance" },
-        [19344] = { ClassMask = 64, Faction = "Horde" },
+        [19343] = { ClassMask = 2, Faction = classicAlliance },
+        [19344] = { ClassMask = 64, Faction = classicHorde },
         [19345] = { ClassMask = 16 },
         [19716] = { ClassMask = 134 },
         [19717] = { ClassMask = 73 },
@@ -949,8 +960,8 @@ LootReserve.Data =
         [19722] = { ClassMask = 1090 },
         [19723] = { ClassMask = 385 },
         [19724] = { ClassMask = 28 },
-        [20264] = { Faction = "Alliance" },
-        [20257] = { Faction = "Horde" },
+        [20264] = { Faction = classicAlliance },
+        [20257] = { Faction = classicHorde },
         [20866] = { ClassMask = 140 },
         [20867] = { ClassMask = 265 },
         [20868] = { ClassMask = 21 },
@@ -990,12 +1001,12 @@ LootReserve.Data =
         [21284] = { ClassMask = 16 },
         [21285] = { ClassMask = 16 },
         [21287] = { ClassMask = 16 },
-        [21288] = { ClassMask = 2, Faction = "Alliance" },
-        [21289] = { ClassMask = 2, Faction = "Alliance" },
-        [21290] = { ClassMask = 2, Faction = "Alliance" },
-        [21291] = { ClassMask = 64, Faction = "Horde" },
-        [21292] = { ClassMask = 64, Faction = "Horde" },
-        [21293] = { ClassMask = 64, Faction = "Horde" },
+        [21288] = { ClassMask = 2, Faction = classicAlliance },
+        [21289] = { ClassMask = 2, Faction = classicAlliance },
+        [21290] = { ClassMask = 2, Faction = classicAlliance },
+        [21291] = { ClassMask = 64, Faction = classicHorde },
+        [21292] = { ClassMask = 64, Faction = classicHorde },
+        [21293] = { ClassMask = 64, Faction = classicHorde },
         [21294] = { ClassMask = 1024 },
         [21295] = { ClassMask = 1024 },
         [21296] = { ClassMask = 1024 },
@@ -1008,13 +1019,13 @@ LootReserve.Data =
         [21304] = { ClassMask = 4 },
         [21306] = { ClassMask = 4 },
         [21307] = { ClassMask = 4 },
-        [21453] = { Faction = "Alliance" },
-        [21454] = { Faction = "Horde" },
-        [21486] = { Faction = "Alliance" },
-        [21487] = { Faction = "Horde" },
-        [21803] = { Faction = "Alliance" },
-        [21804] = { Faction = "Horde" },
-        [21889] = { ClassMask = 2, Faction = "Alliance" },
+        [21453] = { Faction = classicAlliance },
+        [21454] = { Faction = classicHorde },
+        [21486] = { Faction = classicAlliance },
+        [21487] = { Faction = classicHorde },
+        [21803] = { Faction = classicAlliance },
+        [21804] = { Faction = classicHorde },
+        [21889] = { ClassMask = 2, Faction = classicAlliance },
         [22349] = { ClassMask = 9 },
         [22350] = { ClassMask = 1094 },
         [22351] = { ClassMask = 400 },
@@ -1047,15 +1058,15 @@ LootReserve.Data =
         [23062] = { ClassMask = 128 },
         [23063] = { ClassMask = 256 },
         [23064] = { ClassMask = 1024 },
-        [23065] = { ClassMask = 64, Faction = "Horde" },
-        [23066] = { ClassMask = 2, Faction = "Alliance" },
+        [23065] = { ClassMask = 64, Faction = classicHorde },
+        [23066] = { ClassMask = 2, Faction = classicAlliance },
         [23067] = { ClassMask = 4 },
         [23069] = { ClassMask = 400 },
-        [23664] = { ClassMask = 64, Faction = "Horde" },
-        [23665] = { ClassMask = 64, Faction = "Horde" },
-        [23666] = { ClassMask = 2, Faction = "Alliance" },
-        [23667] = { ClassMask = 2, Faction = "Alliance" },
-        [23668] = { ClassMask = 2, Faction = "Alliance" },
+        [23664] = { ClassMask = 64, Faction = classicHorde },
+        [23665] = { ClassMask = 64, Faction = classicHorde },
+        [23666] = { ClassMask = 2, Faction = classicAlliance },
+        [23667] = { ClassMask = 2, Faction = classicAlliance },
+        [23668] = { ClassMask = 2, Faction = classicAlliance },
     },
 };
 
@@ -1063,7 +1074,7 @@ function LootReserve.Data:IsItemInCategory(item, category)
     if item == 0 or category <= 0 then return false; end
 
     category = self.Categories[category];
-    if category and category.Children then
+    if category and category.Children and self:IsCategoryVisible(category) then
         for _, child in ipairs(category.Children) do
             if child.Loot then
                 for _, lootItem in ipairs(child.Loot) do
@@ -1086,4 +1097,15 @@ function LootReserve.Data:GetItemCategories(item)
         end
     end
     return categories;
+end
+
+function LootReserve.Data:IsCategoryVisible(category)
+    return not category.Expansion or category.Expansion <= LootReserve:GetCurrentExpansion();
+end
+
+function LootReserve.Data.CategorySorter(a, b, aID, bID)
+    if aID > 0 and bID > 0 and a.Expansion ~= b.Expansion then
+        return a.Expansion > b.Expansion;
+    end
+    return aID < bID;
 end
