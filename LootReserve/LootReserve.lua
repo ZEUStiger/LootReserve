@@ -49,6 +49,14 @@ StaticPopupDialogs["LOOTRESERVE_GENERIC_ERROR"] =
     hideOnEscape = 1,
 };
 
+LOOTRESERVE_BACKDROP_BLACK_4 =
+{
+    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
+    edgeSize = 16,
+    insets = { left = 4, right = 4, top = 4, bottom = 4 },
+};
+
 SLASH_LOOTRESERVE1 = "/lootreserve";
 SLASH_LOOTRESERVE2 = "/reserve";
 SLASH_LOOTRESERVE3 = "/res";

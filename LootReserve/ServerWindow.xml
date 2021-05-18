@@ -313,7 +313,10 @@
 			</OnLoad>
 		</Scripts>
 	</Button>
-	<Frame name="LootReserveReserveListTemplate" virtual="true" enableMouse="true">
+	<Frame name="LootReserveReserveListTemplate" virtual="true" enableMouse="true" inherits="BackdropTemplate">
+		<KeyValues>
+			<KeyValue key="backdropInfo" value="LOOTRESERVE_BACKDROP_BLACK_4" type="global" />
+		</KeyValues>
 		<Size y="200" />
 		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border">
 			<BackgroundInsets left="5" right="5" top="5" bottom="5" />
@@ -663,7 +666,10 @@
 			</Frame>
 		</Frames>
 	</Frame>
-	<Frame name="LootReserveRollPlaceholderTemplate" virtual="true" enableMouse="true">
+	<Frame name="LootReserveRollPlaceholderTemplate" virtual="true" enableMouse="true" inherits="BackdropTemplate">
+		<KeyValues>
+			<KeyValue key="backdropInfo" value="LOOTRESERVE_BACKDROP_BLACK_4" type="global" />
+		</KeyValues>
 		<Backdrop bgFile="Interface\DialogFrame\UI-DialogBox-Background" edgeFile="Interface\Tooltips\UI-Tooltip-Border">
 			<BackgroundInsets left="5" right="5" top="5" bottom="5" />
 			<EdgeSize val="16" />
@@ -1159,7 +1165,7 @@
 			</Frame>
 		</Frames>
 		<Scripts>
-			<OnLoad>
+			<OnLoad inherit="prepend">
 				self.SetItem = function(self, item)
 					if item then
 						self.Item = item;
