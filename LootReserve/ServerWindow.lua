@@ -42,9 +42,11 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
                         button.Roll:Show();
                         button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or deleted and "DEL" or "...");
                         button.Roll:SetTextColor(color.r, color.g, color.b);
+                        button.AlreadyWonHighlight:SetShown(--[[not frame.Historical and self:IsRolling(frame.Item) and--]] LootReserve.Server:HasAlreadyWon(button.Player, frame.Item) and not winner);
                         button.WinnerHighlight:SetShown(winner);
                     else
                         button.Roll:Hide();
+                        button.AlreadyWonHighlight:Hide();
                         button.WinnerHighlight:Hide();
                     end
                 end
@@ -71,6 +73,7 @@ function LootReserve.Server:UpdateReserveListButtons(lockdown)
                 if button:IsShown() then
                     button.WonRolls:SetShown(self.CurrentSession and self.CurrentSession.Members[button.Player] and self.CurrentSession.Members[button.Player].WonRolls);
                     button.WonRolls:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth() + 2 - (button.WonRolls:IsShown() and 0 or 12), 0);
+                    button.AlreadyWonHighlight:SetShown(LootReserve.Server:HasAlreadyWon(button.Player, frame.Item));
                     button.RecentChat:SetShown(frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player));
                 end
             end
@@ -190,6 +193,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
             end
             button.Name:SetText(format("%s%s", LootReserve:ColoredPlayer(player), LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or LootReserve:IsPlayerOnline(player) == false and "|cFF808080 (offline)|r" or ""));
             button.Roll:SetText("");
+            button.AlreadyWonHighlight:Hide();
             button.WinnerHighlight:Hide();
             button:SetPoint("TOPLEFT", frame.ReservesFrame, "TOPLEFT", 0, 5 - reservesHeight);
             button:SetPoint("TOPRIGHT", frame.ReservesFrame, "TOPRIGHT", 0, 5 - reservesHeight);
@@ -364,9 +368,11 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
                         button.Roll:Show();
                         button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or deleted and "DEL" or "...");
                         button.Roll:SetTextColor(color.r, color.g, color.b);
+                        button.AlreadyWonHighlight:SetShown(--[[not frame.Historical and self:IsRolling(frame.Item) and--]] LootReserve.Server:HasAlreadyWon(button.Player, frame.Item) and not winner);
                         button.WinnerHighlight:SetShown(winner);
                     else
                         button.Roll:Hide();
+                        button.AlreadyWonHighlight:Hide();
                         button.WinnerHighlight:Hide();
                     end
                 end
@@ -516,6 +522,7 @@ function LootReserve.Server:UpdateRollList(lockdown)
                 end
                 button.Name:SetText(format("%s%s", LootReserve:ColoredPlayer(player), historical and "" or LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or LootReserve:IsPlayerOnline(player) == false and "|cFF808080 (offline)|r" or ""));
                 button.Roll:SetText("");
+                button.AlreadyWonHighlight:Hide();
                 button.WinnerHighlight:Hide();
                 button:SetPoint("TOPLEFT", frame.ReservesFrame, "TOPLEFT", 0, 5 - reservesHeight);
                 button:SetPoint("TOPRIGHT", frame.ReservesFrame, "TOPRIGHT", 0, 5 - reservesHeight);

@@ -397,6 +397,18 @@ function LootReserve.Server:Startup()
     self:PrepareGuildTracking();
 end
 
+function LootReserve.Server:HasAlreadyWon(player, item)
+    local won = self.CurrentSession and self.CurrentSession.Members[player] and self.CurrentSession.Members[player].WonRolls;
+    if won then
+        for i, roll in ipairs(won) do
+            if roll.Item == item then
+                return true;
+            end
+        end
+    end
+    return false;
+end
+
 function LootReserve.Server:PrepareLootTracking()
     if self.LootTrackingRegistered then return; end
     self.LootTrackingRegistered = true;
