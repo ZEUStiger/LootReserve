@@ -523,3 +523,135 @@ function LootReserve:MakeMenuSeparator()
         },
     };
 end
+
+function LootReserve:RepeatedTable(element, count)
+    local result = { };
+    for i = 1, count do
+        table.insert(result, element);
+    end
+    return result;
+end
+
+function LootReserve:FormatPlayersText(players, colorFunc)
+    colorFunc = colorFunc or function(...) return ...; end
+
+    local playersSorted = { };
+    local playerNames = { };
+    for _, player in ipairs(players) do
+        if not playerNames[player] then
+           table.insert(playersSorted, player);
+           playerNames[player] = true; 
+        end
+    end
+    table.sort(playersSorted);
+
+    local text = "";
+    for _, player in ipairs(playersSorted) do
+        text = text .. (#text > 0 and ", " or "") .. colorFunc(player);
+    end
+    return text;
+end
+
+local function FormatReservesText(players, excludePlayer, colorFunc)
+    colorFunc = colorFunc or function(...) return ...; end
+
+    local reservesCount = { };
+    for _, player in ipairs(players) do
+        if not excludePlayer or player ~= excludePlayer then
+            reservesCount[player] = reservesCount[player] and reservesCount[player] + 1 or 1;
+        end
+    end
+
+    local playersSorted = { };
+    for player in pairs(reservesCount) do
+        table.insert(playersSorted, player);
+    end
+    table.sort(playersSorted);
+
+    local text = "";
+    for _, player in ipairs(playersSorted) do
+        text = text .. (#text > 0 and ", " or "") .. colorFunc(player) .. (reservesCount[player] > 1 and format(" x%d", reservesCount[player]) or "");
+    end
+    return text;
+end
+
+function LootReserve:FormatReservesText(players, excludePlayer)
+    return FormatReservesText(players, excludePlayer);
+end
+
+function LootReserve:FormatReservesTextColored(players, excludePlayer)
+    return FormatReservesText(players, excludePlayer, function(...) return LootReserve:ColoredPlayer(...); end);
+end
+
+local function GetReservesData(players, me, colorFunc)
+    local reservesCount = { };
+    for _, player in ipairs(players) do
+        reservesCount[player] = reservesCount[player] and reservesCount[player] + 1 or 1;
+    end
+
+    local uniquePlayers = { };
+    for player in pairs(reservesCount) do
+        table.insert(uniquePlayers, player);
+    end
+
+    return FormatReservesText(players, me, colorFunc), me and reservesCount[me] or 0, #uniquePlayers, #players;
+end
+
+function LootReserve:GetReservesData(players, me)
+    return GetReservesData(players, me);
+end
+
+function LootReserve:GetReservesDataColored(players, me)
+    return GetReservesData(players, me, function(...) return LootReserve:ColoredPlayer(...); end);
+end
+
+local function GetReservesString(server, isUpdate, link, reservesText, myReserves, uniqueReservers, reserves)
+    local blind, multireserve;
+    if server then
+        blind = LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.Settings.Blind;
+        multireserve = LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.Settings.Multireserve;
+
+        if blind then
+            return "";
+        end
+    else
+        blind = LootReserve.Client.Blind;
+        multireserve = LootReserve.Client.Multireserve;
+    end
+
+    if uniqueReservers <= 1 then
+        if myReserves > 0 then
+            return format("You are%s%s reserving %s%s.%s",
+                isUpdate and " now" or "",
+                blind and "" or " the only player",
+                link,
+                (isUpdate or blind) and "" or " thus far",
+                multireserve and format(" You have %d %s on this item.", myReserves, myReserves == 1 and "reserve" or "reserves") or "");
+        else
+           return "";
+        end
+    elseif myReserves > 0 then
+        local otherReserves = reserves - myReserves;
+        local otherReservers = uniqueReservers - 1;
+        return format("There %s%s %d %s for %s: %s.",
+            otherReserves == 1 and "is" or "are",
+            isUpdate and " now" or "",
+            otherReserves,
+            multireserve and format("%s by %d %s", otherReserves == 1 and "other reserve" or "other reserves",
+                                                   otherReservers,
+                                                   otherReservers == 1 and "player" or "players")
+                         or format("%s", otherReserves == 1 and "other contender" or "other contenders"),
+            link,
+            reservesText);
+    else
+        return "";
+    end
+end
+
+function LootReserve:GetReservesString(server, players, player, isUpdate, link)
+    return GetReservesString(self, isUpdate, link, self:GetReservesData(players, player));
+end
+
+function LootReserve:GetReservesStringColored(server, players, player, isUpdate, link)
+    return GetReservesString(server, isUpdate, link, self:GetReservesDataColored(players, player));
+end

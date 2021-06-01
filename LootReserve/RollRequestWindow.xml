@@ -87,6 +87,13 @@
 				<Anchors>
 					<Anchor point="LEFT" relativeKey="$parent.ItemFrame" relativePoint="RIGHT" x="5" />
 				</Anchors>
+				<Layers>
+					<Layer level="OVERLAY">
+						<FontString parentKey="Multi" inherits="GameFontNormalOutline" justifyV="BOTTOM" setAllPoints="true">
+							<Color r="0" g="1" b="0" />
+						</FontString>
+					</Layer>
+				</Layers>
 				<Scripts>
 					<OnClick>
 						LootReserve.Client:RespondToRollRequest(true);

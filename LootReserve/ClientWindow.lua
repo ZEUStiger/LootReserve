@@ -25,30 +25,36 @@ function LootReserve.Client:UpdateReserveStatus()
     for i, frame in ipairs(list.Frames) do
         local item = frame.Item;
         if item ~= 0 then
-            frame.ReserveFrame.ReserveButton:SetShown(self.SessionServer and not self:IsItemReservedByMe(item) and self:HasRemainingReserves() and LootReserve.ItemConditions:IsItemReservableOnClient(item));
+            local _, myReserves, uniquePlayers, totalReserves = LootReserve:GetReservesDataColored(self:GetItemReservers(item), LootReserve:Me());
+            local canReserve = self.SessionServer and self:HasRemainingReserves() and LootReserve.ItemConditions:IsItemReservableOnClient(item) and (not self.Multireserve or myReserves < self.Multireserve);
+            frame.ReserveFrame.ReserveButton:SetShown(canReserve and myReserves == 0);
+            frame.ReserveFrame.MultiReserveButton:SetShown(canReserve and myReserves > 0 and self.Multireserve);
+            frame.ReserveFrame.MultiReserveButton:SetText(format("x%d", myReserves + 1));
             frame.ReserveFrame.CancelReserveButton:SetShown(self.SessionServer and self:IsItemReservedByMe(item) and self.AcceptingReserves);
+            frame.ReserveFrame.CancelReserveButton:SetWidth(frame.ReserveFrame.ReserveButton:GetWidth() - (frame.ReserveFrame.MultiReserveButton:IsShown() and frame.ReserveFrame.MultiReserveButton:GetWidth() - select(4, frame.ReserveFrame.MultiReserveButton:GetPoint(1)) or 0));
             frame.ReserveFrame.ReserveIcon.One:Hide();
             frame.ReserveFrame.ReserveIcon.Many:Hide();
             frame.ReserveFrame.ReserveIcon.Number:Hide();
             frame.ReserveFrame.ReserveIcon.NumberLimit:Hide();
             frame.ReserveFrame.ReserveIcon.NumberMany:Hide();
+            frame.ReserveFrame.ReserveIcon.NumberMulti:Hide();
 
             local pending = self:IsItemPending(item);
             frame.ReserveFrame.ReserveButton:SetEnabled(not pending and not self.Locked);
+            frame.ReserveFrame.MultiReserveButton:SetEnabled(not pending and not self.Locked);
             frame.ReserveFrame.CancelReserveButton:SetEnabled(not pending and not self.Locked);
 
             if self.SessionServer then
-                local reservers = self:GetItemReservers(item);
                 local conditions = self.ItemConditions[item];
                 local numberString;
                 if conditions and conditions.Limit and conditions.Limit ~= 0 then
-                    numberString = format(#reservers >= conditions.Limit and "|cFFFF0000%d/%d|r" or "%d/%d", #reservers, conditions.Limit);
+                    numberString = format(totalReserves >= conditions.Limit and "|cFFFF0000%d/%d|r" or "%d/%d", totalReserves, conditions.Limit);
                 else
-                    numberString = tostring(#reservers);
+                    numberString = tostring(totalReserves);
                 end
 
-                if self:IsItemReservedByMe(item) then
-                    if #reservers == 1 and not self.Blind then
+                if myReserves > 0 then
+                    if uniquePlayers == 1 and not self.Blind then
                         frame.ReserveFrame.ReserveIcon.One:Show();
                     else
                         frame.ReserveFrame.ReserveIcon.Many:Show();
@@ -57,11 +63,15 @@ function LootReserve.Client:UpdateReserveStatus()
                             frame.ReserveFrame.ReserveIcon.NumberMany:Show();
                         end
                     end
+                    if myReserves > 1 then
+                        frame.ReserveFrame.ReserveIcon.NumberMulti:SetText(format("x%d", myReserves));
+                        frame.ReserveFrame.ReserveIcon.NumberMulti:Show();
+                    end
                 else
                     if conditions and conditions.Limit and conditions.Limit ~= 0 then
                         frame.ReserveFrame.ReserveIcon.NumberLimit:SetText(numberString);
                         frame.ReserveFrame.ReserveIcon.NumberLimit:Show();
-                    elseif #reservers > 0 then
+                    elseif totalReserves > 0 then
                         frame.ReserveFrame.ReserveIcon.Number:SetText(numberString);
                         frame.ReserveFrame.ReserveIcon.Number:Show();
                     end

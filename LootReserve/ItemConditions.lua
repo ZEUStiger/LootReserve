@@ -186,16 +186,16 @@ function LootReserve.ItemConditions:TestPlayer(player, item, server)
     local conditions = self:Get(item, server);
     if conditions then
         if conditions.Hidden then
-            return false;
+            return false, LootReserve.Constants.ReserveResult.ItemNotReservable;
         end
         if conditions.ClassMask and not self:TestClassMask(conditions.ClassMask, select(3, UnitClass(player))) then
-            return false;
+            return false, LootReserve.Constants.ReserveResult.FailedClass;
         end
         if conditions.Faction and not self:TestFaction(conditions.Faction) then
-            return false;
+            return false, LootReserve.Constants.ReserveResult.FailedFaction;
         end
         if conditions.Limit and not self:TestLimit(conditions.Limit, item, player, server) then
-            return false, true;
+            return false, LootReserve.Constants.ReserveResult.FailedLimit;
         end
     end
     return true;
@@ -215,12 +215,12 @@ function LootReserve.ItemConditions:TestServer(item)
 end
 
 function LootReserve.ItemConditions:IsItemVisibleOnClient(item)
-    local canReserve, overrideShow = self:TestPlayer("player", item, false);
-    return canReserve and overrideShow ~= false or overrideShow == true;
+    local canReserve, conditionResult = self:TestPlayer("player", item, false);
+    return canReserve or conditionResult == LootReserve.Constants.ReserveResult.FailedLimit;
 end
 
 function LootReserve.ItemConditions:IsItemReservableOnClient(item)
-    local canReserve, overrideShow = self:TestPlayer("player", item, false);
+    local canReserve, conditionResult = self:TestPlayer("player", item, false);
     return canReserve;
 end
 

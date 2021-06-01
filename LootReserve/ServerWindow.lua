@@ -18,7 +18,8 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
 
             local highest = 0;
             if frame.Roll then
-                for player, roll in pairs(frame.Roll.Players) do
+                for playerNumber, roll in pairs(frame.Roll.Players) do
+                    local player = playerNumber:match("^(.*)#%d+$") or playerNumber; -- Fallback for backwards compatibility
                     if highest < roll and (frame.Historical or LootReserve:IsPlayerOnline(player)) then
                         highest = roll;
                     end
@@ -27,9 +28,14 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
 
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    if frame.Roll and frame.Roll.Players[button.Player] then
-                        local roll = frame.Roll.Players[button.Player];
-                        local winner = roll > 0 and highest > 0 and roll == highest;
+                    if frame.Roll and frame.Roll.Players[button.PlayerNumber] then
+                        local roll = frame.Roll.Players[button.PlayerNumber];
+                        local winner;
+                        if frame.Roll.Winners then
+                            winner = LootReserve:Contains(frame.Roll.Winners, button.Player);
+                        else
+                            winner = roll > 0 and highest > 0 and roll == highest; -- Backwards compatibility
+                        end
                         local pass = roll == -1;
                         local deleted = roll == -2;
                         local color = not LootReserve:IsPlayerOnline(button.Player) and GRAY_FONT_COLOR or winner and GREEN_FONT_COLOR or pass and GRAY_FONT_COLOR or deleted and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
@@ -162,6 +168,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
 
         local reservesHeight = 5 + 12 + 2;
         local last = 0;
+        local playerNames = { };
         frame.ReservesFrame.Players = frame.ReservesFrame.Players or { };
         for i, player in ipairs(reserve.Players) do
             if i > #frame.ReservesFrame.Players then
@@ -173,6 +180,10 @@ function LootReserve.Server:UpdateReserveList(lockdown)
             if button.init then button:init(); end
             button:Show();
             button.Player = player;
+
+            playerNames[player] = playerNames[player] and playerNames[player] + 1 or 1;
+            button.PlayerNumber = player .. "#" .. playerNames[player];
+
             button.Unit = unit;
             if not lockdown then
                 button:SetAttribute("unit", unit);
@@ -329,7 +340,8 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
 
             local highest = 0;
             if frame.Roll then
-                for player, roll in pairs(frame.Roll.Players) do
+                for playerNumber, roll in pairs(frame.Roll.Players) do
+                    local player = playerNumber:match("^(.*)#%d+$") or playerNumber; -- Fallback for backwards compatibility
                     if highest < roll and (frame.Historical or LootReserve:IsPlayerOnline(player)) then
                         highest = roll;
                     end
@@ -338,9 +350,14 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
 
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    if frame.Roll and frame.Roll.Players[button.Player] then
-                        local roll = frame.Roll.Players[button.Player];
-                        local winner = roll > 0 and highest > 0 and roll == highest;
+                    if frame.Roll and frame.Roll.Players[button.PlayerNumber] then
+                        local roll = frame.Roll.Players[button.PlayerNumber];
+                        local winner;
+                        if frame.Roll.Winners then
+                            winner = LootReserve:Contains(frame.Roll.Winners, button.Player);
+                        else
+                            winner = roll > 0 and highest > 0 and roll == highest; -- Backwards compatibility
+                        end
                         local pass = roll == -1;
                         local deleted = roll == -2;
                         local color = winner and GREEN_FONT_COLOR or pass and GRAY_FONT_COLOR or deleted and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
@@ -474,13 +491,14 @@ function LootReserve.Server:UpdateRollList(lockdown)
             local reservesHeight = 5 + 12 + 2;
             local last = 0;
             frame.ReservesFrame.Players = frame.ReservesFrame.Players or { };
-            for player, roll in LootReserve:Ordered(roll.Players, function(aRoll, bRoll, aPlayer, bPlayer)
+            for playerNumber, roll in LootReserve:Ordered(roll.Players, function(aRoll, bRoll, aPlayer, bPlayer)
                 if aRoll ~= bRoll then
                     return aRoll > bRoll;
                 else
                     return aPlayer < bPlayer;
                 end
             end) do
+                local player = playerNumber:match("^(.*)#%d+$") or playerNumber; -- Fallback for backwards compatibility
                 last = last + 1;
                 if last > #frame.ReservesFrame.Players then
                     local button = CreateFrame("Button", nil, frame.ReservesFrame, lockdown and "LootReserveReserveListPlayerTemplate" or "LootReserveReserveListPlayerSecureTemplate");
@@ -491,6 +509,7 @@ function LootReserve.Server:UpdateRollList(lockdown)
                 if button.init then button:init(); end
                 button:Show();
                 button.Player = player;
+                button.PlayerNumber = playerNumber;
                 button.Unit = unit;
                 if not lockdown then
                     button:SetAttribute("unit", unit);
@@ -660,12 +679,14 @@ function LootReserve.Server:OnWindowLoad(window)
     self.Window.TopLeftCorner:SetSize(32, 32); -- Blizzard UI bug?
     self.Window.TitleText:SetPoint("TOP", self.Window, "TOP", 0, -4);
     self.Window.TitleText:SetText("Loot Reserve Server");
-    self.Window:SetMinResize(230, 360);
+    self.Window:SetMinResize(230, 365);
+    self.Window.PanelSession.LabelDuration:SetPoint("RIGHT", self.Window.PanelSession.DropDownDuration.Text, "LEFT", -16, 0);
+    self.Window.PanelSession.DropDownDuration:SetPoint("CENTER", self.Window.PanelSession.Duration, "CENTER", (6 + self.Window.PanelSession.LabelDuration:GetStringWidth()) / 2, 0);
     PanelTemplates_SetNumTabs(self.Window, 3);
     PanelTemplates_SetTab(self.Window, 1);
     self:SetWindowTab(1);
     self:UpdateServerAuthority();
-    self:LoadNewSessionSessings();
+    self:LoadNewSessionSettings();
 
     LootReserve:RegisterEvent("GROUP_JOINED", "GROUP_LEFT", "PARTY_LEADER_CHANGED", "PARTY_LOOT_METHOD_CHANGED", "GROUP_ROSTER_UPDATE", function()
         self:UpdateServerAuthority();
@@ -733,8 +754,10 @@ local activeSessionChanges =
     DropDownRaid = "DropDown",
     LabelCount = "Label",
     EditBoxCount = "Disable",
-    LabelDuration = "Label",
-    DropDownDuration = "DropDown",
+    LabelMultireserve = "Label",
+    EditBoxMultireserve = "Disable",
+    LabelDuration = "Hide",
+    DropDownDuration = "Hide",
     ButtonLootEdit = "Disable",
 
     Apply = function(self, panel, active)
@@ -762,6 +785,7 @@ local activeSessionChanges =
 
 function LootReserve.Server:SessionStarted()
     activeSessionChanges:Apply(self.Window.PanelSession, true);
+    self:LoadNewSessionSettings();
     self.Window.PanelSession.CheckButtonBlind:SetChecked(self.CurrentSession.Settings.Blind);
     self.Window.PanelSession.CheckButtonLock:SetChecked(self.CurrentSession.Settings.Lock);
     self.Window.PanelSession.Duration:SetShown(self.CurrentSession.Settings.Duration ~= 0);
@@ -778,6 +802,7 @@ end
 
 function LootReserve.Server:SessionStopped()
     activeSessionChanges:Apply(self.Window.PanelSession, true);
+    self:LoadNewSessionSettings();
     self.Window.PanelSession.CheckButtonBlind:SetChecked(self.CurrentSession.Settings.Blind);
     self.Window.PanelSession.CheckButtonLock:SetChecked(self.CurrentSession.Settings.Lock);
     self.Window.PanelSession.Duration:SetShown(self.CurrentSession.Settings.Duration ~= 0);
@@ -791,6 +816,7 @@ end
 
 function LootReserve.Server:SessionReset()
     activeSessionChanges:Apply(self.Window.PanelSession, false);
+    self:LoadNewSessionSettings();
     self.Window.PanelSession.CheckButtonBlind:SetChecked(self.NewSessionSettings.Blind);
     self.Window.PanelSession.CheckButtonLock:SetChecked(self.NewSessionSettings.Lock);
     self.Window.PanelSession.Duration:Hide();
@@ -839,7 +865,7 @@ function LootReserve.Server:UpdateAddonUsers()
     self.Window.PanelSession.AddonUsers:SetShown(#self.AddonUsers > 0 or GetNumGroupMembers() > 0);
 end
 
-function LootReserve.Server:LoadNewSessionSessings()
+function LootReserve.Server:LoadNewSessionSettings()
     if not self.Window:IsShown() then return; end
     
     local function setDropDownValue(dropDown, value)
@@ -851,6 +877,9 @@ function LootReserve.Server:LoadNewSessionSessings()
 
     setDropDownValue(self.Window.PanelSession.DropDownRaid, self.NewSessionSettings.LootCategory);
     self.Window.PanelSession.EditBoxCount:SetText(tostring(self.NewSessionSettings.MaxReservesPerPlayer));
+    self.Window.PanelSession.EditBoxMultireserve:SetEnabled(not self.CurrentSession and self.NewSessionSettings.MaxReservesPerPlayer > 1);
+    self.Window.PanelSession.EditBoxMultireserve:SetText(self.NewSessionSettings.Multireserve and tostring(self.NewSessionSettings.Multireserve) or "Off");
+    self.Window.PanelSession.EditBoxMultireserve:SetMinMaxValues(1, self.NewSessionSettings.MaxReservesPerPlayer);
     setDropDownValue(self.Window.PanelSession.DropDownDuration, self.NewSessionSettings.Duration);
     if self.CurrentSession then
         self.Window.PanelSession.CheckButtonBlind:SetChecked(self.CurrentSession.Settings.Blind);

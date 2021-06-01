@@ -16,6 +16,7 @@ LootReserve.Client =
     ItemConditions = { },
     RollRequest = nil,
     Blind = false,
+    Multireserve = nil,
 
     Settings =
     {
@@ -25,7 +26,7 @@ LootReserve.Client =
         CollapsedExpansions = { },
         CollapsedCategories = { },
         SwapLDBButtons = false,
-        LibDBIcon = { }
+        LibDBIcon = { },
     },
     CharacterFavorites = { },
     GlobalFavorites = { },
@@ -106,7 +107,7 @@ function LootReserve.Client:SearchForServer(startup)
     LootReserve.Comm:BroadcastHello();
 end
 
-function LootReserve.Client:StartSession(server, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration, blind)
+function LootReserve.Client:StartSession(server, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration, blind, multireserve)
     self:ResetSession(true);
     self.SessionServer = server;
     self.StartTime = startTime;
@@ -115,6 +116,7 @@ function LootReserve.Client:StartSession(server, starting, startTime, acceptingR
     self.Duration = duration;
     self.MaxDuration = maxDuration;
     self.Blind = blind;
+    self.Multireserve = multireserve;
 
     if self.MaxDuration ~= 0 and not self.DurationUpdateRegistered then
         self.DurationUpdateRegistered = true;
@@ -169,6 +171,8 @@ function LootReserve.Client:ResetSession(refresh)
     self.LootCategory = nil;
     self.ItemReserves = { };
     self.ItemConditions = { };
+    self.Blind = false;
+    self.Multireserve = nil;
     self.PendingItems = { };
 
     if not refresh then
