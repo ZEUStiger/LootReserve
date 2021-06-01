@@ -16,6 +16,7 @@ LootReserve.Client =
     ItemConditions = { },
     RollRequest = nil,
     Blind = false,
+    Multireserve = nil,
 
     Settings =
     {
@@ -25,7 +26,7 @@ LootReserve.Client =
         CollapsedExpansions = { },
         CollapsedCategories = { },
         SwapLDBButtons = false,
-        LibDBIcon = { }
+        LibDBIcon = { },
     },
     CharacterFavorites = { },
     GlobalFavorites = { },
@@ -72,7 +73,8 @@ function LootReserve.Client:Load()
         icon = "Interface\\Buttons\\UI-GroupLoot-Dice-Up",
         OnClick = function(ldb, button)
             if button == "LeftButton" or button == "RightButton" then
-                SlashCmdList.LOOTRESERVE(((button == "LeftButton") == self.Settings.SwapLDBButtons) and "server" or "");
+                local window = ((button == "LeftButton") == self.Settings.SwapLDBButtons) and LootReserve.Server.Window or LootReserve.Client.Window;
+                window:SetShown(not window:IsShown());
             end
         end,
         OnTooltipShow = function(tooltip)
@@ -105,7 +107,7 @@ function LootReserve.Client:SearchForServer(startup)
     LootReserve.Comm:BroadcastHello();
 end
 
-function LootReserve.Client:StartSession(server, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration, blind)
+function LootReserve.Client:StartSession(server, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration, blind, multireserve)
     self:ResetSession(true);
     self.SessionServer = server;
     self.StartTime = startTime;
@@ -114,6 +116,7 @@ function LootReserve.Client:StartSession(server, starting, startTime, acceptingR
     self.Duration = duration;
     self.MaxDuration = maxDuration;
     self.Blind = blind;
+    self.Multireserve = multireserve;
 
     if self.MaxDuration ~= 0 and not self.DurationUpdateRegistered then
         self.DurationUpdateRegistered = true;
@@ -168,6 +171,8 @@ function LootReserve.Client:ResetSession(refresh)
     self.LootCategory = nil;
     self.ItemReserves = { };
     self.ItemConditions = { };
+    self.Blind = false;
+    self.Multireserve = nil;
     self.PendingItems = { };
 
     if not refresh then

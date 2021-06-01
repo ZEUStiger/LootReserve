@@ -16,6 +16,8 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
         if custom and not self.Settings.RollRequestShowUnusable and LootReserve:IsItemUsable(item) == false then return; end -- Need to check for false, returns nil if item not loaded
     end
 
+    local _, myCount = LootReserve:GetReservesData(players, LootReserve:Me());
+
     self.RollRequest =
     {
         Sender = sender,
@@ -25,6 +27,7 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
         MaxDuration = maxDuration and maxDuration > 0 and maxDuration or nil,
         Phase = phase,
         Example = example,
+        Count = myCount,
     };
     local roll = self.RollRequest;
 
@@ -43,6 +46,8 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
     frame.ItemFrame.Misc:SetText(type);
     frame.ButtonRoll:Disable();
     frame.ButtonRoll:SetAlpha(0.25);
+    frame.ButtonRoll.Multi:SetText(format("x%d", myCount));
+    frame.ButtonRoll.Multi:SetShown(myCount ~= 1);
     frame.ButtonPass:Disable();
     frame.ButtonPass:SetAlpha(0.25);
 
@@ -85,7 +90,9 @@ function LootReserve.Client:RespondToRollRequest(response)
 
     if not self.RollRequest.Example then
         if response then
-            RandomRoll(1, 100);
+            for i = 1, self.RollRequest.Count or 1 do
+                RandomRoll(1, 100);
+            end
         else
             LootReserve.Comm:SendPassRoll(self.RollRequest.Item);
         end

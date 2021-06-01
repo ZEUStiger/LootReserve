@@ -96,6 +96,13 @@
 		<Size y="16" />
 		<Layers>
 			<Layer>
+				<Texture parentKey="AlreadyWonHighlight" file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" alpha="0.25">
+					<Anchors>
+						<Anchor point="TOPLEFT" x="16" />
+						<Anchor point="BOTTOMRIGHT" />
+					</Anchors>
+					<Color r="1" g="1" b="0" />
+				</Texture>
 				<Texture parentKey="WinnerHighlight" file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" alpha="0.5">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="16" />
@@ -128,10 +135,11 @@
 				<Scripts>
 					<OnClick>
 						local player = self:GetParent().Player;
+						local playerNumber = self:GetParent().PlayerNumber;
 						local frame = self:GetParent():GetParent():GetParent();
-						local data = { Player = player, Item = frame.Item };
+						local data = { Player = player, PlayerNumber = playerNumber, Item = frame.Item };
 						local popup = "LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE";
-						if frame.Roll and frame.Roll.Custom then
+						if frame.Roll then
 							popup = "LOOTRESERVE_CONFIRM_FORCED_CANCEL_ROLL";
 						end
 						StaticPopup_Show(popup, LootReserve:ColoredPlayer(player), frame.Link, data);
@@ -149,7 +157,7 @@
 				<Scripts>
 					<OnClick>
 						if LootReserve.Server.RequestedRoll and LootReserve.Server.RequestedRoll.RaidRoll then
-							LootReserve.Server:DeleteRoll(self:GetParent().Player, self:GetParent():GetParent():GetParent().Item);
+							LootReserve.Server:DeleteRoll(self:GetParent().PlayerNumber, self:GetParent():GetParent():GetParent().Item);
 						end
 					</OnClick>
 				</Scripts>
@@ -274,7 +282,7 @@
 					self.ButtonDelete:Show();
 					self.ButtonReroll:Hide();
 				else
-					local roll = frame.Roll.Players[self.Player];
+					local roll = frame.Roll.Players[self.PlayerNumber];
 					local isRaidRoll = frame.Roll.RaidRoll;
 					self.ButtonDelete:SetShown(roll and roll > 0 and not isRaidRoll);
 					self.ButtonReroll:SetShown(roll and roll > 0 and     isRaidRoll);
@@ -363,6 +371,7 @@
 								{ text = "Resolve Tie", disabled = not players or #players &lt;= 1, func = function() LootReserve.Server:ResolveRollTie(self:GetParent().Item); end },
 								{ text = players and format("Announce Winner%s (%s)", #players > 1 and "s" or "", strjoin(", ", unpack(players))) or "Announce Winner", disabled = not players or #players == 0, func = function() LootReserve.Server:FinishRollRequest(self:GetParent().Item); end },
 								{ text = "End Silently", func = function() LootReserve.Server:CancelRollRequest(self:GetParent().Item); end },
+								{ text = "Undo Roll", func = function() LootReserve.Server:CancelRollRequest(self:GetParent().Item, nil, true); end },
 								LootReserve:MakeMenuSeparator(),
 								{ text = "Cancel" },
 							};
@@ -610,7 +619,7 @@
 												end
 											end) do
 												if roll > 0 and (not self.Lines or self.Lines == 0 or self.Lines >= i) then
-													LootReserve:SendChatMessage(format("- %d by %s", roll, player), info.arg1);
+													LootReserve:SendChatMessage(format("- %d by %s", roll, player:match("^(.*)#%d+$") or player), info.arg1);
 													i = i + 1;
 												end
 											end
@@ -1512,13 +1521,13 @@
 							local missingPlayers = { };
 							if LootReserve.Server.CurrentSession then
 								for player, member in pairs(LootReserve.Server.CurrentSession.Members) do
-									if #member.ReservedItems == 0 then
+									if member.ReservesLeft > 0 then
 										table.insert(missingPlayers, player);
 									end
 								end
 							end
 							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-							GameTooltip:SetText(#missingPlayers == 0 and "|cFF00FF00All players reserved items|r" or format("%d |4player:players; without reserves:", #missingPlayers));
+							GameTooltip:SetText(#missingPlayers == 0 and "|cFF00FF00All players reserved items|r" or format("%d |4player:players; missing reserves:", #missingPlayers));
 							for _, player in ipairs(missingPlayers) do
 								GameTooltip:AddLine(LootReserve:ColoredPlayer(player));
 							end
@@ -1530,7 +1539,7 @@
 						local menuWhisperPlayers = { };
 						if LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.AcceptingReserves then
 							for player, member in pairs(LootReserve.Server.CurrentSession.Members) do
-								if #member.ReservedItems == 0 then
+								if member.ReservesLeft > 0 then
 									table.insert(menuWhisperPlayers,
 									{
 										text = LootReserve:ColoredPlayer(player),
@@ -1542,7 +1551,7 @@
 						end
 						local menu =
 						{
-							{ text = "Players Without Reserves", isTitle = true },
+							{ text = "Players Missing Reserves", isTitle = true },
 							{ text = "Whisper All", disabled = #menuWhisperPlayers == 0, func = function() LootReserve.Server:WhisperAllWithoutReserves(); end },
 							{ text = "Whisper...", keepShownOnClick = true, hasArrow = true, menuList = menuWhisperPlayers, disabled = #menuWhisperPlayers == 0 },
 							LootReserve:MakeMenuSeparator(),
@@ -1618,10 +1627,16 @@
 								<Anchor point="TOP" relativeKey="$parent.LabelRaid" relativePoint="BOTTOM" x="-45" y="-38" />
 							</Anchors>
 						</FontString>
-						<FontString parentKey="LabelDuration" inherits="GameFontNormal" text="Duration">
+						<FontString parentKey="LabelMultireserve" inherits="GameFontNormal" text="Multireserves">
 							<Size y="20" />
 							<Anchors>
 								<Anchor point="TOP" relativeKey="$parent.LabelCount" relativePoint="BOTTOM" y="-30" />
+							</Anchors>
+						</FontString>
+						<FontString parentKey="LabelDuration" inherits="GameFontNormal" text="Duration">
+							<Size y="20" />
+							<Anchors>
+								<Anchor point="RIGHT" relativeKey="$parent" /> <!-- Adjusted in LootReserve.Server:OnWindowLoad -->
 							</Anchors>
 						</FontString>
 					</Layer>
@@ -1677,7 +1692,7 @@
 							</OnClick>
 						</Scripts>
 					</Button>
-					<EditBox name="LootReserveServerDropDownCount" parentKey="EditBoxCount" inherits="NumericInputSpinnerTemplate" autoFocus="false">
+					<EditBox parentKey="EditBoxCount" inherits="NumericInputSpinnerTemplate" autoFocus="false">
 						<Size x="40" y="20" />
 						<Anchors>
 							<Anchor point="TOP" relativeKey="$parent.LabelCount" relativePoint="BOTTOM" />
@@ -1708,8 +1723,69 @@
 								else
 									self:SetText("");
 								end
+								if LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer &lt;= 1 then
+									LootReserve.Server.NewSessionSettings.Multireserve = nil;
+								end
+								self:GetParent().EditBoxMultireserve:SetEnabled(not LootReserve.Server.CurrentSession and LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer > 1);
+								self:GetParent().EditBoxMultireserve:SetText(LootReserve.Server.NewSessionSettings.Multireserve and tostring(LootReserve.Server.NewSessionSettings.Multireserve) or "Off");
+								self:GetParent().EditBoxMultireserve:SetMinMaxValues(1, LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer);
 							</OnTextChanged>
 							<OnEnterPressed method="ClearFocus" />
+							<OnEnter>
+								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								GameTooltip:SetText("Reserves");
+								GameTooltip:AddLine("How many reserves can each player make.", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
+								GameTooltip:Show();
+							</OnEnter>
+							<OnLeave function="GameTooltip_Hide" />
+						</Scripts>
+					</EditBox>
+					<EditBox parentKey="EditBoxMultireserve" inherits="NumericInputSpinnerTemplate" autoFocus="false" motionScriptsWhileDisabled="true">
+						<Size x="40" y="20" />
+						<Anchors>
+							<Anchor point="TOP" relativeKey="$parent.LabelMultireserve" relativePoint="BOTTOM" />
+						</Anchors>
+						<Scripts>
+							<OnLoad>
+								self:SetMinMaxValues(1, 10);
+								self:SetJustifyH("CENTER");
+								self.IncrementButton:SetWidth(25);
+								self.IncrementButton:SetHeight(25);
+								self.DecrementButton:SetWidth(25);
+								self.DecrementButton:SetHeight(25);
+								self.DecrementButton:SetPoint("RIGHT", self, "LEFT", 0, 0);
+								-- Hide duplicate regions
+								self.Left:Hide();
+								self.Middle:Hide();
+								self.Right:Hide();
+								-- Move inherited region
+								local _, _, left = self:GetRegions();
+								left:SetPoint("LEFT", self, "LEFT", 0, 0);
+
+								self:SetNumeric(false);
+								function self:SetNumber(number)
+									self:SetText(number and number > 1 and tostring(number) or "Off");
+								end
+							</OnLoad>
+							<OnTextChanged inherit="prepend">
+								local count = tonumber(self:GetText());
+								if count and count > 1 then
+									LootReserve.Server.NewSessionSettings.Multireserve = count;
+									LootReserve.Server.MembersEdit:UpdateMembersList();
+									LootReserve.Server.Import:SessionSettingsUpdated();
+								else
+									LootReserve.Server.NewSessionSettings.Multireserve = nil;
+									self:SetText("Off");
+								end
+							</OnTextChanged>
+							<OnEnterPressed method="ClearFocus" />
+							<OnEnter>
+								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+								GameTooltip:SetText("Multireserves");
+								GameTooltip:AddLine("If enabled - players will be able to reserve the same item multiple times, with each additional reserve allowing them an extra /roll on the item.", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
+								GameTooltip:Show();
+							</OnEnter>
+							<OnLeave function="GameTooltip_Hide" />
 						</Scripts>
 					</EditBox>
 					<CheckButton parentKey="CheckButtonBlind" inherits="LootReserveCheckBoxTemplate">
@@ -1728,7 +1804,7 @@
 									LootReserve.Server.CurrentSession.Settings.Blind = self:GetChecked();
 									LootReserve.Comm:BroadcastSessionInfo();
 									if LootReserve.Server.CurrentSession.Settings.ChatFallback then
-										LootReserve:SendChatMessage(LootReserve.Server.CurrentSession.Settings.Blind and "Blind reserves enabled, you can no longer see what other players have reserved" or "Blind reserves disabled, to see what other players reserved - whisper me:  !reserve", LootReserve.Server:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionBlindToggle));
+										LootReserve:SendChatMessage(LootReserve.Server.CurrentSession.Settings.Blind and "Blind reserves enabled, you can no longer see what other players have reserved" or "Blind reserves disabled, to see what other players reserved - whisper me:  !reserves", LootReserve.Server:GetChatChannel(LootReserve.Constants.ChatAnnouncement.SessionBlindToggle));
 									end
 								end
 							</OnClick>
@@ -1741,7 +1817,7 @@
 							<KeyValue key="tooltipSubtext" value="All reserves (made or missed) are final and cannot be changed after the server stops accepting reserves, even if the session is later resumed. New players, who haven't yet participated in reserves, will be allowed to make them.|n|nThe state of player lock-ins can be viewed and adjusted by clicking the button below." type="string" />
 						</KeyValues>
 						<Anchors>
-							<Anchor point="TOP" relativeKey="$parent.CheckButtonBlind" relativePoint="BOTTOM" y="0" />
+							<Anchor point="TOP" relativeKey="$parent.CheckButtonBlind" relativePoint="BOTTOM" y="2" />
 						</Anchors>
 						<Scripts>
 							<OnClick inherit="prepend">
@@ -1759,7 +1835,7 @@
 					<Button name="LootReserveServerButtonMembersEdit" parentKey="ButtonMembersEdit" inherits="LootReserveGlowingButtonTemplate" text="Players">
 						<Size x="72" y="24" />
 						<Anchors>
-							<Anchor point="TOPLEFT" relativeKey="$parent.CheckButtonLock" relativePoint="BOTTOMLEFT" x="2" y="-2" />
+							<Anchor point="TOPLEFT" relativeKey="$parent.CheckButtonLock" relativePoint="BOTTOMLEFT" x="2" y="0" />
 						</Anchors>
 						<Scripts>
 							<OnClick>
@@ -1767,35 +1843,6 @@
 							</OnClick>
 						</Scripts>
 					</Button>
-					<Frame name="LootReserveServerDropDownDuration" parentKey="DropDownDuration" inherits="UIDropDownMenuTemplate">
-						<Size x="70" y="32" />
-						<Anchors>
-							<Anchor point="TOP" relativeKey="$parent.LabelDuration" relativePoint="BOTTOM" />
-						</Anchors>
-						<Scripts>
-							<OnLoad>
-								self.init = function(self)
-									self.init = nil;
-									UIDropDownMenu_SetWidth(self, self:GetWidth());
-									UIDropDownMenu_JustifyText(self, "LEFT");
-									UIDropDownMenu_Initialize(self, function(frame, level, menuList)
-										local info = UIDropDownMenu_CreateInfo();
-										info.minWidth = self:GetWidth() - 40;
-										info.func = function(info)
-											LootReserve.Server.NewSessionSettings.Duration = info.value;
-											UIDropDownMenu_SetSelectedValue(self, info.value);
-										end
-										for _, time in ipairs({ 0, 10, 30, 60, 90, 120, 180, 240, 300, 600, 900, 1200, 1800, 2700, 3600 }) do
-											info.text = time == 0 and "Manual" or format("%d:%02d", math.floor(time / 60), time % 60);
-											info.value = time;
-											UIDropDownMenu_AddButton(info);
-											info.checked = false;
-										end
-									end);
-								end
-							</OnLoad>
-						</Scripts>
-					</Frame>
 					<Button parentKey="ButtonResetSession" inherits="UIPanelButtonTemplate" text="Reset" hidden="true">
 						<Size x="75" y="23" />
 						<Anchors>
@@ -1842,6 +1889,35 @@
 							<Anchor point="BOTTOM" relativeKey="$parent.ButtonStartSession" relativePoint="TOP" y="10" />
 						</Anchors>
 					</StatusBar>
+					<Frame name="LootReserveServerDropDownDuration" parentKey="DropDownDuration" inherits="UIDropDownMenuTemplate">
+						<Size x="70" y="32" />
+						<Anchors>
+							<Anchor point="CENTER" relativeKey="$parent.Duration" relativePoint="CENTER" x="0" y="0" /> <!-- Adjusted in LootReserve.Server:OnWindowLoad -->
+						</Anchors>
+						<Scripts>
+							<OnLoad>
+								self.init = function(self)
+									self.init = nil;
+									UIDropDownMenu_SetWidth(self, self:GetWidth());
+									UIDropDownMenu_JustifyText(self, "LEFT");
+									UIDropDownMenu_Initialize(self, function(frame, level, menuList)
+										local info = UIDropDownMenu_CreateInfo();
+										info.minWidth = self:GetWidth() - 40;
+										info.func = function(info)
+											LootReserve.Server.NewSessionSettings.Duration = info.value;
+											UIDropDownMenu_SetSelectedValue(self, info.value);
+										end
+										for _, time in ipairs({ 0, 10, 30, 60, 90, 120, 180, 240, 300, 600, 900, 1200, 1800, 2700, 3600 }) do
+											info.text = time == 0 and "Manual" or format("%d:%02d", math.floor(time / 60), time % 60);
+											info.value = time;
+											UIDropDownMenu_AddButton(info);
+											info.checked = false;
+										end
+									end);
+								end
+							</OnLoad>
+						</Scripts>
+					</Frame>
 					<Frame parentKey="AddonUsers" hidden="true" enableMouse="true" frameLevel="1001">
 						<Size x="30" y="12" />
 						<Anchors>
@@ -1977,7 +2053,7 @@
 			</OnLoad>
 			<OnShow>
 				PlaySound(SOUNDKIT.IG_CHARACTER_INFO_OPEN);
-				LootReserve.Server:LoadNewSessionSessings();
+				LootReserve.Server:LoadNewSessionSettings();
 				LootReserve.Server:UpdateReserveList();
 				LootReserve.Server:UpdateRollList();
 			</OnShow>

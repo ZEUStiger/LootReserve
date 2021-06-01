@@ -124,13 +124,24 @@
 						</Scripts>
 					</Button>
 					<Button parentKey="CancelReserveButton" inherits="UIPanelButtonTemplate" hidden="true" text="Cancel">
+						<Size x="53" y="23" />
 						<Anchors>
-							<Anchor point="TOPLEFT" relativeKey="$parent.ReserveButton" />
-							<Anchor point="BOTTOMRIGHT" relativeKey="$parent.ReserveButton" />
+							<Anchor point="RIGHT" relativeKey="$parent.ReserveButton" />
 						</Anchors>
 						<Scripts>
 							<OnClick>
 								LootReserve.Client:CancelReserve(self:GetParent():GetParent().Item);
+							</OnClick>
+						</Scripts>
+					</Button>
+					<Button parentKey="MultiReserveButton" inherits="UIPanelButtonTemplate" text="x2">
+						<Size x="25" y="23" />
+						<Anchors>
+							<Anchor point="RIGHT" relativeKey="$parent.CancelReserveButton" relativePoint="LEFT" x="3" />
+						</Anchors>
+						<Scripts>
+							<OnClick>
+								LootReserve.Client:Reserve(self:GetParent():GetParent().Item);
 							</OnClick>
 						</Scripts>
 					</Button>
@@ -154,7 +165,7 @@
 								</FontString>
 							</Layer>
 							<Layer level="OVERLAY">
-								<FontString parentKey="NumberMany" inherits="GameFontNormal" justifyV="BOTTOM" justifyH="RIGHT">
+								<FontString parentKey="NumberMany" inherits="GameFontNormalOutline" justifyV="TOP" justifyH="RIGHT">
 									<Anchors>
 										<Anchor point="TOP" />
 										<Anchor point="BOTTOM" />
@@ -162,29 +173,32 @@
 										<Anchor point="RIGHT" />
 									</Anchors>
 								</FontString>
+								<FontString parentKey="NumberMulti" inherits="GameFontNormalOutline" outline="NORMAL" justifyV="BOTTOM" setAllPoints="true">
+									<Color r="0" g="1" b="0" />
+								</FontString>
 							</Layer>
 						</Layers>
 						<Scripts>
 							<OnEnter>
 								local item = self:GetParent():GetParent().Item;
-								local reservers = LootReserve.Client:GetItemReservers(item);
+								local _, myReserves, uniquePlayers, totalReserves = LootReserve:GetReservesData(LootReserve.Client:GetItemReservers(item), LootReserve:Me());
 
 								if LootReserve.Client:IsItemReservedByMe(item) and LootReserve.Client.Blind then
 									GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 									GameTooltip:SetText("You reserved this item");
 									GameTooltip:AddLine("It will be rolled among all contenders if it drops.", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
-								elseif LootReserve.Client:IsItemReservedByMe(item) and #reservers == 1 then
+								elseif myReserves > 0 and uniquePlayers == 1 then
 									GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
 									GameTooltip:SetText("Reserved only by you", GREEN_FONT_COLOR.r, GREEN_FONT_COLOR.g, GREEN_FONT_COLOR.b, 1);
 									GameTooltip:AddLine("Unless someone else reserves it - you will receive it if it drops.", HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
-								elseif #reservers &gt; 0 then
-									local text = "It will be rolled among all contenders if it drops:";
-									for _, player in ipairs(reservers) do
-										text = text .. "|n" .. LootReserve:ColoredPlayer(player);
-									end
+								elseif totalReserves > 0 then
 									GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-									GameTooltip:SetText(format("Reserved by %d |4player:players;", #reservers));
-									GameTooltip:AddLine(text, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
+									if LootReserve.Client.Multireserve then
+										GameTooltip:SetText(format("Reserved %d |4time:times; by %d |4player:players;", totalReserves, uniquePlayers));
+									else
+										GameTooltip:SetText(format("Reserved by %d |4player:players;", totalReserves));
+									end
+									GameTooltip:AddLine(format("It will be rolled among all contenders if it drops:|n%s", LootReserve:GetReservesDataColored(LootReserve.Client:GetItemReservers(item)):gsub(", ", "|n")), HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, 1, 1);
 								else
 									return;
 								end
