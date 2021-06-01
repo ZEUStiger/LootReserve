@@ -319,7 +319,7 @@ function LootReserve.Server:Load()
             end
         end
 
-        local fields = { "AcceptingReserves", "Settings", "StartTime", "Duration", "DurationEndTimestamp", "Members", "ItemReserves" };
+        local fields = { "AcceptingReserves", "Settings", "StartTime", "Duration", "DurationEndTimestamp", "Members", "WonItems", "ItemReserves", "LootTracking" };
         for _, field in ipairs(fields) do
             verifySessionField(field);
         end
@@ -585,6 +585,10 @@ function LootReserve.Server:PrepareSession()
                 if not link then return; end
 
                 local item = tonumber(link:match("item:(%d+)"));
+                if item and self.CurrentSession.WonItems[item] then
+                    local reservesText = LootReserve:FormatReservesTextColored(self.CurrentSession.WonItems[item].Players);
+                    tooltip:AddLine("|TInterface\\BUTTONS\\UI-GroupLoot-Coin-Up:32:32:0:-4|t Won by " .. reservesText, 1, 1, 1);
+                end
                 if item and self.CurrentSession.ItemReserves[item] then
                     local reservesText = LootReserve:FormatReservesTextColored(self.CurrentSession.ItemReserves[item].Players);
                     tooltip:AddLine("|TInterface\\BUTTONS\\UI-GroupLoot-Dice-Up:32:32:0:-4|t Reserved by " .. reservesText, 1, 1, 1);
@@ -855,6 +859,17 @@ function LootReserve.Server:StartSession()
                 ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
                 ReservedItems = { ItemID, ItemID, ... },
                 Locked = nil,
+            },
+            ...
+        },
+        ]]
+        WonItems = { },
+        --[[
+        {
+            [ItemID] =
+            {
+                TotalCount = 0,
+                Players = { PlayerName, PlayerName, ... },
             },
             ...
         },
@@ -1556,6 +1571,14 @@ function LootReserve.Server:FinishRollRequest(item, soleReserver)
                     Time = time(),
                 });
             end
+
+            local itemWinners = self.CurrentSession.WonItems[item] or {
+                TotalCount = 0,
+                Players = { },
+            };
+            self.CurrentSession.WonItems[item] = itemWinners;
+            table.insert(itemWinners.Players, player);
+            itemWinners.TotalCount = itemWinners.TotalCount + 1;
         end
     end
 
