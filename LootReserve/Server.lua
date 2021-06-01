@@ -2223,7 +2223,7 @@ function LootReserve.Server:WhisperAllWithoutReserves()
     if not self.CurrentSession.AcceptingReserves then return; end
 
     for player, member in pairs(self.CurrentSession.Members) do
-        if #member.ReservedItems == 0 and member.ReservesLeft > 0 and LootReserve:IsPlayerOnline(player) then
+        if member.ReservesLeft > 0 and LootReserve:IsPlayerOnline(player) then
             LootReserve:SendChatMessage(format("Don't forget to reserve your items. You have %d %s left. Whisper  !reserve ItemLinkOrName",
                 member.ReservesLeft,
                 member.ReservesLeft == 1 and "reserve" or "reserves"

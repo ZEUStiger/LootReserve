@@ -104,7 +104,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
     local totalPlayers = 0;
     if self.CurrentSession then
         for _, member in pairs(self.CurrentSession.Members) do
-            if #member.ReservedItems > 0 then
+            if member.ReservesLeft == 0 then
                 totalPlayers = totalPlayers + 1;
             end
         end

@@ -1514,13 +1514,13 @@
 							local missingPlayers = { };
 							if LootReserve.Server.CurrentSession then
 								for player, member in pairs(LootReserve.Server.CurrentSession.Members) do
-									if #member.ReservedItems == 0 then
+									if member.ReservesLeft > 0 then
 										table.insert(missingPlayers, player);
 									end
 								end
 							end
 							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-							GameTooltip:SetText(#missingPlayers == 0 and "|cFF00FF00All players reserved items|r" or format("%d |4player:players; without reserves:", #missingPlayers));
+							GameTooltip:SetText(#missingPlayers == 0 and "|cFF00FF00All players reserved items|r" or format("%d |4player:players; missing reserves:", #missingPlayers));
 							for _, player in ipairs(missingPlayers) do
 								GameTooltip:AddLine(LootReserve:ColoredPlayer(player));
 							end
@@ -1532,7 +1532,7 @@
 						local menuWhisperPlayers = { };
 						if LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.AcceptingReserves then
 							for player, member in pairs(LootReserve.Server.CurrentSession.Members) do
-								if #member.ReservedItems == 0 then
+								if member.ReservesLeft > 0 then
 									table.insert(menuWhisperPlayers,
 									{
 										text = LootReserve:ColoredPlayer(player),
@@ -1544,7 +1544,7 @@
 						end
 						local menu =
 						{
-							{ text = "Players Without Reserves", isTitle = true },
+							{ text = "Players Missing Reserves", isTitle = true },
 							{ text = "Whisper All", disabled = #menuWhisperPlayers == 0, func = function() LootReserve.Server:WhisperAllWithoutReserves(); end },
 							{ text = "Whisper...", keepShownOnClick = true, hasArrow = true, menuList = menuWhisperPlayers, disabled = #menuWhisperPlayers == 0 },
 							LootReserve:MakeMenuSeparator(),
