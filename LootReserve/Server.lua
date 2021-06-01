@@ -474,6 +474,43 @@ function LootReserve.Server:PrepareGuildTracking()
     GuildRoster();
 end
 
+function LootReserve.Server:UpdateGroupMembers()
+    if self.CurrentSession then
+        -- Remove member info for players who left with no reserves
+        local leavers = { };
+        for player, member in pairs(self.CurrentSession.Members) do
+            if not UnitInRaid(player) and #member.ReservedItems == 0 then
+                table.insert(leavers, player);
+
+                -- for i = #member.ReservedItems, 1, -1 do
+                --     self:CancelReserve(player, member.ReservedItems[i], 1, false, true);
+                -- end
+            end
+        end
+
+        for _, player in ipairs(leavers) do
+            self.CurrentSession.Members[player] = nil;
+            self.MembersEdit:UpdateMembersList();
+        end
+
+        -- Add member info for players who joined
+        LootReserve:ForEachRaider(function(name)
+            if not self.CurrentSession.Members[name] then
+                self.CurrentSession.Members[name] =
+                {
+                    ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
+                    ReservedItems = { },
+                    Locked = nil,
+                };
+                self.MembersEdit:UpdateMembersList();
+            end
+        end);
+    end
+    self:UpdateReserveList();
+    self:UpdateRollList();
+    self:UpdateAddonUsers();
+end
+
 function LootReserve.Server:PrepareSession()
     if self.CurrentSession.Settings.Duration ~= 0 and not self.DurationUpdateRegistered then
         self.DurationUpdateRegistered = true;
@@ -516,53 +553,17 @@ function LootReserve.Server:PrepareSession()
             self:UpdateAddonUsers();
         end);
 
-        local function UpdateGroupMembers()
-            if self.CurrentSession then
-                -- Remove member info for players who left (?)
-                --[[
-                local leavers = { };
-                for player, member in pairs(self.CurrentSession.Members) do
-                    if not UnitInRaid(player) then
-                        table.insert(leavers, player);
-
-                        for i = #member.ReservedItems, 1, -1 do
-                            self:CancelReserve(player, member.ReservedItems[i], false, true);
-                        end
-                    end
-                end
-
-                for _, player in ipairs(leavers) do
-                    self.CurrentSession.Members[player] = nil;
-                end
-                ]]
-
-                -- Add member info for players who joined
-                LootReserve:ForEachRaider(function(name)
-                    if not self.CurrentSession.Members[name] then
-                        self.CurrentSession.Members[name] =
-                        {
-                            ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
-                            ReservedItems = { },
-                            Locked = nil,
-                        };
-                        self.MembersEdit:UpdateMembersList();
-                    end
-                end);
-            end
-            self:UpdateReserveList();
-            self:UpdateRollList();
-            self:UpdateAddonUsers();
-        end
-        
-        LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", UpdateGroupMembers);
+        LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", function()
+            self:UpdateGroupMembers();
+        end);
         LootReserve:RegisterEvent("UNIT_NAME_UPDATE", function(unit)
             if unit and (stringStartsWith(unit, "raid") or stringStartsWith(unit, "party")) then
-                UpdateGroupMembers();
+                self:UpdateGroupMembers();
             end
         end);
         LootReserve:RegisterEvent("UNIT_CONNECTION", function(unit)
             if unit and (stringStartsWith(unit, "raid") or stringStartsWith(unit, "party")) then
-                UpdateGroupMembers();
+                self:UpdateGroupMembers();
             end
         end);
 
@@ -1323,6 +1324,9 @@ function LootReserve.Server:CancelReserve(player, item, count, chat, forced)
             WhisperOthers();
         end
     end
+
+    -- Remove member info if player no longer has any reserves left and isn't in the group anymore
+    self:UpdateGroupMembers();
 
     -- Update UI
     self:UpdateReserveList();
