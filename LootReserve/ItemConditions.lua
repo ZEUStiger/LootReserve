@@ -166,14 +166,9 @@ function LootReserve.ItemConditions:TestLimit(limit, item, player, server)
             return true;
         end
 
-        if LootReserve:Contains(reserves.Players, player) then
-            -- Player is already reserving the item - allow them to cancel
-            return true;
-        end
-
         return #reserves.Players < limit;
     else
-        return LootReserve.Client:IsItemReservedByMe(item) or #LootReserve.Client:GetItemReservers(item) < limit;
+        return #LootReserve.Client:GetItemReservers(item) < limit;
     end
 end
 
