@@ -72,7 +72,8 @@ function LootReserve.Client:Load()
         icon = "Interface\\Buttons\\UI-GroupLoot-Dice-Up",
         OnClick = function(ldb, button)
             if button == "LeftButton" or button == "RightButton" then
-                SlashCmdList.LOOTRESERVE(((button == "LeftButton") == self.Settings.SwapLDBButtons) and "server" or "");
+                local window = ((button == "LeftButton") == self.Settings.SwapLDBButtons) and LootReserve.Server.Window or LootReserve.Client.Window;
+                window:SetShown(not window:IsShown());
             end
         end,
         OnTooltipShow = function(tooltip)
