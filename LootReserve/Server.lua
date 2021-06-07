@@ -1657,8 +1657,8 @@ function LootReserve.Server:FinishRollRequest(item, soleReserver)
         self:CancelRollRequest(item, players);
     end
 
-    self:UpdateReserveListButtons();
-    self:UpdateRollListButtons();
+    self:UpdateReserveListRolls();
+    self:UpdateRollListRolls();
     self.MembersEdit:UpdateMembersList();
 end
 
@@ -2144,7 +2144,7 @@ function LootReserve.Server:PassRoll(player, item, chat)
     end
 
     self:UpdateReserveListRolls();
-    self:UpdateRollListRolls();
+    self:UpdateRollList();
 
     self:TryFinishRoll();
 end
@@ -2180,7 +2180,7 @@ function LootReserve.Server:DeleteRoll(playerNumber, item)
     end
 
     self:UpdateReserveListRolls();
-    self:UpdateRollListRolls();
+    self:UpdateRollList();
 
     self:TryFinishRoll();
 end
