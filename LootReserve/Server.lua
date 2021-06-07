@@ -655,7 +655,7 @@ function LootReserve.Server:PrepareSession()
 
             text = LootReserve:StringTrim(text);
             if command == "cancel" then
-                local count = tonumber(text:match("^[Xx]?%s-(%d+)%s-[Xx]?$"));
+                local count = tonumber(text:match("^[Xx]?%s*(%d+)%s*[Xx]?$"));
                 if #text == 0 then
                     count = 1;
                 end
@@ -690,13 +690,13 @@ function LootReserve.Server:PrepareSession()
             end
 
             local item = tonumber(text:match("item:(%d+)"));
-            local count = tonumber(text:match("%]|h|r%s-[xX]?%s-(%d+)"));
+            local count = tonumber(text:match("%]|h|r%s*[xX]?%s*(%d+)"));
             if item then
                 handleItemCommand(item, command, count);
             else
-                count = tonumber(text:match("%s-[xX]?%s-(%d+)%s-[Xx]?$"));
+                count = tonumber(text:match("%s*[xX]?%s*(%d+)%s*[Xx]?$"));
                 if count then
-                    text = text:match("^(.-)%s-[xX]?%s-(%d+)%s-[Xx]?$");
+                    text = text:match("^(.-)%s*[xX]?%s*(%d+)%s*[Xx]?$");
                 else
                     count = 1;
                 end
