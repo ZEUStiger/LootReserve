@@ -38,6 +38,7 @@ LootReserve.Server =
         MasterLooting = false,
         ItemConditions = { },
         CollapsedExpansions = { },
+        HighlightSameItemWinners = false,
     },
     RequestedRoll = nil,
     RollHistory = { },

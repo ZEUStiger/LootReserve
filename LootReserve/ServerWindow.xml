@@ -96,12 +96,12 @@
 		<Size y="16" />
 		<Layers>
 			<Layer>
-				<Texture parentKey="AlreadyWonHighlight" file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" alpha="0.25">
+				<Texture parentKey="AlreadyWonHighlight" file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" alpha="0.5">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="16" />
 						<Anchor point="BOTTOMRIGHT" />
 					</Anchors>
-					<Color r="1" g="1" b="0" />
+					<Color r="1" g="0" b="0" />
 				</Texture>
 				<Texture parentKey="WinnerHighlight" file="Interface\QUESTFRAME\UI-QuestTitleHighlight" alphaMode="ADD" alpha="0.5">
 					<Anchors>
@@ -1366,15 +1366,20 @@
 						end
 
 						-- Callbacks
-						local function RefreshReserves()
+						local function RefreshReservesSorting()
 							LootReserve.Server:UpdateReserveList();
 							CloseMenus();
 							self:Click();
+							LootReserve:OpenSubMenu("#sort");
 						end
 						local function RefreshWinToGuildThreshold()
 							CloseMenus();
 							self:Click();
 							LootReserve:OpenSubMenu("#guild");
+						end
+						local function RefreshReservesAndRolls()
+							LootReserve.Server:UpdateReserveList();
+							LootReserve.Server:UpdateRollsList();
 						end
 						local function ToggleGlobalProfile(enabled)
 							if enabled then
@@ -1433,11 +1438,14 @@
 							MakeMenuToggle("Send Reserve Updates",     "ChatUpdates",       "Send whispers to players without addons if someone else reserves or cancels the reserve of the items that they have reserved as well."),
 							MakeMenuToggle("Slow Chat Messages",       "ChatThrottle",      "Slow down broadcasting of Raid and Whisper messages. Will lead to some messages being delivered late. Enable only if WoW servers are blocking your messages under suspicion of spam."),
 							LootReserve:MakeMenuSeparator(),
-							{ text = "Reserves Sorting", isTitle = true },
-							MakeMenuRadio("By Time",   "ReservesSorting", LootReserve.Constants.ReservesSorting.ByTime,   "Sort reserves by the time the item was first reserved in the current session.", RefreshReserves),
-							MakeMenuRadio("By Name",   "ReservesSorting", LootReserve.Constants.ReservesSorting.ByName,   "Sort reserves by the name of the item.", RefreshReserves),
-							MakeMenuRadio("By Boss",   "ReservesSorting", LootReserve.Constants.ReservesSorting.BySource, "Sort reserves by the order of the boss the item first drops from.", RefreshReserves),
-							MakeMenuRadio("By Looter", "ReservesSorting", LootReserve.Constants.ReservesSorting.ByLooter, "Sort reserves by the name of one of the players that looted this item in the current session.|n|nShow items from the currently looted corpse/container on top.|n|nFade out items not looted by anyone.|cFF808080 (applies only after some items have been looted in the raid)|r", RefreshReserves),
+							{ text = "Display", isTitle = true },
+							{ text = format("Sort Reserves: %s", LootReserve.Constants.ReservesSortingText[LootReserve.Server.Settings.ReservesSorting] or "???"), arg1 = "#sort", keepShownOnClick = true, hasArrow = true, menuList = {
+								MakeMenuRadio(LootReserve.Constants.ReservesSortingText[LootReserve.Constants.ReservesSorting.ByTime  ], "ReservesSorting", LootReserve.Constants.ReservesSorting.ByTime,   "Sort reserves by the time the item was first reserved in the current session.", RefreshReservesSorting),
+								MakeMenuRadio(LootReserve.Constants.ReservesSortingText[LootReserve.Constants.ReservesSorting.ByName  ], "ReservesSorting", LootReserve.Constants.ReservesSorting.ByName,   "Sort reserves by the name of the item.", RefreshReservesSorting),
+								MakeMenuRadio(LootReserve.Constants.ReservesSortingText[LootReserve.Constants.ReservesSorting.BySource], "ReservesSorting", LootReserve.Constants.ReservesSorting.BySource, "Sort reserves by the order of the boss the item first drops from.", RefreshReservesSorting),
+								MakeMenuRadio(LootReserve.Constants.ReservesSortingText[LootReserve.Constants.ReservesSorting.ByLooter], "ReservesSorting", LootReserve.Constants.ReservesSorting.ByLooter, "Sort reserves by the name of one of the players that looted this item in the current session.|n|nShow items from the currently looted corpse/container on top.|n|nFade out items not looted by anyone.|cFF808080 (applies only after some items have been looted in the raid)|r", RefreshReservesSorting),
+							} },
+							MakeMenuToggle("Highlight Previous Winners", "HighlightSameItemWinners", "Show a red highlight for players who are currently rolling on an item, but have already won that item earlier during the session.|n|nThis disables the green highlight for highest rolling players, but the highest roll number will still be colored green.", function() LootReserve.Server:UpdateReserveList(); LootReserve.Server:UpdateRollList(); end),
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Storage", isTitle = true },
 							MakeMenuToggle("Use Global Profile", "UseGlobalProfile", "By default all the data about the active reserves session is stored per-character. Enable this to share the same session between all characters on your account.|n|nThe session from your current character will be the one propagated to others.", ToggleGlobalProfile),

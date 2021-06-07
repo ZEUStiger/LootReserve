@@ -104,3 +104,12 @@ LootReserve.Constants.CancelReserveResultText =
     [result.InternalError] = "Internal error",
     [result.NotEnoughReserves] = "You don't have that many reserves on that item",
 };
+
+local enum = LootReserve.Constants.ReservesSorting;
+LootReserve.Constants.ReservesSortingText =
+{
+    [enum.ByTime] = "By Time",
+    [enum.ByName] = "By Item Name",
+    [enum.BySource] = "By Boss",
+    [enum.ByLooter] = "By Looter",
+};
