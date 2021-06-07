@@ -78,6 +78,26 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
             self:RollRequested(sender, item, players, custom, duration, maxDuration, phase);
         end);
     end
+
+    if not self.RollMatcherRegistered then
+        self.RollMatcherRegistered = true;
+        local rollMatcher = LootReserve:FormatToRegexp(RANDOM_ROLL_RESULT);
+        LootReserve:RegisterEvent("CHAT_MSG_SYSTEM", function(text)
+            if self.RollRequest and frame:IsShown() then
+                local player, roll, min, max = text:match(rollMatcher);
+                if LootReserve:IsMe(player) and roll and min == "1" and max == "100" and tonumber(roll) then
+                    if self.RollRequest.Count > 1 then
+                        self.RollRequest.Count = self.RollRequest.Count - 1;
+                        local myCount = self.RollRequest.Count;
+                        frame.ButtonRoll.Multi:SetText(format("x%d", myCount));
+                        frame.ButtonRoll.Multi:SetShown(myCount ~= 1);
+                    else
+                        frame:Hide();
+                    end
+                end
+            end
+        end);
+    end
 end
 
 function LootReserve.Client:RespondToRollRequest(response)

@@ -177,9 +177,6 @@ StaticPopupDialogs["LOOTRESERVE_CONFIRM_ANNOUNCE_BLIND_RESERVES"] =
     hideOnEscape = 1,
 };
 
-local function formatToRegexp(fmt)
-    return fmt:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)");
-end
 local function stringStartsWith(str, start)
     return str:sub(1, #start) == start;
 end
@@ -413,10 +410,10 @@ function LootReserve.Server:PrepareLootTracking()
     if self.LootTrackingRegistered then return; end
     self.LootTrackingRegistered = true;
 
-    local loot = formatToRegexp(LOOT_ITEM);
-    local lootMultiple = formatToRegexp(LOOT_ITEM_MULTIPLE);
-    local lootSelf = formatToRegexp(LOOT_ITEM_SELF);
-    local lootSelfMultiple = formatToRegexp(LOOT_ITEM_SELF_MULTIPLE);
+    local loot = LootReserve:FormatToRegexp(LOOT_ITEM);
+    local lootMultiple = LootReserve:FormatToRegexp(LOOT_ITEM_MULTIPLE);
+    local lootSelf = LootReserve:FormatToRegexp(LOOT_ITEM_SELF);
+    local lootSelfMultiple = LootReserve:FormatToRegexp(LOOT_ITEM_SELF_MULTIPLE);
     LootReserve:RegisterEvent("CHAT_MSG_LOOT", function(text)
         local looter, item, count;
         item, count = text:match(lootSelfMultiple);
@@ -1769,7 +1766,7 @@ function LootReserve.Server:PrepareRequestRoll()
 
     if not self.RollMatcherRegistered then
         self.RollMatcherRegistered = true;
-        local rollMatcher = formatToRegexp(RANDOM_ROLL_RESULT);
+        local rollMatcher = LootReserve:FormatToRegexp(RANDOM_ROLL_RESULT);
         LootReserve:RegisterEvent("CHAT_MSG_SYSTEM", function(text)
             if self.RequestedRoll then
                 local player, roll, min, max = text:match(rollMatcher);
