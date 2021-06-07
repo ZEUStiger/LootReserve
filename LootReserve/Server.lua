@@ -48,6 +48,7 @@ LootReserve.Server =
     Import = { },
     Export = { },
     PendingMasterLoot = nil,
+    ExtraRollRequestNag = { },
 
     ReservableItems = { },
     ItemNames = { },
@@ -1817,40 +1818,62 @@ function LootReserve.Server:PrepareRequestRoll()
                         end
                         count = count + 1;
                     end
-                    count = count - 1;
 
                     self:UpdateReserveListRolls();
                     self:UpdateRollList();
+
+                    if self.ExtraRollRequestNag[player] then
+                        self.ExtraRollRequestNag[player]:Cancel();
+                        self.ExtraRollRequestNag[player] = nil;
+                    end
 
                     if not self:TryFinishRoll() then
                         if extraRolls > 0 then
                             -- RollRequestWindow will currently just trigger /roll multiple times, uncomment to send roll request after roll request until the player exhausts all their roll slots
                             -- LootReserve.Comm:SendRequestRoll(player, self.RequestedRoll.Item, {player}, self.RequestedRoll.Custom, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration, self.RequestedRoll.Phases and self.RequestedRoll.Phases[1] or "");
-                            if not self:IsAddonUser(player) then
-                                local item = self.RequestedRoll.Item;
-                                local function WhisperPlayer()
-                                    if not self.RequestedRoll or self.RequestedRoll.Item ~= item then return; end
 
-                                    local name, link = GetItemInfo(item);
-                                    if not name or not link then
-                                        C_Timer.After(0.25, WhisperPlayer);
-                                        return;
-                                    end
+                            local closureRoll = self.RequestedRoll;
+                            local closureItem = self.RequestedRoll.Item;
+                            local function WhisperPlayer()
+                                if not self.RequestedRoll or self.RequestedRoll ~= closureRoll or self.RequestedRoll.Item ~= closureItem then return; end
 
-                                    local durationStr = "";
-                                    if self.RequestedRoll.Duration then
-                                        local time = math.ceil(self.RequestedRoll.Duration);
-                                        durationStr = time < 60      and format(" (%d %s)", time,      time ==  1 and "sec" or "secs")
-                                                   or time % 60 == 0 and format(" (%d %s)", time / 60, time == 60 and "min" or "mins")
-                                                   or                    format(" (%d:%02d mins)", math.floor(time / 60), time % 60);
+                                local count = 1;
+                                local extraRolls = 0;
+                                while self.RequestedRoll.Players[player .. "#" .. count] do
+                                    if self.RequestedRoll.Players[player .. "#" .. count] == 0 then
+                                        extraRolls = extraRolls + 1;
                                     end
-                                    LootReserve:SendChatMessage(format("Please /roll again on %s you reserved%s.%s",
-                                        link,
-                                        count > 1 and format(" (%d/%d)", count - extraRolls + 1, count) or "",
-                                        durationStr
-                                    ), "WHISPER", player);
+                                    count = count + 1;
                                 end
+                                count = count - 1;
+                                if extraRolls == 0 then
+                                    return;
+                                end
+
+                                local name, link = GetItemInfo(closureItem);
+                                if not name or not link then
+                                    C_Timer.After(0.25, WhisperPlayer);
+                                    return;
+                                end
+
+                                local durationStr = "";
+                                if self.RequestedRoll.Duration then
+                                    local time = math.ceil(self.RequestedRoll.Duration);
+                                    durationStr = time < 60      and format(" (%d %s)", time,      time ==  1 and "sec" or "secs")
+                                                or time % 60 == 0 and format(" (%d %s)", time / 60, time == 60 and "min" or "mins")
+                                                or                    format(" (%d:%02d mins)", math.floor(time / 60), time % 60);
+                                end
+                                LootReserve:SendChatMessage(format("Please /roll again on %s you reserved%s.%s",
+                                    link,
+                                    count > 1 and format(" (%d/%d)", count - extraRolls + 1, count) or "",
+                                    durationStr
+                                ), "WHISPER", player);
+                            end
+
+                            if not self:IsAddonUser(player) then
                                 WhisperPlayer();
+                            else
+                                self.ExtraRollRequestNag[player] = C_Timer.NewTimer(3, WhisperPlayer);
                             end
                         end
                     end
