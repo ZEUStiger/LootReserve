@@ -91,6 +91,8 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
                         local myCount = self.RollRequest.Count;
                         frame.ButtonRoll.Multi:SetText(format("x%d", myCount));
                         frame.ButtonRoll.Multi:SetShown(myCount ~= 1);
+                        frame.ButtonPass:Disable();
+                        frame.ButtonPass:SetAlpha(0.25);
                     else
                         frame:Hide();
                     end

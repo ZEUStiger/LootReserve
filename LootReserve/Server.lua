@@ -2095,6 +2095,19 @@ function LootReserve.Server:PassRoll(player, item, chat)
         return;
     end
 
+    if not chat then
+        -- If the player passed through the addon button - they may have done it after /rolling manually, so ignore it if they have even a single roll already registered
+        local i = 1;
+        while self.RequestedRoll.Players[player .. "#" .. i] do
+            if self.RequestedRoll.Players[player .. "#" .. i] > 0 then
+                return;
+            end
+            i = i + 1;
+        end
+    else
+        -- If the player passed through a chat message - consider it a deliberate choice and overwrite all their rolls with passes
+    end
+
     local success = false;
     local i = 1;
     while self.RequestedRoll.Players[player .. "#" .. i] do
