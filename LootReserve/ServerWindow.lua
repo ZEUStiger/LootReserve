@@ -42,8 +42,13 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
                         button.Roll:Show();
                         button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or deleted and "DEL" or "...");
                         button.Roll:SetTextColor(color.r, color.g, color.b);
-                        button.AlreadyWonHighlight:SetShown(--[[not frame.Historical and self:IsRolling(frame.Item) and--]] LootReserve.Server:HasAlreadyWon(button.Player, frame.Item) and not winner);
-                        button.WinnerHighlight:SetShown(winner);
+                        if LootReserve.Server.Settings.HighlightSameItemWinners and not frame.Historical then
+                            button.AlreadyWonHighlight:SetShown(LootReserve.Server:HasAlreadyWon(button.Player, frame.Item));
+                            button.WinnerHighlight:Hide();
+                        else
+                            button.AlreadyWonHighlight:Hide();
+                            button.WinnerHighlight:SetShown(winner);
+                        end
                     else
                         button.Roll:Hide();
                         button.AlreadyWonHighlight:Hide();
@@ -73,7 +78,6 @@ function LootReserve.Server:UpdateReserveListButtons(lockdown)
                 if button:IsShown() then
                     button.WonRolls:SetShown(self.CurrentSession and self.CurrentSession.Members[button.Player] and self.CurrentSession.Members[button.Player].WonRolls);
                     button.WonRolls:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth() + 2 - (button.WonRolls:IsShown() and 0 or 12), 0);
-                    button.AlreadyWonHighlight:SetShown(LootReserve.Server:HasAlreadyWon(button.Player, frame.Item));
                     button.RecentChat:SetShown(frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player));
                 end
             end
@@ -368,8 +372,13 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
                         button.Roll:Show();
                         button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or deleted and "DEL" or "...");
                         button.Roll:SetTextColor(color.r, color.g, color.b);
-                        button.AlreadyWonHighlight:SetShown(--[[not frame.Historical and self:IsRolling(frame.Item) and--]] LootReserve.Server:HasAlreadyWon(button.Player, frame.Item) and not winner);
-                        button.WinnerHighlight:SetShown(winner);
+                        if LootReserve.Server.Settings.HighlightSameItemWinners and not frame.Historical then
+                            button.AlreadyWonHighlight:SetShown(LootReserve.Server:HasAlreadyWon(button.Player, frame.Item));
+                            button.WinnerHighlight:Hide();
+                        else
+                            button.AlreadyWonHighlight:Hide();
+                            button.WinnerHighlight:SetShown(winner);
+                        end
                     else
                         button.Roll:Hide();
                         button.AlreadyWonHighlight:Hide();

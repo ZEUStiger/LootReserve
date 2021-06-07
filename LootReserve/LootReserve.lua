@@ -428,6 +428,10 @@ function LootReserve:StringTrim(str, chars)
     return (str:match("^" .. chars .. "*(.-)" .. chars .. "*$"));
 end
 
+function LootReserve:FormatToRegexp(fmt)
+    return fmt:gsub("%(", "%%("):gsub("%)", "%%)"):gsub("%%s", "(.+)"):gsub("%%d", "(%%d+)");
+end
+
 function LootReserve:Deepcopy(orig)
     if type(orig) == 'table' then
         local copy = { };
