@@ -98,6 +98,12 @@
 					<OnClick>
 						LootReserve.Client:RespondToRollRequest(true);
 					</OnClick>
+					<OnEnter>
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						GameTooltip:SetText(ROLL);
+						GameTooltip:Show();
+					</OnEnter>
+					<OnLeave function="GameTooltip_Hide" />
 				</Scripts>
 				<NormalTexture file="Interface\Buttons\UI-GroupLoot-Dice-Up" />
 				<HighlightTexture file="Interface\Buttons\UI-GroupLoot-Dice-Highlight" alphaMode="ADD" />
@@ -112,10 +118,30 @@
 					<OnClick>
 						LootReserve.Client:RespondToRollRequest(false);
 					</OnClick>
+					<OnEnter>
+						GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+						GameTooltip:SetText(PASS);
+						GameTooltip:Show();
+					</OnEnter>
+					<OnLeave function="GameTooltip_Hide" />
 				</Scripts>
 				<NormalTexture file="Interface\Buttons\UI-GroupLoot-Pass-Up" />
 				<HighlightTexture file="Interface\Buttons\UI-GroupLoot-Pass-Highlight" alphaMode="ADD" />
 				<PushedTexture file="Interface\Buttons\UI-GroupLoot-Pass-Down" />
+			</Button>
+			<Button parentKey="ButtonClose" frameLevel="-1">
+				<Size x="14" y="14" />
+				<Anchors>
+					<Anchor point="TOPRIGHT" x="-5" y="-5" />
+				</Anchors>
+				<Scripts>
+					<OnClick>
+						self:GetParent():Hide();
+					</OnClick>
+				</Scripts>
+				<NormalTexture file="Interface\Buttons\UI-StopButton" alpha="0.5" />
+				<PushedTexture file="Interface\Buttons\UI-StopButton" alpha="0.25" />
+				<HighlightTexture file="Interface\Buttons\UI-StopButton" alpha="0.5" alphaMode="ADD" />
 			</Button>
 		</Frames>
 		<Scripts>
