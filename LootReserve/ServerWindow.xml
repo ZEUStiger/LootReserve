@@ -1727,14 +1727,14 @@
 								local count = tonumber(self:GetText());
 								if count and count > 0 then
 									LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer = count;
-									LootReserve.Server.MembersEdit:UpdateMembersList();
-									LootReserve.Server.Import:SessionSettingsUpdated();
 								else
 									self:SetText("");
 								end
 								if LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer &lt;= 1 then
 									LootReserve.Server.NewSessionSettings.Multireserve = nil;
 								end
+								LootReserve.Server.MembersEdit:UpdateMembersList();
+								LootReserve.Server.Import:SessionSettingsUpdated();
 								self:GetParent().EditBoxMultireserve:SetEnabled(not LootReserve.Server.CurrentSession and LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer > 1);
 								self:GetParent().EditBoxMultireserve:SetText(LootReserve.Server.NewSessionSettings.Multireserve and tostring(LootReserve.Server.NewSessionSettings.Multireserve) or "Off");
 								self:GetParent().EditBoxMultireserve:SetMinMaxValues(1, LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer);
@@ -1780,12 +1780,12 @@
 								local count = tonumber(self:GetText());
 								if count and count > 1 then
 									LootReserve.Server.NewSessionSettings.Multireserve = count;
-									LootReserve.Server.MembersEdit:UpdateMembersList();
-									LootReserve.Server.Import:SessionSettingsUpdated();
 								else
 									LootReserve.Server.NewSessionSettings.Multireserve = nil;
 									self:SetText("Off");
 								end
+								LootReserve.Server.MembersEdit:UpdateMembersList();
+								LootReserve.Server.Import:SessionSettingsUpdated();
 							</OnTextChanged>
 							<OnEnterPressed method="ClearFocus" />
 							<OnEnter>
