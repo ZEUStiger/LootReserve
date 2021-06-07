@@ -1271,19 +1271,21 @@ function LootReserve.Server:CancelReserve(player, item, count, chat, forced)
         return Failure(LootReserve.Constants.CancelReserveResult.NotEnoughReserves, member.ReservesLeft);
     end
 
-    -- Remove player from the active roll on that item
-    if self:IsRolling(item) and not self.RequestedRoll.Custom then
-        local i = 1;
-        while self.RequestedRoll.Players[player .. "#" .. i] do
-            self.RequestedRoll.Players[player .. "#" .. i] = nil;
-            i = i + 1;
-        end
-    end
-
     -- Perform reserve cancelling
     for i = 1, count do
         if not LootReserve:Contains(member.ReservedItems, item) then
             break;
+        end
+
+        -- Remove player from the active roll on that item
+        if self:IsRolling(item) and not self.RequestedRoll.Custom and not self.RequestedRoll.RaidRoll then
+            local i = 1;
+            while self.RequestedRoll.Players[player .. "#" .. i] do
+                i = i + 1;
+            end
+            if i > 1 then
+                self.RequestedRoll.Players[player .. "#" .. (i-1)] = nil;
+            end
         end
 
         member.ReservesLeft = math.min(member.ReservesLeft + 1, self.CurrentSession.Settings.MaxReservesPerPlayer);
