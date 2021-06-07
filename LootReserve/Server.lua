@@ -37,6 +37,7 @@ LootReserve.Server =
         RollMasterLoot = false,
         MasterLooting = false,
         ItemConditions = { },
+        CollapsedExpansions = { },
     },
     RequestedRoll = nil,
     RollHistory = { },
