@@ -193,10 +193,17 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
     if target and not session.Members[target] then return; end
 
     local membersInfo = "";
+    local refPlayers = { };
     for player, member in pairs(session.Members) do
         if not target or player == target then
             membersInfo = membersInfo .. (#membersInfo > 0 and ";" or "") .. format("%s=%s", player, strjoin(",", session.Settings.Lock and member.Locked and "#" or member.ReservesLeft));
+            table.insert(refPlayers, player);
         end
+    end
+
+    local refPlayerToIndex = { };
+    for index, player in ipairs(refPlayers) do
+        refPlayerToIndex[player] = index;
     end
 
     local itemReserves = "";
@@ -204,10 +211,14 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
         if session.Settings.Blind and target then
             if LootReserve:Contains(reserve.Players, target) then
                 local _, myReserves = LootReserve:GetReservesData(reserve.Players, target);
-                itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, strjoin(",", unpack(LootReserve:RepeatedTable(target, myReserves))));
+                itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, strjoin(",", unpack(LootReserve:RepeatedTable(refPlayerToIndex[target] or target, myReserves))));
             end
         else
-            itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, strjoin(",", unpack(reserve.Players)));
+            local players = { };
+            for _, player in ipairs(reserve.Players) do
+                table.insert(players, refPlayerToIndex[player] or player);
+            end
+            itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, strjoin(",", unpack(players)));
         end
     end
 
@@ -251,10 +262,12 @@ LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, star
     LootReserve.Client:StartSession(sender, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration, blind, multireserve);
 
     LootReserve.Client.RemainingReserves = 0;
+    local refPlayers = { };
     if #membersInfo > 0 then
         membersInfo = { strsplit(";", membersInfo) };
         for _, infoStr in ipairs(membersInfo) do
             local player, info = strsplit("=", infoStr, 2);
+            table.insert(refPlayers, player);
             if LootReserve:IsMe(player) then
                 local remainingReserves = strsplit(",", info);
                 LootReserve.Client.RemainingReserves = tonumber(remainingReserves) or 0;
@@ -267,8 +280,15 @@ LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, star
     if #itemReserves > 0 then
         itemReserves = { strsplit(";", itemReserves) };
         for _, reserves in ipairs(itemReserves) do
-            local item, players = strsplit("=", reserves, 2);
-            LootReserve.Client.ItemReserves[tonumber(item)] = #players > 0 and { strsplit(",", players) } or nil;
+            local item, playerRefs = strsplit("=", reserves, 2);
+            local players;
+            if #playerRefs > 0 then
+                players = { };
+                for _, ref in ipairs({ strsplit(",", playerRefs) }) do
+                    table.insert(players, tonumber(ref) and refPlayers[tonumber(ref)] or ref);
+                end
+            end
+            LootReserve.Client.ItemReserves[tonumber(item)] = players;
         end
     end
 
