@@ -219,6 +219,7 @@ function LootReserve:FixLink(link)
 end
 
 function LootReserve:SendChatMessage(text, channel, target)
+    if target and not LootReserve:IsPlayerOnline(target) then return; end
     local function Send(text)
         if #text > 0 then
             if ChatThrottleLib and LootReserve.Server.Settings.ChatThrottle then

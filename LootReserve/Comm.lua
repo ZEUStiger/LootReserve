@@ -388,7 +388,7 @@ LootReserve.Comm.Handlers[Opcodes.ReserveInfo] = function(sender, item, players)
                 reservesCount[player][2] = reservesCount[player][2] + 1;
             end
             for player, reserves in pairs(reservesCount) do
-                if reserves[1] ~= reserves[2] and player ~= UnitName("player") then
+                if reserves[1] ~= reserves[2] and not LootReserve:IsMe(player) then
                     isUpdate = true;
                     break;
                 end
