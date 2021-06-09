@@ -93,6 +93,15 @@ local function SimplifyName(name)
     return NormalizeName(name:utf8replace(simplificationMapping));
 end
 
+local function ParseMultireserveCount(value)
+    if type(value) == "string" then
+        value = tonumber(value:match("[Xx]%s-(%d+)") or value:match("(%d+)%s-[Xx]") or value:match("^(%d+)$"));
+    end
+    if value and type(value) == "number" and value > 1 then
+        return value;
+    end
+end
+
 function LootReserve.Server.Import:UpdateReservesList()
     if not self.Window:IsShown() then return; end
 
@@ -106,7 +115,6 @@ function LootReserve.Server.Import:UpdateReservesList()
     end
 
     local data = self.Members;
-    self.Window.NoData:SetShown(not data or not next(data));
     if not data then
         return;
     end
@@ -249,6 +257,14 @@ function LootReserve.Server.Import:InputOptionsUpdated()
                     self.Columns[i] = "Item";
                 elseif (header:find("name") or header:find("player") or header:find("member")) and not (header:find("guild") or header:find("class") or header:find("race")) then
                     self.Columns[i] = "Player";
+                elseif header:find("note") or header:find("count") or header:find("quantity") then
+                    -- Search for meaningful numbers first (basically where count > 1)
+                    for _, row in ipairs(self.Rows) do
+                        if row[i] and ParseMultireserveCount(row[i]) then
+                            self.Columns[i] = "Count";
+                            break;
+                        end
+                    end
                 end
             end
         end
@@ -257,12 +273,10 @@ function LootReserve.Server.Import:InputOptionsUpdated()
         self.Columns = self.Columns or { };
     end
 
-    -- Count how many columns we have, checking each row, in case somewhere the date spilled out into unheadered columns
+    -- Count how many columns we have, checking each row, in case somewhere the data spilled out into unheadered columns
     local columns = self.Headers and #self.Headers or 0;
-    if self.Rows then
-        for _, row in ipairs(self.Rows) do
-            columns = math.max(#row, columns);
-        end
+    for _, row in ipairs(self.Rows) do
+        columns = math.max(#row, columns);
     end
 
     -- Create drop-down frames for each column
@@ -289,9 +303,7 @@ function LootReserve.Server.Import:InputOptionsUpdated()
 
         local rows = "";
         for index, row in ipairs(self.Rows) do
-            if row[i] then
-                rows = rows .. (#rows > 0 and "|n" or "") .. (index % 2 == 0 and "|cFFAAAAAA" or "|cFFFFFFFF") .. tostring(row[i]) .. "|r";
-            end
+            rows = rows .. (#rows > 0 and "|n" or "") .. (row[i] and ((index % 2 == 0 and "|cFFAAAAAA" or "|cFFFFFFFF") .. tostring(row[i]) .. "|r") or "|cFF606060<MISSING>|r");
         end
         frame.Rows.Text:SetText(rows);
     end
@@ -318,7 +330,20 @@ function LootReserve.Server.Import:SessionSettingsUpdated()
     self.Members = { };
     local function Parse()
         if #playerColumns == 0 or #itemColumns == 0 then
-            return;
+            return "Enter CSV text above and mark at least one|ncolumn as \"Player\" and \"Item\"";
+        end
+
+        for _, row in ipairs(self.Rows) do
+            row.Count = nil;
+            for i, column in ipairs(self.Columns) do
+                if column == "Count" and row[i] then
+                    if not row.Count then
+                        row.Count = ParseMultireserveCount(row[i]);
+                    else
+                        return "Only one column can be marked as \"Count\"";
+                    end
+                end
+            end
         end
 
         local simplifiedRaidNames = nil;
@@ -338,8 +363,10 @@ function LootReserve.Server.Import:SessionSettingsUpdated()
         end
 
         local itemReserveCount = { };
+        local itemReserveCountByPlayer = { };
 
         for _, row in ipairs(self.Rows) do
+            local itemsOnThisRow = { };
             for _, playerColumn in ipairs(playerColumns) do
                 for _, itemColumn in ipairs(itemColumns) do
                     local player = row[playerColumn];
@@ -369,7 +396,7 @@ function LootReserve.Server.Import:SessionSettingsUpdated()
                         if type(item) == "string" then
                             if not LootReserve.Server:UpdateItemNameCache() then
                                 C_Timer.After(0.25, function() LootReserve.Server.Import:InputOptionsUpdated(); end);
-                                return;
+                                return "Loading item names, please wait...";
                             end
 
                             item = LootReserve:TransformSearchText(item);
@@ -397,21 +424,28 @@ function LootReserve.Server.Import:SessionSettingsUpdated()
                         if nameMatchResult and not member.NameMatchResult then
                             member.NameMatchResult = nameMatchResult;
                         end
-                        if not LootReserve:Contains(member.ReservedItems, item) then
-                            table.insert(member.ReservedItems, item);
-                            itemReserveCount[item] = (itemReserveCount[item] or 0) + 1;
-                            local conditions = LootReserve.Server:GetNewSessionItemConditions()[item];
-                            local class = select(3, UnitClass(player));
-                            if item == 0 then
-                                member.InvalidReasons[#member.ReservedItems] = "Item with the name \"" .. row[itemColumn] .. "\" was not be found|nor it can't be reserved due to session settings.";
-                            elseif not (LootReserve.Data:IsItemInCategory(item, LootReserve.Server.NewSessionSettings.LootCategory) or conditions and conditions.Custom) or not LootReserve.ItemConditions:TestServer(item) then
-                                member.InvalidReasons[#member.ReservedItems] = "Item can't be reserved due to session settings.|nChange to the appropriate raid map or add this item as a custom item.";
-                            elseif conditions and conditions.ClassMask and class and not LootReserve.ItemConditions:TestClassMask(conditions.ClassMask, class) then
-                                member.InvalidReasons[#member.ReservedItems] = player .. "'s class cannot reserve this item.|nEdit the raid loot to change the class restrictions on this item, or it will not be imported.";
-                            elseif conditions and conditions.Limit and itemReserveCount[item] > conditions.Limit then
-                                member.InvalidReasons[#member.ReservedItems] = "This item has hit the limit of how many times it can be reserved.|nEdit the raid loot to increase or remove the limit on this item, or it will not be imported.";
-                            elseif #member.ReservedItems > LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer then
-                                member.InvalidReasons[#member.ReservedItems] = "Player has more reserved items than allowed by the session settings.|nIncrease the number of allowed reserves, or this item will not be imported.";
+                        if not itemsOnThisRow[item] then
+                            itemsOnThisRow[item] = true;
+                            for i = 1, row.Count or 1 do
+                                table.insert(member.ReservedItems, item);
+                                itemReserveCount[item] = (itemReserveCount[item] or 0) + 1;
+                                itemReserveCountByPlayer[player] = itemReserveCountByPlayer[player] or { };
+                                itemReserveCountByPlayer[player][item] = (itemReserveCountByPlayer[player][item] or 0) + 1;
+                                local conditions = LootReserve.Server:GetNewSessionItemConditions()[item];
+                                local class = select(3, UnitClass(player));
+                                if item == 0 then
+                                    member.InvalidReasons[#member.ReservedItems] = "Item with the name \"" .. row[itemColumn] .. "\" was not be found|nor it can't be reserved due to session settings.";
+                                elseif not (LootReserve.Data:IsItemInCategory(item, LootReserve.Server.NewSessionSettings.LootCategory) or conditions and conditions.Custom) or not LootReserve.ItemConditions:TestServer(item) then
+                                    member.InvalidReasons[#member.ReservedItems] = "Item can't be reserved due to session settings.|nChange to the appropriate raid map or add this item as a custom item.";
+                                elseif conditions and conditions.ClassMask and class and not LootReserve.ItemConditions:TestClassMask(conditions.ClassMask, class) then
+                                    member.InvalidReasons[#member.ReservedItems] = player .. "'s class cannot reserve this item.|nEdit the raid loot to change the class restrictions on this item, or it will not be imported.";
+                                elseif conditions and conditions.Limit and itemReserveCount[item] > conditions.Limit then
+                                    member.InvalidReasons[#member.ReservedItems] = "This item has hit the limit of how many times it can be reserved.|nEdit the raid loot to increase or remove the limit on this item, or it will not be imported.";
+                                elseif #member.ReservedItems > LootReserve.Server.NewSessionSettings.MaxReservesPerPlayer then
+                                    member.InvalidReasons[#member.ReservedItems] = "Player has more reserved items than allowed by the session settings.|nIncrease the number of allowed reserves, or this item will not be imported.";
+                                elseif itemReserveCountByPlayer[player][item] > (LootReserve.Server.NewSessionSettings.Multireserve or 1) then
+                                    member.InvalidReasons[#member.ReservedItems] = "Player has reserved this item more times than allowed by the session settings.|nIncrease the number of allowed multireserves, or this item will not be imported.";
+                                end
                             end
                         end
                     end
@@ -419,7 +453,13 @@ function LootReserve.Server.Import:SessionSettingsUpdated()
             end
         end
     end
-    Parse();
+    local error = Parse();
+    if error then
+        self.Window.Error:SetText(format("No reserves imported|n|n%s", error));
+        self.Window.Error:Show();
+    else
+        self.Window.Error:Hide();
+    end
 
     self:UpdateReservesList();
     self.Window.ImportButton:SetEnabled(self.Members and next(self.Members));
