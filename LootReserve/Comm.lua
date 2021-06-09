@@ -1,3 +1,5 @@
+local LibDeflate = LibStub:GetLibrary("LibDeflate");
+
 LootReserve = LootReserve or { };
 LootReserve.Comm =
 {
@@ -26,16 +28,74 @@ local Opcodes =
     DeletedRoll = 14,
 };
 
+local LAST_UNCOMPRESSED_OPCODE = Opcodes.Hello;
+local MAX_UNCOMPRESSED_SIZE = 20;
+
+local function ThrottlingError()
+    LootReserve:ShowError("There was an error when reading session server's communications.|n|nIf both your and the server's addons are up to date, then this is likely due to Blizzard's excessive addon communication throttling which results in some messages outright not being delivered.|n|nWait a few seconds and click \"Search For Server\" in LootReserve client window's settings menu to request up to date information from the server.");
+end
+
+function LootReserve.Comm:SendCommMessage(channel, target, opcode, ...)
+    local message = "";
+    for _, part in ipairs({ ... }) do
+        if type(part) == "boolean" then
+            message = message .. tostring(part and 1 or 0) .. "|";
+        else
+            message = message .. tostring(part) .. "|";
+        end
+    end
+
+    if opcode > LAST_UNCOMPRESSED_OPCODE then
+        local length = #message;
+        if length > MAX_UNCOMPRESSED_SIZE then
+            message = LibDeflate:CompressDeflate(message);
+            message = LibDeflate:EncodeForWoWAddonChannel(message);
+        else
+            length = -length;
+        end
+        message = length .. "|" .. message;
+    end
+
+    message = opcode .. "|" .. message;
+
+    LootReserve:SendCommMessage(self.Prefix, message, channel, target, "ALERT");
+
+    return message;
+end
+
 function LootReserve.Comm:StartListening()
     if not self.Listening then
         self.Listening = true;
         LootReserve:RegisterComm(self.Prefix, function(prefix, text, channel, sender)
             if LootReserve.Enabled and prefix == self.Prefix then
                 local opcode, message = strsplit("|", text, 2);
-                local handler = self.Handlers[tonumber(opcode)];
+                opcode = tonumber(opcode);
+                if not opcode or not message then
+                    return ThrottlingError();
+                end
+
+                local handler = self.Handlers[opcode];
                 if handler then
+                    if opcode > LAST_UNCOMPRESSED_OPCODE then
+                        local length;
+                        length, message = strsplit("|", message, 2);
+                        length = tonumber(length);
+                        if not length or not message then
+                            return ThrottlingError();
+                        end
+
+                        if length > 0 then
+                            message = LibDeflate:DecodeForWoWAddonChannel(message);
+                            message = LibDeflate:DecompressDeflate(message);
+                        end
+
+                        if #message ~= math.abs(length) then
+                            return ThrottlingError();
+                        end
+                    end
+
                     if self.Debug then
-                        print("[DEBUG] Received from " .. sender .. ": " .. text:gsub("|", "||"));
+                        print("[DEBUG] Received from " .. sender .. ": " .. opcode .. "||" .. length .. "||" .. message:gsub("|", "||"));
                     end
 
                     sender = LootReserve:Player(sender);
@@ -64,42 +124,25 @@ end
 function LootReserve.Comm:Broadcast(opcode, ...)
     if not self:CanBroadcast(opcode) then return; end
 
-    local message = format("%d|", opcode);
-    for _, part in ipairs({ ... }) do
-        if type(part) == "boolean" then
-            message = message .. tostring(part and 1 or 0) .. "|";
-        else
-            message = message .. tostring(part) .. "|";
-        end
+    local message;
+    if self.SoloDebug then
+        message = self:SendCommMessage("WHISPER", (UnitName("player")), opcode, ...);
+    else
+        message = self:SendCommMessage(IsInRaid() and "RAID" or "PARTY", nil, opcode, ...);
     end
 
     if self.Debug then
         print("[DEBUG] Raid Broadcast: " .. message:gsub("|", "||"));
     end
-
-    if self.SoloDebug then
-        LootReserve:SendCommMessage(self.Prefix, message, "WHISPER", UnitName("player"));
-    else
-        LootReserve:SendCommMessage(self.Prefix, message, IsInRaid() and "RAID" or "PARTY");
-    end
 end
 function LootReserve.Comm:Whisper(target, opcode, ...)
     if not self:CanWhisper(target, opcode) then return; end
 
-    local message = format("%d|", opcode);
-    for _, part in ipairs({ ... }) do
-        if type(part) == "boolean" then
-            message = message .. tostring(part and 1 or 0) .. "|";
-        else
-            message = message .. tostring(part) .. "|";
-        end
-    end
+    local message = self:SendCommMessage("WHISPER", target, opcode, ...);
 
     if self.Debug then
         print("[DEBUG] Sent to " .. target .. ": " .. message:gsub("|", "||"));
     end
-
-    LootReserve:SendCommMessage(self.Prefix, message, "WHISPER", target);
 end
 function LootReserve.Comm:Send(target, opcode, ...)
     if target then

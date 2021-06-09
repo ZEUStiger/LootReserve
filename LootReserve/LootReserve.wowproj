@@ -57,6 +57,12 @@
     <Content Include="Libs\LibDBIcon-1.0\LibDBIcon-1.0.lua">
       <SubType>Code</SubType>
     </Content>
+    <Content Include="Libs\LibDeflate\lib.xml">
+      <SubType>Code</SubType>
+    </Content>
+    <Content Include="Libs\LibDeflate\LibDeflate.lua">
+      <SubType>Code</SubType>
+    </Content>
     <Content Include="Libs\UTF8\Changelog-UTF8-v1.1.txt" />
     <Content Include="Libs\UTF8\utf8.lua">
       <SubType>Code</SubType>
@@ -161,6 +167,7 @@
     <Folder Include="Libs\LibCustomGlow-1.0\" />
     <Folder Include="Libs\LibDataBroker-1.1\" />
     <Folder Include="Libs\LibDBIcon-1.0\" />
+    <Folder Include="Libs\LibDeflate\" />
     <Folder Include="Libs\LibStub\" />
     <Folder Include="Libs\UTF8\" />
     <Folder Include="Textures\" />
