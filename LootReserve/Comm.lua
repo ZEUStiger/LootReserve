@@ -1,3 +1,5 @@
+local LibDeflate = LibStub:GetLibrary("LibDeflate");
+
 LootReserve = LootReserve or { };
 LootReserve.Comm =
 {
@@ -26,16 +28,74 @@ local Opcodes =
     DeletedRoll = 14,
 };
 
+local LAST_UNCOMPRESSED_OPCODE = Opcodes.Hello;
+local MAX_UNCOMPRESSED_SIZE = 20;
+
+local function ThrottlingError()
+    LootReserve:ShowError("There was an error when reading session server's communications.|n|nIf both your and the server's addons are up to date, then this is likely due to Blizzard's excessive addon communication throttling which results in some messages outright not being delivered.|n|nWait a few seconds and click \"Search For Server\" in LootReserve client window's settings menu to request up to date information from the server.");
+end
+
+function LootReserve.Comm:SendCommMessage(channel, target, opcode, ...)
+    local message = "";
+    for _, part in ipairs({ ... }) do
+        if type(part) == "boolean" then
+            message = message .. tostring(part and 1 or 0) .. "|";
+        else
+            message = message .. tostring(part) .. "|";
+        end
+    end
+
+    if opcode > LAST_UNCOMPRESSED_OPCODE then
+        local length = #message;
+        if length > MAX_UNCOMPRESSED_SIZE then
+            message = LibDeflate:CompressDeflate(message);
+            message = LibDeflate:EncodeForWoWAddonChannel(message);
+        else
+            length = -length;
+        end
+        message = length .. "|" .. message;
+    end
+
+    message = opcode .. "|" .. message;
+
+    LootReserve:SendCommMessage(self.Prefix, message, channel, target, "ALERT");
+
+    return message;
+end
+
 function LootReserve.Comm:StartListening()
     if not self.Listening then
         self.Listening = true;
         LootReserve:RegisterComm(self.Prefix, function(prefix, text, channel, sender)
             if LootReserve.Enabled and prefix == self.Prefix then
                 local opcode, message = strsplit("|", text, 2);
-                local handler = self.Handlers[tonumber(opcode)];
+                opcode = tonumber(opcode);
+                if not opcode or not message then
+                    return ThrottlingError();
+                end
+
+                local handler = self.Handlers[opcode];
                 if handler then
+                    if opcode > LAST_UNCOMPRESSED_OPCODE then
+                        local length;
+                        length, message = strsplit("|", message, 2);
+                        length = tonumber(length);
+                        if not length or not message then
+                            return ThrottlingError();
+                        end
+
+                        if length > 0 then
+                            message = LibDeflate:DecodeForWoWAddonChannel(message);
+                            message = LibDeflate:DecompressDeflate(message);
+                        end
+
+                        if #message ~= math.abs(length) then
+                            return ThrottlingError();
+                        end
+                    end
+
                     if self.Debug then
-                        print("[DEBUG] Received from " .. sender .. ": " .. text:gsub("|", "||"));
+                        print("[DEBUG] Received from " .. sender .. ": " .. opcode .. "||" .. length .. "||" .. message:gsub("|", "||"));
                     end
 
                     sender = LootReserve:Player(sender);
@@ -64,42 +124,25 @@ end
 function LootReserve.Comm:Broadcast(opcode, ...)
     if not self:CanBroadcast(opcode) then return; end
 
-    local message = format("%d|", opcode);
-    for _, part in ipairs({ ... }) do
-        if type(part) == "boolean" then
-            message = message .. tostring(part and 1 or 0) .. "|";
-        else
-            message = message .. tostring(part) .. "|";
-        end
+    local message;
+    if self.SoloDebug then
+        message = self:SendCommMessage("WHISPER", (UnitName("player")), opcode, ...);
+    else
+        message = self:SendCommMessage(IsInRaid() and "RAID" or "PARTY", nil, opcode, ...);
     end
 
     if self.Debug then
         print("[DEBUG] Raid Broadcast: " .. message:gsub("|", "||"));
     end
-
-    if self.SoloDebug then
-        LootReserve:SendCommMessage(self.Prefix, message, "WHISPER", UnitName("player"));
-    else
-        LootReserve:SendCommMessage(self.Prefix, message, IsInRaid() and "RAID" or "PARTY");
-    end
 end
 function LootReserve.Comm:Whisper(target, opcode, ...)
     if not self:CanWhisper(target, opcode) then return; end
 
-    local message = format("%d|", opcode);
-    for _, part in ipairs({ ... }) do
-        if type(part) == "boolean" then
-            message = message .. tostring(part and 1 or 0) .. "|";
-        else
-            message = message .. tostring(part) .. "|";
-        end
-    end
+    local message = self:SendCommMessage("WHISPER", target, opcode, ...);
 
     if self.Debug then
         print("[DEBUG] Sent to " .. target .. ": " .. message:gsub("|", "||"));
     end
-
-    LootReserve:SendCommMessage(self.Prefix, message, "WHISPER", target);
 end
 function LootReserve.Comm:Send(target, opcode, ...)
     if target then
@@ -193,10 +236,17 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
     if target and not session.Members[target] then return; end
 
     local membersInfo = "";
+    local refPlayers = { };
     for player, member in pairs(session.Members) do
         if not target or player == target then
             membersInfo = membersInfo .. (#membersInfo > 0 and ";" or "") .. format("%s=%s", player, strjoin(",", session.Settings.Lock and member.Locked and "#" or member.ReservesLeft));
+            table.insert(refPlayers, player);
         end
+    end
+
+    local refPlayerToIndex = { };
+    for index, player in ipairs(refPlayers) do
+        refPlayerToIndex[player] = index;
     end
 
     local itemReserves = "";
@@ -204,10 +254,14 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
         if session.Settings.Blind and target then
             if LootReserve:Contains(reserve.Players, target) then
                 local _, myReserves = LootReserve:GetReservesData(reserve.Players, target);
-                itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, strjoin(",", unpack(LootReserve:RepeatedTable(target, myReserves))));
+                itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, strjoin(",", unpack(LootReserve:RepeatedTable(refPlayerToIndex[target] or target, myReserves))));
             end
         else
-            itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, strjoin(",", unpack(reserve.Players)));
+            local players = { };
+            for _, player in ipairs(reserve.Players) do
+                table.insert(players, refPlayerToIndex[player] or player);
+            end
+            itemReserves = itemReserves .. (#itemReserves > 0 and ";" or "") .. format("%d=%s", item, strjoin(",", unpack(players)));
         end
     end
 
@@ -251,10 +305,12 @@ LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, star
     LootReserve.Client:StartSession(sender, starting, startTime, acceptingReserves, lootCategory, duration, maxDuration, blind, multireserve);
 
     LootReserve.Client.RemainingReserves = 0;
+    local refPlayers = { };
     if #membersInfo > 0 then
         membersInfo = { strsplit(";", membersInfo) };
         for _, infoStr in ipairs(membersInfo) do
             local player, info = strsplit("=", infoStr, 2);
+            table.insert(refPlayers, player);
             if LootReserve:IsMe(player) then
                 local remainingReserves = strsplit(",", info);
                 LootReserve.Client.RemainingReserves = tonumber(remainingReserves) or 0;
@@ -267,8 +323,15 @@ LootReserve.Comm.Handlers[Opcodes.SessionInfo] = function(sender, starting, star
     if #itemReserves > 0 then
         itemReserves = { strsplit(";", itemReserves) };
         for _, reserves in ipairs(itemReserves) do
-            local item, players = strsplit("=", reserves, 2);
-            LootReserve.Client.ItemReserves[tonumber(item)] = #players > 0 and { strsplit(",", players) } or nil;
+            local item, playerRefs = strsplit("=", reserves, 2);
+            local players;
+            if #playerRefs > 0 then
+                players = { };
+                for _, ref in ipairs({ strsplit(",", playerRefs) }) do
+                    table.insert(players, tonumber(ref) and refPlayers[tonumber(ref)] or ref);
+                end
+            end
+            LootReserve.Client.ItemReserves[tonumber(item)] = players;
         end
     end
 
@@ -388,7 +451,7 @@ LootReserve.Comm.Handlers[Opcodes.ReserveInfo] = function(sender, item, players)
                 reservesCount[player][2] = reservesCount[player][2] + 1;
             end
             for player, reserves in pairs(reservesCount) do
-                if reserves[1] ~= reserves[2] and player ~= UnitName("player") then
+                if reserves[1] ~= reserves[2] and not LootReserve:IsMe(player) then
                     isUpdate = true;
                     break;
                 end

@@ -192,7 +192,7 @@ function LootReserve.Client:IsItemReserved(item)
 end
 function LootReserve.Client:IsItemReservedByMe(item)
     for _, player in ipairs(self:GetItemReservers(item)) do
-        if player == UnitName("player") then
+        if LootReserve:IsMe(player) then
             return true;
         end
     end
