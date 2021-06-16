@@ -554,7 +554,7 @@ function LootReserve.Server:UpdateRollList(lockdown)
             frame:SetHeight(44 + durationHeight + reservesHeight);
         else
             frame:SetShown(not self.RequestedRoll);
-            frame:SetHeight(frame:IsShown() and 45 or 0.00001);
+            frame:SetHeight(frame:IsShown() and 44 or 0.00001);
         end
 
         if historical and firstHistorical then

@@ -94,7 +94,12 @@
 			</Layer>
 		</Layers>
 	</CheckButton>
-	<Frame name="LootReserveLootListTemplate" virtual="true" enableMouse="true">
+	<Frame name="LootReserveLootListTemplate" virtual="true" enableMouse="true" inherits="BackdropTemplate">
+		<KeyValues>
+			<KeyValue key="backdropInfo" value="BACKDROP_TOOLTIP_0_16_5555" type="global" />
+			<KeyValue key="backdropBorderColor" value="NORMAL_FONT_COLOR" type="global" />
+			<KeyValue key="backdropBorderColorAlpha" value="0" type="number" />
+		</KeyValues>
 		<Size y="44" />
 		<Backdrop edgeFile="Interface\Tooltips\UI-Tooltip-Border">
 			<EdgeSize val="16" />
@@ -390,7 +395,10 @@
 					</OnTextChanged>
 				</Scripts>
 			</EditBox>
-			<Frame parentKey="Categories">
+			<Frame parentKey="Categories" inherits="BackdropTemplate">
+				<KeyValues>
+					<KeyValue key="backdropInfo" value="LOOTRESERVE_BACKDROP_BLACK_4" type="global" />
+				</KeyValues>
 				<Anchors>
 					<Anchor point="TOPRIGHT" relativeKey="$parent.Search" relativePoint="BOTTOMRIGHT" x="1" />
 					<Anchor point="BOTTOMLEFT" x="16" y="16" />
@@ -408,7 +416,10 @@
 					</ScrollFrame>
 				</Frames>
 			</Frame>
-			<Frame parentKey="Loot">
+			<Frame parentKey="Loot" inherits="BackdropTemplate">
+				<KeyValues>
+					<KeyValue key="backdropInfo" value="LOOTRESERVE_BACKDROP_BLACK_4" type="global" />
+				</KeyValues>
 				<Anchors>
 					<Anchor point="TOPLEFT" relativeKey="$parent.Search" relativePoint="TOPRIGHT" />
 					<Anchor point="BOTTOMRIGHT" x="-16" y="16" />
