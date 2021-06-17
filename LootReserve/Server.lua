@@ -39,10 +39,12 @@ LootReserve.Server =
         ItemConditions                  = { },
         CollapsedExpansions             = { },
         HighlightSameItemWinners        = false,
+        MaxRecentLoot                   = 15;
     },
     RequestedRoll       = nil,
     RollHistory         = { },
     RecentLoot          = { },
+    CurrentLoot         = { },
     AddonUsers          = { },
     GuildMembers        = { },
     LootEdit            = { },
@@ -448,7 +450,7 @@ function LootReserve.Server:PrepareLootTracking()
         if looter and item and count then
             LootReserve:TableRemove(self.RecentLoot, item);
             table.insert(self.RecentLoot, item);
-            while #self.RecentLoot > 10 do
+            while #self.RecentLoot > self.Settings.MaxRecentLoot do
                 table.remove(self.RecentLoot, 1);
             end
 
@@ -463,6 +465,29 @@ function LootReserve.Server:PrepareLootTracking()
                 tracking.Players[looter] = (tracking.Players[looter] or 0) + count;
 
                 self:UpdateReserveList();
+            end
+        end
+    end);
+    LootReserve:RegisterEvent("LOOT_OPENED", function(text)
+        table.wipe(self.CurrentLoot);
+        for lootSlot = 1, GetNumLootItems() do
+            if GetLootSlotType(lootSlot) == 1 then -- loot slot contains item, not currency/empty
+                local link = GetLootSlotLink(lootSlot);
+                if link then
+                    local item = tonumber(link:match("item:(%d+)"));
+                    if item then
+                        table.insert(self.CurrentLoot, item);
+                    end
+                end
+            end
+        end
+    end);
+    LootReserve:RegisterEvent("LOOT_CLOSED", function(text)
+        for _, item in ipairs(self.CurrentLoot) do
+            LootReserve:TableRemove(self.RecentLoot, item);
+            table.insert(self.RecentLoot, item);
+            while #self.RecentLoot > MaxRecentLoot do
+                table.remove(self.RecentLoot, 1);
             end
         end
     end);
@@ -1699,6 +1724,25 @@ function LootReserve.Server:CancelRollRequest(item, winners, noHistory)
             self.RequestedRoll.Winners = { };
             for _, winner in ipairs(winners) do
                 table.insert(self.RequestedRoll.Winners, winner);
+                local stack = select(8, GetItemInfo(item));
+                
+                local count = 0;
+                for bag = 0, 4 do
+                    local slots = GetContainerNumSlots(bag);
+                    if slots > 0 then
+                        for slot = 1, slots do
+                            local _, quantity, _, _, _, _, _, _, _, bagItem = GetContainerItemInfo(bag, slot);
+                            if bagItem and bagItem == item and (not C_Item.IsBound(ItemLocation:CreateFromBagAndSlot(bag, slot)) or LootReserve:IsItemSoulboundTradeable(bag, slot)) then
+                                count = count + quantity;
+                            end
+                        end
+                    end
+                end
+                
+                if count <= stack then
+                    LootReserve:TableRemove(self.RecentLoot, item);
+                    LootReserve:TableRemove(self.CurrentLoot, item);
+                end
             end
         end
 
