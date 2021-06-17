@@ -416,8 +416,8 @@ function LootReserve.Server.Import:SessionSettingsUpdated()
                             self.Members[player] =
                             {
                                 NameMatchResult = nameMatchResult,
-                                ReservedItems = { },
-                                InvalidReasons = { },
+                                ReservedItems   = { },
+                                InvalidReasons  = { },
                             };
                         end
                         local member = self.Members[player];

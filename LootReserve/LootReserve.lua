@@ -20,41 +20,41 @@ LootReserveCharacterSave =
     Server =
     {
         CurrentSession = nil,
-        RequestedRoll = nil,
-        RollHistory = nil,
-        RecentLoot = nil,
+        RequestedRoll  = nil,
+        RollHistory    = nil,
+        RecentLoot     = nil,
     },
 };
 LootReserveGlobalSave =
 {
     Client =
     {
-        Settings = nil,
+        Settings        = nil,
         GlobalFavorites = nil,
     },
     Server =
     {
         NewSessionSettings = nil,
-        Settings = nil,
-        GlobalProfile = nil,
+        Settings           = nil,
+        GlobalProfile      = nil,
     },
 };
 
 StaticPopupDialogs["LOOTRESERVE_GENERIC_ERROR"] =
 {
-    text = "%s",
-    button1 = CLOSE,
-    timeout = 0,
-    whileDead = 1,
+    text         = "%s",
+    button1      = CLOSE,
+    timeout      = 0,
+    whileDead    = 1,
     hideOnEscape = 1,
 };
 
 LOOTRESERVE_BACKDROP_BLACK_4 =
 {
-    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
     edgeSize = 16,
-    insets = { left = 4, right = 4, top = 4, bottom = 4 },
+    insets   = { left = 4, right = 4, top = 4, bottom = 4 },
 };
 
 SLASH_LOOTRESERVE1 = "/lootreserve";
@@ -509,29 +509,29 @@ end
 function LootReserve:MakeMenuSeparator()
     return
     {
-        text = "",
-        hasArrow = false,
-        dist = 0,
-        isTitle = true,
-        isUninteractable = true,
-        notCheckable = true,
-        iconOnly = true,
-        icon = "Interface\\Common\\UI-TooltipDivider-Transparent",
-        tCoordLeft = 0,
-        tCoordRight = 1,
-        tCoordTop = 0,
-        tCoordBottom = 1,
-        tSizeX = 0,
-        tSizeY = 8,
+        text              = "",
+        hasArrow          = false,
+        dist              = 0,
+        isTitle           = true,
+        isUninteractable  = true,
+        notCheckable      = true,
+        iconOnly          = true,
+        icon              = "Interface\\Common\\UI-TooltipDivider-Transparent",
+        tCoordLeft        = 0,
+        tCoordRight       = 1,
+        tCoordTop         = 0,
+        tCoordBottom      = 1,
+        tSizeX            = 0,
+        tSizeY            = 8,
         tFitDropDownSizeX = true,
         iconInfo =
         {
-            tCoordLeft = 0,
-            tCoordRight = 1,
-            tCoordTop = 0,
-            tCoordBottom = 1,
-            tSizeX = 0,
-            tSizeY = 8,
+            tCoordLeft        = 0,
+            tCoordRight       = 1,
+            tCoordTop         = 0,
+            tCoordBottom      = 1,
+            tSizeX            = 0,
+            tSizeY            = 8,
             tFitDropDownSizeX = true
         },
     };

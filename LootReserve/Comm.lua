@@ -3,29 +3,29 @@ local LibDeflate = LibStub:GetLibrary("LibDeflate");
 LootReserve = LootReserve or { };
 LootReserve.Comm =
 {
-    Prefix = "LootReserve",
-    Handlers = { },
+    Prefix    = "LootReserve",
+    Handlers  = { },
     Listening = false,
-    Debug = false,
+    Debug     = false,
     SoloDebug = false,
 };
 
 local Opcodes =
 {
-    Version = 1,
+    Version                   = 1,
     ReportIncompatibleVersion = 2,
-    Hello = 3,
-    SessionInfo = 4,
-    SessionStop = 5,
-    SessionReset = 6,
-    ReserveItem = 7,
-    ReserveResult = 8,
-    ReserveInfo = 9,
-    CancelReserve = 10,
-    CancelReserveResult = 11,
-    RequestRoll = 12,
-    PassRoll = 13,
-    DeletedRoll = 14,
+    Hello                     = 3,
+    SessionInfo               = 4,
+    SessionStop               = 5,
+    SessionReset              = 6,
+    ReserveItem               = 7,
+    ReserveResult             = 8,
+    ReserveInfo               = 9,
+    CancelReserve             = 10,
+    CancelReserveResult       = 11,
+    RequestRoll               = 12,
+    PassRoll                  = 13,
+    DeletedRoll               = 14,
 };
 
 local LAST_UNCOMPRESSED_OPCODE = Opcodes.Hello;

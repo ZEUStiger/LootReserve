@@ -4,117 +4,120 @@ LootReserve.Server =
     CurrentSession = nil,
     NewSessionSettings =
     {
-        LootCategory = 100,
+        LootCategory         = 100,
         MaxReservesPerPlayer = 1,
-        Multireserve = nil,
-        Duration = 300,
-        ChatFallback = true,
-        Blind = false,
-        Lock = false,
-        ImportedMembers = { },
+        Multireserve         = nil,
+        Duration             = 300,
+        ChatFallback         = true,
+        Blind                = false,
+        Lock                 = false,
+        ImportedMembers      = { },
     },
     Settings =
     {
-        ChatAsRaidWarning = { },
-        ChatAnnounceWinToGuild = false,
+        ChatAsRaidWarning               = { },
+        ChatAnnounceWinToGuild          = false,
         ChatAnnounceWinToGuildThreshold = 3,
-        ChatReservesList = true,
-        ChatUpdates = true,
-        ChatThrottle = false,
-        ReservesSorting = LootReserve.Constants.ReservesSorting.ByTime,
-        UseGlobalProfile = false,
-        Phases = LootReserve:Deepcopy(LootReserve.Constants.DefaultPhases),
-        RollUsePhases = false,
-        RollPhases = { },
-        RollAdvanceOnExpire = true,
-        RollLimitDuration = false,
-        RollDuration = 60,
-        RollFinishOnExpire = true,
-        RollFinishOnAllReservingRolled = false,
-        RollFinishOnRaidRoll = false,
-        RollSkipNotContested = false,
-        RollHistoryDisplayLimit = 5,
-        RollMasterLoot = false,
-        MasterLooting = false,
-        ItemConditions = { },
-        CollapsedExpansions = { },
-        HighlightSameItemWinners = false,
+        ChatReservesList                = true,
+        ChatUpdates                     = true,
+        ChatThrottle                    = false,
+        ReservesSorting                 = LootReserve.Constants.ReservesSorting.ByTime,
+        UseGlobalProfile                = false,
+        Phases                          = LootReserve:Deepcopy(LootReserve.Constants.DefaultPhases),
+        RollUsePhases                   = false,
+        RollPhases                      = { },
+        RollAdvanceOnExpire             = true,
+        RollLimitDuration               = false,
+        RollDuration                    = 60,
+        RollFinishOnExpire              = true,
+        RollFinishOnAllReservingRolled  = false,
+        RollFinishOnRaidRoll            = false,
+        RollSkipNotContested            = false,
+        RollHistoryDisplayLimit         = 5,
+        RollMasterLoot                  = false,
+        MasterLooting                   = false,
+        ItemConditions                  = { },
+        CollapsedExpansions             = { },
+        HighlightSameItemWinners        = false,
     },
-    RequestedRoll = nil,
-    RollHistory = { },
-    RecentLoot = { },
-    AddonUsers = { },
-    GuildMembers = { },
-    LootEdit = { },
-    MembersEdit = { },
-    Import = { },
-    Export = { },
-    PendingMasterLoot = nil,
+    RequestedRoll       = nil,
+    RollHistory         = { },
+    RecentLoot          = { },
+    AddonUsers          = { },
+    GuildMembers        = { },
+    LootEdit            = { },
+    MembersEdit         = { },
+    Import              = { },
+    Export              = { },
+    PendingMasterLoot   = nil,
     ExtraRollRequestNag = { },
 
-    ReservableItems = { },
-    ItemNames = { },
-    LootTrackingRegistered = false,
-    GuildMemberTrackingRegistered = false,
-    DurationUpdateRegistered = false,
-    RollDurationUpdateRegistered = false,
-    RollMatcherRegistered = false,
-    ChatTrackingRegistered = false,
-    ChatFallbackRegistered = false,
-    SessionEventsRegistered = false,
-    AllItemNamesCached = false,
-    StartupAwaitingAuthority = false,
+    ReservableItems                    = { },
+    ItemNames                          = { },
+    LootTrackingRegistered             = false,
+    GuildMemberTrackingRegistered      = false,
+    DurationUpdateRegistered           = false,
+    RollDurationUpdateRegistered       = false,
+    RollMatcherRegistered              = false,
+    ChatTrackingRegistered             = false,
+    ChatFallbackRegistered             = false,
+    SessionEventsRegistered            = false,
+    AllItemNamesCached                 = false,
+    StartupAwaitingAuthority           = false,
     StartupAwaitingAuthorityRegistered = false,
-    MasterLootListUpdateRegistered = false,
-    RollHistoryDisplayLimit = 0,
+    MasterLootListUpdateRegistered     = false,
+    RollHistoryDisplayLimit            = 0,
 };
 
 StaticPopupDialogs["LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE"] =
 {
-    text = "Are you sure you want to remove %s's reserve for item %s?",
-    button1 = YES,
-    button2 = NO,
+    text         = "Are you sure you want to remove %s's reserve for item %s?",
+    button1      = YES,
+    button2      = NO,
+    timeout      = 0,
+    whileDead    = 1,
+    hideOnEscape = 1,
     OnAccept = function(self)
         LootReserve.Server:CancelReserve(self.data.Player, self.data.Item, 1, false, true);
     end,
-    timeout = 0,
-    whileDead = 1,
-    hideOnEscape = 1,
 };
 
 StaticPopupDialogs["LOOTRESERVE_CONFIRM_FORCED_CANCEL_ROLL"] =
 {
-    text = "Are you sure you want to delete %s's roll for item %s?",
-    button1 = YES,
-    button2 = NO,
+    text         = "Are you sure you want to delete %s's roll for item %s?",
+    button1      = YES,
+    button2      = NO,
+    timeout      = 0,
+    whileDead    = 1,
+    hideOnEscape = 1,
     OnAccept = function(self)
         LootReserve.Server:DeleteRoll(self.data.Player, self.data.RollNumber, self.data.Item);
     end,
-    timeout = 0,
-    whileDead = 1,
-    hideOnEscape = 1,
 };
 
 StaticPopupDialogs["LOOTRESERVE_CONFIRM_GLOBAL_PROFILE_ENABLE"] =
 {
-    text = "By enabling global profile you acknowledge that all the mess you can create by e.g. swapping between characters who are in different raid groups will be on your conscience.|n|nDo you want to enable global profile?",
-    button1 = YES,
-    button2 = NO,
+    text         = "By enabling global profile you acknowledge that all the mess you can create by e.g. swapping between characters who are in different raid groups will be on your conscience.|n|nDo you want to enable global profile?",
+    button1      = YES,
+    button2      = NO,
+    timeout      = 0,
+    whileDead    = 1,
+    hideOnEscape = 1,
     OnAccept = function(self)
         LootReserveGlobalSave.Server.GlobalProfile = LootReserveCharacterSave.Server;
         LootReserve.Server.Settings.UseGlobalProfile = true;
         LootReserve.Server:Load();
     end,
-    timeout = 0,
-    whileDead = 1,
-    hideOnEscape = 1,
 };
 
 StaticPopupDialogs["LOOTRESERVE_CONFIRM_GLOBAL_PROFILE_DISABLE"] =
 {
-    text = "Disabling global profile will revert you back to using sessions stored on your other characters before you turned global profile on. Your current character will adopt the current session.|n|nDo you want to disable global profile?",
-    button1 = YES,
-    button2 = NO,
+    text         = "Disabling global profile will revert you back to using sessions stored on your other characters before you turned global profile on. Your current character will adopt the current session.|n|nDo you want to disable global profile?",
+    button1      = YES,
+    button2      = NO,
+    timeout      = 0,
+    whileDead    = 1,
+    hideOnEscape = 1,
     OnAccept = function(self)
         LootReserveCharacterSave.Server = LootReserveGlobalSave.Server.GlobalProfile;
         LootReserveGlobalSave.Server.GlobalProfile = nil;
@@ -124,18 +127,18 @@ StaticPopupDialogs["LOOTRESERVE_CONFIRM_GLOBAL_PROFILE_DISABLE"] =
         LootReserve.Server:UpdateReserveList();
         LootReserve.Server:UpdateRollList();
     end,
-    timeout = 0,
-    whileDead = 1,
-    hideOnEscape = 1,
 };
 
 StaticPopupDialogs["LOOTRESERVE_NEW_PHASE_NAME"] =
 {
-    text = "Name the new stage:",
-    button1 = ACCEPT,
-    button2 = CANCEL,
-    hasEditBox = true,
-    maxLetters = 50,
+    text         = "Name the new stage:",
+    button1      = ACCEPT,
+    button2      = CANCEL,
+    hasEditBox   = true,
+    maxLetters   = 50,
+    timeout      = 0,
+    whileDead    = 1,
+    hideOnEscape = 1,
     OnAccept = function(self)
         local name = LootReserve:StringTrim(self.editBox:GetText());
         if #name > 0 and not LootReserve:Contains(LootReserve.Server.Settings.Phases, name) then
@@ -149,35 +152,32 @@ StaticPopupDialogs["LOOTRESERVE_NEW_PHASE_NAME"] =
     EditBoxOnEscapePressed = function(self)
         self:GetParent():Hide();
     end,
-    timeout = 0,
-    whileDead = 1,
-    hideOnEscape = 1,
 };
 
 StaticPopupDialogs["LOOTRESERVE_CONFIRM_RESET_PHASES"] =
 {
-    text = "Are you sure you want to reset stages to default?",
-    button1 = YES,
-    button2 = NO,
+    text         = "Are you sure you want to reset stages to default?",
+    button1      = YES,
+    button2      = NO,
+    timeout      = 0,
+    whileDead    = 1,
+    hideOnEscape = 1,
     OnAccept = function(self)
         LootReserve.Server.Settings.Phases = LootReserve:Deepcopy(LootReserve.Constants.DefaultPhases);
     end,
-    timeout = 0,
-    whileDead = 1,
-    hideOnEscape = 1,
 };
 
 StaticPopupDialogs["LOOTRESERVE_CONFIRM_ANNOUNCE_BLIND_RESERVES"] =
 {
-    text = "Blind reserves in effect. Are you sure you want to publicly announce all reserves?",
-    button1 = YES,
-    button2 = NO,
+    text         = "Blind reserves in effect. Are you sure you want to publicly announce all reserves?",
+    button1      = YES,
+    button2      = NO,
+    timeout      = 0,
+    whileDead    = 1,
+    hideOnEscape = 1,
     OnAccept = function(self)
         LootReserve.Server:SendReservesList(nil, false, true);
     end,
-    timeout = 0,
-    whileDead = 1,
-    hideOnEscape = 1,
 };
 
 local function stringStartsWith(str, start)
@@ -456,7 +456,7 @@ function LootReserve.Server:PrepareLootTracking()
                 local tracking = self.CurrentSession.LootTracking[item] or
                 {
                     TotalCount = 0,
-                    Players = { },
+                    Players    = { },
                 };
                 self.CurrentSession.LootTracking[item] = tracking;
                 tracking.TotalCount = tracking.TotalCount + count;
@@ -510,9 +510,9 @@ function LootReserve.Server:UpdateGroupMembers()
             if not self.CurrentSession.Members[name] then
                 self.CurrentSession.Members[name] =
                 {
-                    ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
+                    ReservesLeft  = self.CurrentSession.Settings.MaxReservesPerPlayer,
                     ReservedItems = { },
-                    Locked = nil,
+                    Locked        = nil,
                 };
                 self.MembersEdit:UpdateMembersList();
             end
@@ -845,13 +845,13 @@ function LootReserve.Server:StartSession()
 
     self.CurrentSession =
     {
-        AcceptingReserves = true,
-        Settings = LootReserve:Deepcopy(self.NewSessionSettings),
-        ItemConditions = LootReserve:Deepcopy(self:GetNewSessionItemConditions()),
-        StartTime = time(),
-        Duration = self.NewSessionSettings.Duration,
+        AcceptingReserves    = true,
+        Settings             = LootReserve:Deepcopy(self.NewSessionSettings),
+        ItemConditions       = LootReserve:Deepcopy(self:GetNewSessionItemConditions()),
+        StartTime            = time(),
+        Duration             = self.NewSessionSettings.Duration,
         DurationEndTimestamp = time() + self.NewSessionSettings.Duration, -- Used to resume the session after relog or UI reload
-        Members = { },
+        Members              = { },
         --[[
         {
             [PlayerName] =
@@ -910,7 +910,7 @@ function LootReserve.Server:StartSession()
     LootReserve:ForEachRaider(function(name)
         self.CurrentSession.Members[name] =
         {
-            ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
+            ReservesLeft  = self.CurrentSession.Settings.MaxReservesPerPlayer,
             ReservedItems = { },
         };
     end);
@@ -921,7 +921,7 @@ function LootReserve.Server:StartSession()
     for player, importedMember in pairs(self.CurrentSession.Settings.ImportedMembers) do
         local member = self.CurrentSession.Members[player] or
         {
-            ReservesLeft = self.CurrentSession.Settings.MaxReservesPerPlayer,
+            ReservesLeft  = self.CurrentSession.Settings.MaxReservesPerPlayer,
             ReservedItems = { },
         };
         self.CurrentSession.Members[player] = member;
@@ -932,9 +932,9 @@ function LootReserve.Server:StartSession()
 
                 local reserve = self.CurrentSession.ItemReserves[item] or
                 {
-                    Item = item,
+                    Item      = item,
                     StartTime = time(),
-                    Players = { },
+                    Players   = { },
                 };
                 self.CurrentSession.ItemReserves[item] = reserve;
                 table.insert(reserve.Players, player);
@@ -1118,9 +1118,9 @@ function LootReserve.Server:Reserve(player, item, count, chat, skipChecks)
     -- Create item reserve
     local reserve = self.CurrentSession.ItemReserves[item] or
     {
-        Item = item,
+        Item      = item,
         StartTime = time(),
-        Players = { },
+        Players   = { },
     };
     self.CurrentSession.ItemReserves[item] = reserve;
 
@@ -1571,15 +1571,15 @@ function LootReserve.Server:FinishRollRequest(item, soleReserver)
                 if not member.WonRolls then member.WonRolls = { }; end
                 table.insert(member.WonRolls,
                 {
-                    Item = item,
+                    Item  = item,
                     Phase = phase,
-                    Time = time(),
+                    Time  = time(),
                 });
             end
 
             local itemWinners = self.CurrentSession.WonItems[item] or {
                 TotalCount = 0,
-                Players = { },
+                Players    = { },
             };
             self.CurrentSession.WonItems[item] = itemWinners;
             table.insert(itemWinners.Players, player);
@@ -1929,13 +1929,13 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
 
     self.RequestedRoll =
     {
-        Item = item,
-        StartTime = time(),
+        Item        = item,
+        StartTime   = time(),
         MaxDuration = duration and duration > 0 and duration or nil,
-        Duration = duration and duration > 0 and duration or nil,
-        Phases = phases and #phases > 0 and phases or nil,
-        Custom = nil,
-        Players = { },
+        Duration    = duration and duration > 0 and duration or nil,
+        Phases      = phases and #phases > 0 and phases or nil,
+        Custom      = nil,
+        Players     = { },
         --[[
         {
             [PlayerName] = {Roll, Roll, ...},
@@ -2003,13 +2003,13 @@ end
 function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPlayers)
     self.RequestedRoll =
     {
-        Item = item,
-        StartTime = time(),
-        MaxDuration = duration and duration > 0 and duration or nil,
-        Duration = duration and duration > 0 and duration or nil,
-        Phases = phases and #phases > 0 and phases or nil,
-        Custom = true,
-        Players = { },
+        Item           = item,
+        StartTime      = time(),
+        MaxDuration    = duration and duration > 0 and duration or nil,
+        Duration       = duration and duration > 0 and duration or nil,
+        Phases         = phases and #phases > 0 and phases or nil,
+        Custom         = true,
+        Players        = { },
         AllowedPlayers = allowedPlayers,
     };
     self.SaveProfile.RequestedRoll = self.RequestedRoll;
@@ -2077,10 +2077,10 @@ end
 function LootReserve.Server:RaidRoll(item)
     self.RequestedRoll =
     {
-        Item = item,
-        StartTime = time(),
-        RaidRoll = true,
-        Players = { },
+        Item           = item,
+        StartTime      = time(),
+        RaidRoll       = true,
+        Players        = { },
         AllowedPlayers = { LootReserve:Me() },
     };
     self.SaveProfile.RequestedRoll = self.RequestedRoll;
@@ -2238,10 +2238,10 @@ function LootReserve.Server:MasterLootItem(item, player, multipleWinners)
 
     self.PendingMasterLoot =
     {
-        Item = item,
+        Item      = item,
         ItemIndex = itemIndex,
-        Player = player,
-        Timeout = time() + 5,
+        Player    = player,
+        Timeout   = time() + 5,
     };
 
     --LootSlot(itemIndex); -- Can't do it this way, LootFrame breaks due to some crucial variables not being filled

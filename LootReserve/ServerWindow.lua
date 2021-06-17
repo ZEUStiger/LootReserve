@@ -778,18 +778,18 @@ end
 
 local activeSessionChanges =
 {
-    ButtonStartSession = "Hide",
-    ButtonStopSession = "Show",
-    ButtonResetSession = "Hide",
-    LabelRaid = "Label",
-    DropDownRaid = "DropDown",
-    LabelCount = "Label",
-    EditBoxCount = "Disable",
-    LabelMultireserve = "Label",
+    ButtonStartSession  = "Hide",
+    ButtonStopSession   = "Show",
+    ButtonResetSession  = "Hide",
+    LabelRaid           = "Label",
+    DropDownRaid        = "DropDown",
+    LabelCount          = "Label",
+    EditBoxCount        = "Disable",
+    LabelMultireserve   = "Label",
     EditBoxMultireserve = "Disable",
-    LabelDuration = "Hide",
-    DropDownDuration = "Hide",
-    ButtonLootEdit = "Disable",
+    LabelDuration       = "Hide",
+    DropDownDuration    = "Hide",
+    ButtonLootEdit      = "Disable",
 
     Apply = function(self, panel, active)
         for k, action in pairs(self) do

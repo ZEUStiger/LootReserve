@@ -20,14 +20,14 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
 
     self.RollRequest =
     {
-        Sender = sender,
-        Item = item,
-        Custom = custom or nil,
-        Duration = duration and duration > 0 and duration or nil,
+        Sender      = sender,
+        Item        = item,
+        Custom      = custom or nil,
+        Duration    = duration and duration > 0 and duration or nil,
         MaxDuration = maxDuration and maxDuration > 0 and maxDuration or nil,
-        Phase = phase,
-        Example = example,
-        Count = myCount,
+        Phase       = phase,
+        Example     = example,
+        Count       = myCount,
     };
     local roll = self.RollRequest;
 

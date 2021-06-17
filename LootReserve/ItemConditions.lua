@@ -3,11 +3,11 @@ LootReserve.ItemConditions = LootReserve.ItemConditions or { };
 
 local DefaultConditions =
 {
-    Hidden = nil,
-    Custom = nil,
-    Faction = nil,
+    Hidden    = nil,
+    Custom    = nil,
+    Faction   = nil,
     ClassMask = nil,
-    Limit = nil,
+    Limit     = nil,
 };
 
 function LootReserve.ItemConditions:Get(item, server)

@@ -5,37 +5,37 @@ LootReserve.Client =
     SessionServer = nil,
 
     -- Server Session Info
-    StartTime = 0,
+    StartTime         = 0,
     AcceptingReserves = false,
     RemainingReserves = 0,
-    Locked = false,
-    LootCategory = nil,
-    Duration = nil,
-    MaxDuration = nil,
-    ItemReserves = { }, -- { [ItemID] = { "Playername", "Playername", ... }, ... }
-    ItemConditions = { },
-    RollRequest = nil,
-    Blind = false,
-    Multireserve = nil,
+    Locked            = false,
+    LootCategory      = nil,
+    Duration          = nil,
+    MaxDuration       = nil,
+    ItemReserves      = { }, -- { [ItemID] = { "Playername", "Playername", ... }, ... }
+    ItemConditions    = { },
+    RollRequest       = nil,
+    Blind             = false,
+    Multireserve      = nil,
 
     Settings =
     {
-        RollRequestShow = true,
-        RollRequestShowUnusable = false,
+        RollRequestShow             = true,
+        RollRequestShowUnusable     = false,
         RollRequestGlowOnlyReserved = false,
-        CollapsedExpansions = { },
-        CollapsedCategories = { },
-        SwapLDBButtons = false,
-        LibDBIcon = { },
+        CollapsedExpansions         = { },
+        CollapsedCategories         = { },
+        SwapLDBButtons              = false,
+        LibDBIcon                   = { },
     },
     CharacterFavorites = { },
-    GlobalFavorites = { },
+    GlobalFavorites    = { },
 
-    PendingItems = { },
-    ServerSearchTimeoutTime = nil,
+    PendingItems             = { },
+    ServerSearchTimeoutTime  = nil,
     DurationUpdateRegistered = false,
-    SessionEventsRegistered = false,
-    CategoryFlashing = false,
+    SessionEventsRegistered  = false,
+    CategoryFlashing         = false,
 
     SelectedCategory = nil,
 };
