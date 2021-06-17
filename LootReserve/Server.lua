@@ -63,6 +63,7 @@ LootReserve.Server =
     RollMatcherRegistered              = false,
     ChatTrackingRegistered             = false,
     ChatFallbackRegistered             = false,
+    BasicChatListeningRegistered       = false,
     SessionEventsRegistered            = false,
     AllItemNamesCached                 = false,
     StartupAwaitingAuthority           = false,
@@ -801,6 +802,37 @@ function LootReserve.Server:PrepareSession()
             end
         end
     end
+end
+
+function LootReserve.Server:PrepareBasicChatListening()
+    local function ProcessChat(text, sender)
+        sender = LootReserve:Player(sender);
+        
+        text = text:lower();
+        text = LootReserve:StringTrim(text);
+        if text == "pass" or text == "p" then
+            if self.RequestedRoll then
+                self:PassRoll(sender, self.RequestedRoll.Item, true);
+            end
+            return;
+        end
+    end
+
+    local chatTypes =
+    {
+        "CHAT_MSG_WHISPER",
+        "CHAT_MSG_SAY",
+        "CHAT_MSG_YELL",
+        "CHAT_MSG_PARTY",
+        "CHAT_MSG_PARTY_LEADER",
+        "CHAT_MSG_RAID",
+        "CHAT_MSG_RAID_LEADER",
+        "CHAT_MSG_RAID_WARNING",
+    };
+    for _, type in ipairs(chatTypes) do
+        LootReserve:RegisterEvent(type, ProcessChat);
+    end
+    self.BasicChatListeningRegistered = true;
 end
 
 function LootReserve.Server:UpdateItemNameCache()
@@ -2043,6 +2075,10 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
 end
 
 function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPlayers)
+    if not self.BasicChatListeningRegistered then
+        self:PrepareBasicChatListening();
+    end
+    
     self.RequestedRoll =
     {
         Item           = item,
@@ -2154,7 +2190,7 @@ function LootReserve.Server:PassRoll(player, item, chat)
     local i = 1;
     for i, roll in ipairs(self.RequestedRoll.Players[player]) do
         if roll >= 0 then
-            self.RequestedRoll.Players[player][i] = -1;
+            self.RequestedRoll.Players[player][i] = LootReserve.Constants.RollType.Passed;
             success = true;
         end
     end
@@ -2198,7 +2234,7 @@ function LootReserve.Server:DeleteRoll(player, rollNumber, item)
     end
 
     local oldRoll = self.RequestedRoll.Players[player][rollNumber];
-    self.RequestedRoll.Players[player][rollNumber] = -2;
+    self.RequestedRoll.Players[player][rollNumber] = LootReserve.Constants.RollType.Deleted;
     
     local phase = self.RequestedRoll.Phases and self.RequestedRoll.Phases[1] or nil;
 

@@ -69,6 +69,11 @@ LootReserve.Constants =
         Reserve  = 1,
         RaidRoll = 2,
     },
+    RollType =
+    {
+        Passed  = -1,
+        Deleted = -2,
+    },
 };
 
 local result = LootReserve.Constants.ReserveResult;

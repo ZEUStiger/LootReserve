@@ -37,8 +37,8 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
                         else
                             winner = roll > 0 and highest > 0 and roll == highest; -- Backwards compatibility
                         end
-                        local pass = roll == -1;
-                        local deleted = roll == -2;
+                        local pass = roll == LootReserve.Constants.RollType.Passed;
+                        local deleted = roll == LootReserve.Constants.RollType.Deleted;
                         local color = not LootReserve:IsPlayerOnline(button.Player) and GRAY_FONT_COLOR or winner and GREEN_FONT_COLOR or pass and GRAY_FONT_COLOR or deleted and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
                         button.Roll:Show();
                         button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or deleted and "DEL" or "...");
@@ -368,8 +368,8 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
                         else
                             winner = roll > 0 and highest > 0 and roll == highest; -- Backwards compatibility
                         end
-                        local pass = roll == -1;
-                        local deleted = roll == -2;
+                        local pass = roll == LootReserve.Constants.RollType.Passed;
+                        local deleted = roll == LootReserve.Constants.RollType.Deleted;
                         local color = winner and GREEN_FONT_COLOR or pass and GRAY_FONT_COLOR or deleted and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
                         button.Roll:Show();
                         button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or deleted and "DEL" or "...");
