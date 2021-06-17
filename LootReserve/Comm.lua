@@ -202,10 +202,9 @@ LootReserve.Comm.Handlers[Opcodes.Hello] = function(sender)
         local players = { sender };
         if not LootReserve.Server.RequestedRoll.Custom then
             table.wipe(players);
-            for playerNumber, roll in pairs(LootReserve.Server.RequestedRoll.Players) do
-                local player = playerNumber:match("^(.*)#%d+$") or playerNumber; -- Fallback for backwards compatibility
-                if player == sender and roll == 0 then
-                    table.insert(players, player);
+            for _, roll in ipairs(LootReserve.Server.RequestedRoll.Players[sender] or { }) do
+                if roll == 0 then
+                    table.insert(players, sender);
                 end
             end
         end

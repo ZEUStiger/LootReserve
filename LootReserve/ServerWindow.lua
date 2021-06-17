@@ -508,38 +508,20 @@ function LootReserve.Server:UpdateRollList(lockdown)
             local reservesHeight = 5 + 12 + 2;
             local last = 0;
             frame.ReservesFrame.Players = frame.ReservesFrame.Players or { };
-            
-            local playerNames = { };
-            local playerRolls = { };
-            for player, rolls in pairs(roll.Players) do
-                playerNames[player] = playerNames[player] and playerNames[player] + 1 or 1;
-                for _, roll in ipairs(rolls) do
-                   tinsert(playerRolls, {player = player, roll = roll, rollNumber = playerNames[player]});
-                end
-            end
-            for i in LootReserve:Ordered(playerRolls, function(aData, bData)
-                if aData.roll ~= bData.roll then
-                    return aData.roll > bData.roll;
-                elseif aData.player ~= bData.player then
-                    return aData.player < bData.player;
-                else
-                    return aData.rollNumber < bData.rollNumber;
-                end
-            end) do
-                local player     = playerRolls[i].player;
-                local roll       = playerRolls[i].roll;
-                local rollNumber = playerRolls[i].rollNumber;
+
+            for _, playerRoll in LootReserve.Server:GetOrderedPlayerRolls(roll) do
                 last = last + 1;
                 if last > #frame.ReservesFrame.Players then
                     local button = CreateFrame("Button", nil, frame.ReservesFrame, lockdown and "LootReserveReserveListPlayerTemplate" or "LootReserveReserveListPlayerSecureTemplate");
                     table.insert(frame.ReservesFrame.Players, button);
                 end
+                local player = playerRoll.Player;
                 local unit = LootReserve:GetRaidUnitID(player) or LootReserve:GetPartyUnitID(player);
                 local button = frame.ReservesFrame.Players[last];
                 if button.init then button:init(); end
                 button:Show();
                 button.Player = player;
-                button.RollNumber = rollNumber;
+                button.RollNumber = playerRoll.RollNumber;
                 button.Unit = unit;
                 if not lockdown then
                     button:SetAttribute("unit", unit);
