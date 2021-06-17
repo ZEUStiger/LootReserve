@@ -271,7 +271,7 @@ function LootReserve.Server:Load()
         end
     end
 
-    -- 2012-02-12: Upgrade item conditions
+    -- 2021-02-12: Upgrade item conditions
     if self.NewSessionSettings.ItemConditions then
         for item, conditions in pairs(self.NewSessionSettings.ItemConditions) do
             local category = conditions.Custom;
@@ -303,6 +303,32 @@ function LootReserve.Server:Load()
                 end
             end
             self.CurrentSession.Settings.ItemConditions = nil;
+        end
+    end
+
+    -- 2021-06-17: Upgrade roll history to support multiple rolls from the same player
+    for _, roll in ipairs(self.RollHistory) do
+        local needsUpgrade = false;
+        for player, rolls in pairs(roll.Players) do
+            if player:match("^(.*)#%d+$") or type(rolls) == "number" then
+                needsUpgrade = true;
+                break;
+            end
+        end
+        if needsUpgrade then
+            local players = { };
+            for player, rolls in LootReserve:Ordered(roll.Players) do
+                player = player:match("^(.*)#%d+$") or player;
+                players[player] = players[player] or { };
+                if type(rolls) == "number" then
+                    table.insert(players[player], rolls);
+                elseif type(rolls) == "table" then
+                    for _, roll in ipairs(rolls) do
+                        table.insert(players[player], roll);
+                    end
+                end
+            end
+            roll.Players = players;
         end
     end
 
