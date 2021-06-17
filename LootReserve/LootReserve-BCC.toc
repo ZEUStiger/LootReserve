@@ -1,7 +1,7 @@
-## Interface: 11307
+## Interface: 20501
 ## Title: LootReserve
 ## Version: 2021-05-18
-## X-Min-Allowed-Version: 2020-12-22
+## X-Min-Allowed-Version: 2021-05-18
 ## Author: Tagar-NethergardeKeep
 ## SavedVariables: LootReserveGlobalSave
 ## SavedVariablesPerCharacter: LootReserveCharacterSave
@@ -16,7 +16,7 @@ Comm.lua
 Data.lua
 ItemConditions.lua
 ItemSearch.lua
-Common-Classic.xml
+Common-BCC.xml
 Common.xml
 ClientWindow.xml
 ServerWindow.xml

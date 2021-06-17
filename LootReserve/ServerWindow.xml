@@ -321,7 +321,7 @@
 			</OnLoad>
 		</Scripts>
 	</Button>
-	<Frame name="LootReserveReserveListTemplate" virtual="true" enableMouse="true" inherits="BackdropTemplate">
+	<Frame name="LootReserveReserveListTemplate" virtual="true" enableMouse="true" inherits="LootReserveBackdropTemplate">
 		<KeyValues>
 			<KeyValue key="backdropInfo" value="LOOTRESERVE_BACKDROP_BLACK_4" type="global" />
 		</KeyValues>
@@ -675,7 +675,7 @@
 			</Frame>
 		</Frames>
 	</Frame>
-	<Frame name="LootReserveRollPlaceholderTemplate" virtual="true" enableMouse="true" inherits="BackdropTemplate">
+	<Frame name="LootReserveRollPlaceholderTemplate" virtual="true" enableMouse="true" inherits="LootReserveBackdropTemplate">
 		<KeyValues>
 			<KeyValue key="backdropInfo" value="LOOTRESERVE_BACKDROP_BLACK_4" type="global" />
 		</KeyValues>

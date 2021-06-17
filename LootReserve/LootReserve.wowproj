@@ -17,6 +17,12 @@
     <Content Include="Comm.lua">
       <SubType>Code</SubType>
     </Content>
+    <Content Include="Common-BCC.xml">
+      <SubType>Frame</SubType>
+    </Content>
+    <Content Include="Common-Classic.xml">
+      <SubType>Frame</SubType>
+    </Content>
     <Content Include="Common.xml">
       <SubType>Frame</SubType>
     </Content>
@@ -74,6 +80,12 @@
       <SubType>Code</SubType>
     </Content>
     <Content Include="LootReserve.toc">
+      <SubType>TableOfContents</SubType>
+    </Content>
+    <Content Include="LootReserve-BCC.toc">
+      <SubType>TableOfContents</SubType>
+    </Content>
+    <Content Include="LootReserve-Classic.toc">
       <SubType>TableOfContents</SubType>
     </Content>
     <Content Include="LootReserve.lua">

@@ -94,7 +94,7 @@
 			</Layer>
 		</Layers>
 	</CheckButton>
-	<Frame name="LootReserveLootListTemplate" virtual="true" enableMouse="true" inherits="BackdropTemplate">
+	<Frame name="LootReserveLootListTemplate" virtual="true" enableMouse="true" inherits="LootReserveBackdropTemplate">
 		<KeyValues>
 			<KeyValue key="backdropInfo" value="BACKDROP_TOOLTIP_0_16_5555" type="global" />
 			<KeyValue key="backdropBorderColor" value="NORMAL_FONT_COLOR" type="global" />
@@ -395,7 +395,7 @@
 					</OnTextChanged>
 				</Scripts>
 			</EditBox>
-			<Frame parentKey="Categories" inherits="BackdropTemplate">
+			<Frame parentKey="Categories" inherits="LootReserveBackdropTemplate">
 				<KeyValues>
 					<KeyValue key="backdropInfo" value="LOOTRESERVE_BACKDROP_BLACK_4" type="global" />
 				</KeyValues>
@@ -416,7 +416,7 @@
 					</ScrollFrame>
 				</Frames>
 			</Frame>
-			<Frame parentKey="Loot" inherits="BackdropTemplate">
+			<Frame parentKey="Loot" inherits="LootReserveBackdropTemplate">
 				<KeyValues>
 					<KeyValue key="backdropInfo" value="LOOTRESERVE_BACKDROP_BLACK_4" type="global" />
 				</KeyValues>

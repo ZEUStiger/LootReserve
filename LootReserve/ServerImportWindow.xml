@@ -238,7 +238,7 @@
 					<Anchor point="TOPRIGHT" relativeKey="$parent.Input" relativePoint="BOTTOMRIGHT" y="-5" />
 				</Anchors>
 				<Frames>
-					<Frame parentKey="Input" inherits="BackdropTemplate">
+					<Frame parentKey="Input" inherits="LootReserveBackdropTemplate">
 						<KeyValues>
 							<KeyValue key="backdropInfo" value="LOOTRESERVE_BACKDROP_BLACK_4" type="global" />
 						</KeyValues>
@@ -322,7 +322,7 @@
 							</CheckButton>
 						</Frames>
 					</Frame>
-					<Frame parentKey="Columns" inherits="BackdropTemplate">
+					<Frame parentKey="Columns" inherits="LootReserveBackdropTemplate">
 						<KeyValues>
 							<KeyValue key="backdropInfo" value="LOOTRESERVE_BACKDROP_BLACK_4" type="global" />
 						</KeyValues>
