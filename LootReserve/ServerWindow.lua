@@ -18,18 +18,19 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
 
             local highest = 0;
             if frame.Roll then
-                for playerNumber, roll in pairs(frame.Roll.Players) do
-                    local player = playerNumber:match("^(.*)#%d+$") or playerNumber; -- Fallback for backwards compatibility
-                    if highest < roll and (frame.Historical or LootReserve:IsPlayerOnline(player)) then
-                        highest = roll;
+                for player, rolls in pairs(frame.Roll.Players) do
+                    for _, roll in ipairs(rolls) do
+                        if highest < roll and (frame.Historical or LootReserve:IsPlayerOnline(player)) then
+                            highest = roll;
+                        end
                     end
                 end
             end
 
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    if frame.Roll and frame.Roll.Players[button.PlayerNumber] then
-                        local roll = frame.Roll.Players[button.PlayerNumber];
+                    if frame.Roll and frame.Roll.Players[button.Player] and frame.Roll.Players[button.Player][button.RollNumber] then
+                        local roll = frame.Roll.Players[button.Player][button.RollNumber];
                         local winner;
                         if frame.Roll.Winners then
                             winner = LootReserve:Contains(frame.Roll.Winners, button.Player);
@@ -189,7 +190,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
             button.Player = player;
 
             playerNames[player] = playerNames[player] and playerNames[player] + 1 or 1;
-            button.PlayerNumber = player .. "#" .. playerNames[player];
+            button.RollNumber = playerNames[player];
 
             button.Unit = unit;
             if not lockdown then
@@ -348,18 +349,19 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
 
             local highest = 0;
             if frame.Roll then
-                for playerNumber, roll in pairs(frame.Roll.Players) do
-                    local player = playerNumber:match("^(.*)#%d+$") or playerNumber; -- Fallback for backwards compatibility
-                    if highest < roll and (frame.Historical or LootReserve:IsPlayerOnline(player)) then
-                        highest = roll;
+                for player, rolls in pairs(frame.Roll.Players) do
+                    for _, roll in ipairs(rolls) do
+                        if highest < roll and (frame.Historical or LootReserve:IsPlayerOnline(player)) then
+                            highest = roll;
+                        end
                     end
                 end
             end
 
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    if frame.Roll and frame.Roll.Players[button.PlayerNumber] then
-                        local roll = frame.Roll.Players[button.PlayerNumber];
+                    if frame.Roll and frame.Roll.Players[button.Player] and frame.Roll.Players[button.Player][button.RollNumber] then
+                        local roll = frame.Roll.Players[button.Player][button.RollNumber];
                         local winner;
                         if frame.Roll.Winners then
                             winner = LootReserve:Contains(frame.Roll.Winners, button.Player);
@@ -506,14 +508,27 @@ function LootReserve.Server:UpdateRollList(lockdown)
             local reservesHeight = 5 + 12 + 2;
             local last = 0;
             frame.ReservesFrame.Players = frame.ReservesFrame.Players or { };
-            for playerNumber, roll in LootReserve:Ordered(roll.Players, function(aRoll, bRoll, aPlayer, bPlayer)
-                if aRoll ~= bRoll then
-                    return aRoll > bRoll;
+            
+            local playerNames = { };
+            local playerRolls = { };
+            for player, rolls in pairs(roll.Players) do
+                playerNames[player] = playerNames[player] and playerNames[player] + 1 or 1;
+                for _, roll in ipairs(rolls) do
+                   tinsert(playerRolls, {player = player, roll = roll, rollNumber = playerNames[player]});
+                end
+            end
+            for i in LootReserve:Ordered(playerRolls, function(aData, bData)
+                if aData.roll ~= bData.roll then
+                    return aData.roll > bData.roll;
+                elseif aData.player ~= bData.player then
+                    return aData.player < bData.player;
                 else
-                    return aPlayer < bPlayer;
+                    return aData.rollNumber < bData.rollNumber;
                 end
             end) do
-                local player = playerNumber:match("^(.*)#%d+$") or playerNumber; -- Fallback for backwards compatibility
+                local player     = playerRolls[i].player;
+                local roll       = playerRolls[i].roll;
+                local rollNumber = playerRolls[i].rollNumber;
                 last = last + 1;
                 if last > #frame.ReservesFrame.Players then
                     local button = CreateFrame("Button", nil, frame.ReservesFrame, lockdown and "LootReserveReserveListPlayerTemplate" or "LootReserveReserveListPlayerSecureTemplate");
@@ -524,7 +539,7 @@ function LootReserve.Server:UpdateRollList(lockdown)
                 if button.init then button:init(); end
                 button:Show();
                 button.Player = player;
-                button.PlayerNumber = playerNumber;
+                button.RollNumber = rollNumber;
                 button.Unit = unit;
                 if not lockdown then
                     button:SetAttribute("unit", unit);

@@ -88,7 +88,7 @@ StaticPopupDialogs["LOOTRESERVE_CONFIRM_FORCED_CANCEL_ROLL"] =
     button1 = YES,
     button2 = NO,
     OnAccept = function(self)
-        LootReserve.Server:DeleteRoll(self.data.PlayerNumber, self.data.Item);
+        LootReserve.Server:DeleteRoll(self.data.Player, self.data.RollNumber, self.data.Item);
     end,
     timeout = 0,
     whileDead = 1,
@@ -1056,7 +1056,7 @@ function LootReserve.Server:ResetSession()
     return true;
 end
 
-function LootReserve.Server:Reserve(player, item, count, chat)
+function LootReserve.Server:Reserve(player, item, count, chat, skipChecks)
     count = math.max(1, count or 1);
 
     local function Failure(result, reservesLeft, postText, ...)
@@ -1071,10 +1071,6 @@ function LootReserve.Server:Reserve(player, item, count, chat)
         return false;
     end
 
-    if not LootReserve:IsPlayerOnline(player) then
-        return Failure(LootReserve.Constants.ReserveResult.NotInRaid, 0);
-    end
-
     if not self.CurrentSession or not self.CurrentSession.AcceptingReserves then
         return Failure(LootReserve.Constants.ReserveResult.NoSession, 0);
     end
@@ -1084,33 +1080,39 @@ function LootReserve.Server:Reserve(player, item, count, chat)
         return Failure(LootReserve.Constants.ReserveResult.NotMember, 0);
     end
 
-    if self.CurrentSession.Settings.Lock and member.Locked then
-        return Failure(LootReserve.Constants.ReserveResult.Locked, "#");
-    end
-
     if not self.ReservableItems[item] then
         return Failure(LootReserve.Constants.ReserveResult.ItemNotReservable, member.ReservesLeft);
     end
 
-    local canReserve, conditionResult = LootReserve.ItemConditions:TestPlayer(player, item, true);
-    if not canReserve then
-        return Failure(conditionResult or LootReserve.Constants.ReserveResult.FailedConditions, member.ReservesLeft);
-    end
+    if not skipChecks then
+        if not LootReserve:IsPlayerOnline(player) then
+            return Failure(LootReserve.Constants.ReserveResult.NotInRaid, 0);
+        end
 
-    if not self.CurrentSession.Settings.Multireserve and LootReserve:Contains(member.ReservedItems, item) then
-        return Failure(LootReserve.Constants.ReserveResult.AlreadyReserved, member.ReservesLeft);
-    end
+        if self.CurrentSession.Settings.Lock and member.Locked then
+            return Failure(LootReserve.Constants.ReserveResult.Locked, "#");
+        end
 
-    if member.ReservesLeft <= 0 then
-        return Failure(LootReserve.Constants.ReserveResult.NoReservesLeft, member.ReservesLeft, ". You can cancel a reserve with  !reserve cancel [ItemLinkOrName]");
-    end
+        local canReserve, conditionResult = LootReserve.ItemConditions:TestPlayer(player, item, true);
+        if not canReserve then
+            return Failure(conditionResult or LootReserve.Constants.ReserveResult.FailedConditions, member.ReservesLeft);
+        end
 
-    if member.ReservesLeft < count then
-        return Failure(LootReserve.Constants.ReserveResult.NotEnoughReservesLeft, member.ReservesLeft, ". You have %d/%d %s left. You can cancel a reserve with  !reserve cancel [ItemLinkOrName]",
-            member.ReservesLeft,
-            self.CurrentSession.Settings.MaxReservesPerPlayer,
-            self.CurrentSession.Settings.MaxReservesPerPlayer == 1 and "reserve" or "reserves"
-        );
+        if not self.CurrentSession.Settings.Multireserve and LootReserve:Contains(member.ReservedItems, item) then
+            return Failure(LootReserve.Constants.ReserveResult.AlreadyReserved, member.ReservesLeft);
+        end
+
+        if member.ReservesLeft <= 0 then
+            return Failure(LootReserve.Constants.ReserveResult.NoReservesLeft, member.ReservesLeft, ". You can cancel a reserve with  !reserve cancel [ItemLinkOrName]");
+        end
+
+        if member.ReservesLeft < count then
+            return Failure(LootReserve.Constants.ReserveResult.NotEnoughReservesLeft, member.ReservesLeft, ". You have %d/%d %s left. You can cancel a reserve with  !reserve cancel [ItemLinkOrName]",
+                member.ReservesLeft,
+                self.CurrentSession.Settings.MaxReservesPerPlayer,
+                self.CurrentSession.Settings.MaxReservesPerPlayer == 1 and "reserve" or "reserves"
+            );
+        end
     end
 
     -- Create item reserve
@@ -1280,13 +1282,7 @@ function LootReserve.Server:CancelReserve(player, item, count, chat, forced)
 
         -- Remove player from the active roll on that item
         if self:IsRolling(item) and not self.RequestedRoll.Custom and not self.RequestedRoll.RaidRoll then
-            local i = 1;
-            while self.RequestedRoll.Players[player .. "#" .. i] do
-                i = i + 1;
-            end
-            if i > 1 then
-                self.RequestedRoll.Players[player .. "#" .. (i-1)] = nil;
-            end
+            self.RequestedRoll.Players[player] = nil;
         end
 
         member.ReservesLeft = math.min(member.ReservesLeft + 1, self.CurrentSession.Settings.MaxReservesPerPlayer);
@@ -1469,15 +1465,11 @@ end
 
 function LootReserve.Server:TryFinishRoll()
     if self.RequestedRoll then
+        -- Check if only one player exists in the roll request
         if not self.RequestedRoll.Custom and not self.RequestedRoll.RaidRoll and self.Settings.RollSkipNotContested then
             local count = 0;
-            local names = { };
             for player, roll in pairs(self.RequestedRoll.Players) do
-                local name = player:match("^(.*)#%d+$");
-                if not names[name] then
-                    count = count + 1;
-                    names[name] = true;
-                end
+                count = count + 1;
             end
             if count == 1 then
                 self:FinishRollRequest(self.RequestedRoll.Item, true);
@@ -1485,14 +1477,21 @@ function LootReserve.Server:TryFinishRoll()
                 return true;
             end
         end
+        
+        -- Check if any player other than the current winning player has still not rolled
         if (not self.RequestedRoll.Custom or self.RequestedRoll.AllowedPlayers) and not self.RequestedRoll.RaidRoll and self.Settings.RollFinishOnAllReservingRolled then
             local highestPlayers = select(2, self:GetWinningRollAndPlayers()) or { };
             local missingRolls = #highestPlayers ~= 1;
             if not missingRolls then
-                for player, roll in pairs(self.RequestedRoll.Players) do
-                    if roll == 0 and player:match("^(.*)#%d+$") ~= highestPlayers[1] then
-                        missingRolls = true;
-                        break;
+                for player, rolls in pairs(self.RequestedRoll.Players) do
+                    for _, roll in ipairs(rolls) do
+                        if roll == 0 and player ~= highestPlayers[1] then
+                            missingRolls = true;
+                            break;
+                        end
+                        if missingRolls then
+                            break;
+                        end
                     end
                 end
             end
@@ -1502,29 +1501,33 @@ function LootReserve.Server:TryFinishRoll()
                 return true;
             end
         end
+        
+        -- Check if this is a raid roll that should autocomplete
         if self.RequestedRoll.RaidRoll and self.Settings.RollFinishOnRaidRoll and next(self.RequestedRoll.Players) then
             self:FinishRollRequest(self.RequestedRoll.Item);
             self:RollEnded();
             return true;
         end
+        
         return false;
     end
 end
 
-function LootReserve.Server:GetWinningRollAndPlayers(rolls)
-    if self.RequestedRoll or rolls then
+function LootReserve.Server:GetWinningRollAndPlayers()
+    if self.RequestedRoll then
         local highestRoll = 0;
         local highestPlayers = { };
-        for playerNumber, roll in pairs(rolls or self.RequestedRoll.Players) do
-            local player = playerNumber:match("^(.*)#%d+$") or playerNumber;
-            if highestRoll <= roll and LootReserve:IsPlayerOnline(player) then
-                if highestRoll ~= roll then
-                    table.wipe(highestPlayers);
+        for player, rolls in pairs(self.RequestedRoll.Players) do
+            for _, roll in ipairs(rolls) do
+                if highestRoll <= roll and LootReserve:IsPlayerOnline(player) then
+                    if highestRoll ~= roll then
+                        table.wipe(highestPlayers);
+                    end
+                    if not LootReserve:Contains(highestPlayers, player) then
+                        table.insert(highestPlayers, player);
+                    end
+                    highestRoll = roll;
                 end
-                if not LootReserve:Contains(highestPlayers, player) then
-                    table.insert(highestPlayers, player);
-                end
-                highestRoll = roll;
             end
         end
         if highestRoll > 0 then
@@ -1627,8 +1630,7 @@ function LootReserve.Server:FinishRollRequest(item, soleReserver)
                 self:MasterLootItem(item, players[1], #players > 1);
             end
         elseif soleReserver and not self.RequestedRoll.Custom and next(self.RequestedRoll.Players) then
-            local playerNumber = next(self.RequestedRoll.Players);
-            local player = playerNumber:match("^(.*)#%d+$");
+            local player = next(self.RequestedRoll.Players);
             players = { player };
             RecordRollWinner(player, item, LootReserve.Constants.WonRollPhase.Reserve);
 
@@ -1724,17 +1726,15 @@ function LootReserve.Server:CanRoll(player)
     -- Only raid roll creator is allowed to re-roll the raid-roll
     if self.RequestedRoll.RaidRoll then return LootReserve:IsMe(player); end
     -- Player must have reserved the item if the roll is for a reserved item
-    if not self.RequestedRoll.Custom and not self.RequestedRoll.Players[player .. "#1"] then return false; end
+    if not self.RequestedRoll.Custom and not self.RequestedRoll.Players[player] then return false; end
     -- Player cannot roll if they have rolled their allotted number of times already
-    if self.RequestedRoll.Players[player .. "#1"] then
+    if self.RequestedRoll.Players[player] then
         local hasRolls = false;
-        local i = 1;
-        while self.RequestedRoll.Players[player .. "#" .. i] do
-            if self.RequestedRoll.Players[player .. "#" .. i] == 0 then
+        for _, roll in ipairs(self.RequestedRoll.Players[player]) do
+            if roll == 0 then
                hasRolls = true;
                break; 
             end
-            i = i + 1;
         end
         if not hasRolls then
             return false;
@@ -1805,22 +1805,20 @@ function LootReserve.Server:PrepareRequestRoll()
                         table.insert(self.RequestedRoll.Chat[player], format("%d|%s|%s", time(), "SYSTEM", text));
                     end
 
-                    local count = 1;
-                    if not self.RequestedRoll.Players[player .. "#" .. count] then
-                       self.RequestedRoll.Players[player .. "#" .. count] = 0; 
-                    end
                     local rollSubmitted = false;
-                    local extraRolls = 0;
-                    while self.RequestedRoll.Players[player .. "#" .. count] do
-                        if self.RequestedRoll.Players[player .. "#" .. count] == 0 then
+                    local extraRolls    = false;
+                    if not self.RequestedRoll.Players[player] then
+                       self.RequestedRoll.Players[player] = { 0 };
+                    end
+                    for i, oldRoll in ipairs(self.RequestedRoll.Players[player]) do
+                        if oldRoll == 0 then
                             if not rollSubmitted then
-                                self.RequestedRoll.Players[player .. "#" .. count] = tonumber(roll);
+                                self.RequestedRoll.Players[player][i] = tonumber(roll);
                                 rollSubmitted = true;
                             else
-                                extraRolls = extraRolls + 1;
+                                extraRolls = true;
                             end
                         end
-                        count = count + 1;
                     end
 
                     self:UpdateReserveListRolls();
@@ -1832,7 +1830,7 @@ function LootReserve.Server:PrepareRequestRoll()
                     end
 
                     if not self:TryFinishRoll() then
-                        if extraRolls > 0 then
+                        if extraRolls then
                             -- RollRequestWindow will currently just trigger /roll multiple times, uncomment to send roll request after roll request until the player exhausts all their roll slots
                             -- LootReserve.Comm:SendRequestRoll(player, self.RequestedRoll.Item, {player}, self.RequestedRoll.Custom, self.RequestedRoll.Duration, self.RequestedRoll.MaxDuration, self.RequestedRoll.Phases and self.RequestedRoll.Phases[1] or "");
 
@@ -1841,15 +1839,15 @@ function LootReserve.Server:PrepareRequestRoll()
                             local function WhisperPlayer()
                                 if not self.RequestedRoll or self.RequestedRoll ~= closureRoll or self.RequestedRoll.Item ~= closureItem then return; end
 
-                                local count = 1;
+                                local rollsCount = 0;
                                 local extraRolls = 0;
-                                while self.RequestedRoll.Players[player .. "#" .. count] do
-                                    if self.RequestedRoll.Players[player .. "#" .. count] == 0 then
+                                for _, roll in ipairs(self.RequestedRoll.Players[player]) do
+                                    if roll == 0 then
                                         extraRolls = extraRolls + 1;
                                     end
-                                    count = count + 1;
+                                    rollsCount = rollsCount + 1;
                                 end
-                                count = count - 1;
+                                
                                 if extraRolls == 0 then
                                     return;
                                 end
@@ -1869,7 +1867,7 @@ function LootReserve.Server:PrepareRequestRoll()
                                 end
                                 LootReserve:SendChatMessage(format("Please /roll again on %s you reserved%s.%s",
                                     link,
-                                    count > 1 and format(" (%d/%d)", count - extraRolls + 1, count) or "",
+                                    rollsCount > 1 and format(" (%d/%d)", rollsCount - extraRolls + 1, rollsCount) or "",
                                     durationStr
                                 ), "WHISPER", player);
                             end
@@ -1940,7 +1938,7 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
         Players = { },
         --[[
         {
-            [PlayerName#i] = Roll,
+            [PlayerName] = {Roll, Roll, ...},
             ...
         },
         ]]
@@ -1949,11 +1947,8 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
     self.SaveProfile.RequestedRoll = self.RequestedRoll;
 
     for _, player in ipairs(players) do
-        local i = 1;
-        while self.RequestedRoll.Players[player .. "#" .. i] do
-            i = i + 1;
-        end
-        self.RequestedRoll.Players[player .. "#" .. i] = 0;
+        self.RequestedRoll.Players[player] = self.RequestedRoll.Players[player] or { };
+        tinsert(self.RequestedRoll.Players[player], 0);
     end
 
     if self:TryFinishRoll() then
@@ -1984,16 +1979,17 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
             LootReserve:SendChatMessage(format("%s - roll on reserved %s%s", playersText, LootReserve:FixLink(link), durationStr), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartReserved));
 
             local sentToPlayer = { };
-            for player, roll in pairs(self.RequestedRoll.Players) do
-                local name = player:match("^(.*)#%d+$");
-                local _, myReserves = LootReserve:GetReservesData(players, name);
-                if roll == 0 and LootReserve:IsPlayerOnline(name) and not self:IsAddonUser(name) and not sentToPlayer[name] then
-                    local rollProgressText = "";
-                    if myReserves > 1 then
-                        rollProgressText = format(" (%d/%d)", 1, myReserves);
+            for player, rolls in pairs(self.RequestedRoll.Players) do
+                for _, roll in ipairs(rolls) do
+                    local _, myReserves = LootReserve:GetReservesData(players, player);
+                    if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) and not sentToPlayer[player] then
+                        local rollProgressText = "";
+                        if myReserves > 1 then
+                            rollProgressText = format(" (%d/%d)", 1, myReserves);
+                        end
+                        LootReserve:SendChatMessage(format("Please /roll on %s you reserved%s.%s", link, rollProgressText, durationStr), "WHISPER", player);
+                        sentToPlayer[player] = true;
                     end
-                    LootReserve:SendChatMessage(format("Please /roll on %s you reserved%s.%s", link, rollProgressText, durationStr), "WHISPER", name);
-                    sentToPlayer[name] = true;
                 end
             end
         end
@@ -2017,10 +2013,11 @@ function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPla
         AllowedPlayers = allowedPlayers,
     };
     self.SaveProfile.RequestedRoll = self.RequestedRoll;
-
+    
     if allowedPlayers then
         for _, player in ipairs(allowedPlayers) do
-            self.RequestedRoll.Players[player .. "#1"] = 0;
+            self.RequestedRoll.Players[player] = self.RequestedRoll.Players[player] or { };
+            tinsert(self.RequestedRoll.Players[player], 0);
         end
     end
 
@@ -2059,11 +2056,12 @@ function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPla
 
                 local sentToPlayer = { };
                 for player, rolls in pairs(self.RequestedRoll.Players) do
-                    local name = player:match("^(.*)#%d+$");
-                    local _, myReserves = LootReserve:GetReservesData(allowedPlayers, name);
-                    if roll == 0 and LootReserve:IsPlayerOnline(name) and not self:IsAddonUser(name) and not sentToPlayer[name] then
-                        LootReserve:SendChatMessage(format("Please /roll on %s%s.%s", link, myReserves > 1 and format(" x%d", myReserves) or "", durationStr), "WHISPER", name);
-                        sentToPlayer[name] = true;
+                    for _, roll in ipairs(rolls) do
+                        local _, myReserves = LootReserve:GetReservesData(allowedPlayers, player);
+                        if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) and not sentToPlayer[player] then
+                            LootReserve:SendChatMessage(format("Please /roll on %s%s.%s", link, myReserves > 1 and format(" x%d", myReserves) or "", durationStr), "WHISPER", player);
+                            sentToPlayer[player] = true;
+                        end
                     end
                 end
             else
@@ -2094,18 +2092,17 @@ function LootReserve.Server:RaidRoll(item)
 end
 
 function LootReserve.Server:PassRoll(player, item, chat)
-    if not self:IsRolling(item) or not self.RequestedRoll.Players[player .. "#1"] then
+    if not self:IsRolling(item) or not self.RequestedRoll.Players[player] then
         return;
     end
 
     if not chat then
         -- If the player passed through the addon button - they may have done it after /rolling manually, so ignore it if they have even a single roll already registered
         local i = 1;
-        while self.RequestedRoll.Players[player .. "#" .. i] do
-            if self.RequestedRoll.Players[player .. "#" .. i] > 0 then
-                return;
+        for _, roll in ipairs(self.RequestedRoll.Players[player]) do
+            if roll > 0 then
+               return; 
             end
-            i = i + 1;
         end
     else
         -- If the player passed through a chat message - consider it a deliberate choice and overwrite all their rolls with passes
@@ -2113,12 +2110,11 @@ function LootReserve.Server:PassRoll(player, item, chat)
 
     local success = false;
     local i = 1;
-    while self.RequestedRoll.Players[player .. "#" .. i] do
-        if self.RequestedRoll.Players[player .. "#" .. i] >= 0 then
-            self.RequestedRoll.Players[player .. "#" .. i] = -1;
+    for i, roll in ipairs(self.RequestedRoll.Players[player]) do
+        if roll >= 0 then
+            self.RequestedRoll.Players[player][i] = -1;
             success = true;
         end
-        i = i + 1;
     end
 
     if not success then
@@ -2149,8 +2145,8 @@ function LootReserve.Server:PassRoll(player, item, chat)
     self:TryFinishRoll();
 end
 
-function LootReserve.Server:DeleteRoll(playerNumber, item)
-    if not self:IsRolling(item) or not self.RequestedRoll.Players[playerNumber] or self.RequestedRoll.Players[playerNumber] < 0 then
+function LootReserve.Server:DeleteRoll(player, rollNumber, item)
+    if not self:IsRolling(item) or not self.RequestedRoll.Players[player] or not self.RequestedRoll.Players[player][rollNumber] or self.RequestedRoll.Players[player][rollNumber] < 0 then
         return;
     end
 
@@ -2159,10 +2155,9 @@ function LootReserve.Server:DeleteRoll(playerNumber, item)
         return;
     end
 
-    local oldRoll = self.RequestedRoll.Players[playerNumber];
-    self.RequestedRoll.Players[playerNumber] = -2;
+    local oldRoll = self.RequestedRoll.Players[player][rollNumber];
+    self.RequestedRoll.Players[player][rollNumber] = -2;
 
-    local player = playerNumber:match("^(.*)#%d+$");
     LootReserve.Comm:SendDeletedRoll(player, item, oldRoll);
     if not self.CurrentSession or self.CurrentSession.Settings.ChatFallback then
         local function WhisperPlayer()
