@@ -311,7 +311,7 @@ function LootReserve.Server:Load()
     for _, roll in ipairs(self.RollHistory) do
         local needsUpgrade = false;
         for player, rolls in pairs(roll.Players) do
-            if player:match("^(.*)#%d+$") or type(rolls) == "number" then
+            if type(rolls) == "number" then
                 needsUpgrade = true;
                 break;
             end
@@ -319,7 +319,6 @@ function LootReserve.Server:Load()
         if needsUpgrade then
             local players = { };
             for player, rolls in LootReserve:Ordered(roll.Players) do
-                player = player:match("^(.*)#%d+$") or player;
                 players[player] = players[player] or { };
                 if type(rolls) == "number" then
                     table.insert(players[player], rolls);
@@ -1571,14 +1570,9 @@ function LootReserve.Server:TryFinishRoll()
             local highestPlayers = select(2, self:GetWinningRollAndPlayers()) or { };
             local missingRolls = #highestPlayers ~= 1;
             if not missingRolls then
-                for player, rolls in pairs(self.RequestedRoll.Players) do
-                    for _, roll in ipairs(rolls) do
-                        if roll == 0 and player ~= highestPlayers[1] then
-                            missingRolls = true;
-                            break;
-                        end
-                    end
-                    if missingRolls then
+                for player, roll in self:GetOrderedPlayerRolls(self.RequestedRoll.Players) do
+                    if roll == 0 and player ~= highestPlayers[1] then
+                        missingRolls = true;
                         break;
                     end
                 end
@@ -1605,17 +1599,16 @@ function LootReserve.Server:GetWinningRollAndPlayers()
     if self.RequestedRoll then
         local highestRoll = 0;
         local highestPlayers = { };
-        for player, rolls in pairs(self.RequestedRoll.Players) do
-            for _, roll in ipairs(rolls) do
-                if highestRoll <= roll and LootReserve:IsPlayerOnline(player) then
-                    if highestRoll ~= roll then
-                        table.wipe(highestPlayers);
-                    end
-                    if not LootReserve:Contains(highestPlayers, player) then
-                        table.insert(highestPlayers, player);
-                    end
-                    highestRoll = roll;
+        AnonTable(self.RequestedRoll.Players):print()
+        for player, roll in self:GetOrderedPlayerRolls(self.RequestedRoll.Players) do
+            if highestRoll <= roll and LootReserve:IsPlayerOnline(player) then
+                if highestRoll ~= roll then
+                    table.wipe(highestPlayers);
                 end
+                if not LootReserve:Contains(highestPlayers, player) then
+                    table.insert(highestPlayers, player);
+                end
+                highestRoll = roll;
             end
         end
         if highestRoll > 0 then
@@ -2086,17 +2079,15 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
             LootReserve:SendChatMessage(format("%s - roll on reserved %s%s", playersText, LootReserve:FixLink(link), durationStr), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartReserved));
 
             local sentToPlayer = { };
-            for player, rolls in pairs(self.RequestedRoll.Players) do
-                for _, roll in ipairs(rolls) do
-                    local _, myReserves = LootReserve:GetReservesData(players, player);
-                    if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) and not sentToPlayer[player] then
-                        local rollProgressText = "";
-                        if myReserves > 1 then
-                            rollProgressText = format(" (%d/%d)", 1, myReserves);
-                        end
-                        LootReserve:SendChatMessage(format("Please /roll on %s you reserved%s.%s", link, rollProgressText, durationStr), "WHISPER", player);
-                        sentToPlayer[player] = true;
+            for player, roll in self:GetOrderedPlayerRolls(self.RequestedRoll.Players) do
+                local _, myReserves = LootReserve:GetReservesData(players, player);
+                if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) and not sentToPlayer[player] then
+                    local rollProgressText = "";
+                    if myReserves > 1 then
+                        rollProgressText = format(" (%d/%d)", 1, myReserves);
                     end
+                    LootReserve:SendChatMessage(format("Please /roll on %s you reserved%s.%s", link, rollProgressText, durationStr), "WHISPER", player);
+                    sentToPlayer[player] = true;
                 end
             end
         end
@@ -2166,13 +2157,11 @@ function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPla
                 --LootReserve:SendChatMessage(format("%s - roll on %s%s", strjoin(", ", unpack(allowedPlayers)), LootReserve:FixLink(link), durationStr), self:GetChatChannel(LootReserve.Constants.ChatAnnouncement.RollStartCustom));
 
                 local sentToPlayer = { };
-                for player, rolls in pairs(self.RequestedRoll.Players) do
-                    for _, roll in ipairs(rolls) do
-                        local _, myReserves = LootReserve:GetReservesData(allowedPlayers, player);
-                        if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) and not sentToPlayer[player] then
-                            LootReserve:SendChatMessage(format("Please /roll on %s%s.%s", link, myReserves > 1 and format(" x%d", myReserves) or "", durationStr), "WHISPER", player);
-                            sentToPlayer[player] = true;
-                        end
+                for player, roll in self:GetOrderedPlayerRolls(self.RequestedRoll.Players) do
+                    local _, myReserves = LootReserve:GetReservesData(allowedPlayers, player);
+                    if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) and not sentToPlayer[player] then
+                        LootReserve:SendChatMessage(format("Please /roll on %s%s.%s", link, myReserves > 1 and format(" x%d", myReserves) or "", durationStr), "WHISPER", player);
+                        sentToPlayer[player] = true;
                     end
                 end
             else
@@ -2295,12 +2284,12 @@ end
 
 function LootReserve.Server:GetOrderedPlayerRolls(roll)
     local playerRolls = { };
-    for player, rolls in pairs(roll.Players) do
+    for player, rolls in pairs(roll) do
         for i, roll in ipairs(rolls) do
             table.insert(playerRolls, { Player = player, RollNumber = i, Roll = roll });
         end
     end
-    return LootReserve:Ordered(playerRolls, function(aData, bData)
+    table.sort(playerRolls, function(aData, bData)
         if aData.Roll ~= bData.Roll then
             return aData.Roll > bData.Roll;
         elseif aData.Player ~= bData.Player then
@@ -2309,6 +2298,16 @@ function LootReserve.Server:GetOrderedPlayerRolls(roll)
             return aData.RollNumber < bData.RollNumber;
         end
     end);
+    
+    local i = 0;
+    return function()
+        i = i + 1;
+        if playerRolls[i] then
+            return playerRolls[i].Player, playerRolls[i].Roll, playerRolls[i].RollNumber;
+        else
+            return;
+        end
+    end
 end
 
 function LootReserve.Server:MasterLootItem(item, player, multipleWinners)

@@ -509,19 +509,18 @@ function LootReserve.Server:UpdateRollList(lockdown)
             local last = 0;
             frame.ReservesFrame.Players = frame.ReservesFrame.Players or { };
 
-            for _, playerRoll in LootReserve.Server:GetOrderedPlayerRolls(roll) do
+            for player, roll, rollNumber in LootReserve.Server:GetOrderedPlayerRolls(roll.Players) do
                 last = last + 1;
                 if last > #frame.ReservesFrame.Players then
                     local button = CreateFrame("Button", nil, frame.ReservesFrame, lockdown and "LootReserveReserveListPlayerTemplate" or "LootReserveReserveListPlayerSecureTemplate");
                     table.insert(frame.ReservesFrame.Players, button);
                 end
-                local player = playerRoll.Player;
                 local unit = LootReserve:GetRaidUnitID(player) or LootReserve:GetPartyUnitID(player);
                 local button = frame.ReservesFrame.Players[last];
                 if button.init then button:init(); end
                 button:Show();
                 button.Player = player;
-                button.RollNumber = playerRoll.RollNumber;
+                button.RollNumber = rollNumber;
                 button.Unit = unit;
                 if not lockdown then
                     button:SetAttribute("unit", unit);

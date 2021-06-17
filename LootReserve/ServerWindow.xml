@@ -613,9 +613,9 @@
 												frame.Historical and format(" on %s", (frame.ItemFrame.Misc:GetText() or ""):gsub("%s%s", " at ")) or ""
 											), info.arg1);
 											local i = 1;
-											for _, playerRoll in LootReserve.Server:GetOrderedPlayerRolls(frame.Roll) do
-												if playerRoll.Roll > 0 and (not self.Lines or self.Lines == 0 or self.Lines >= i) then
-													LootReserve:SendChatMessage(format("- %d by %s", playerRoll.Roll, playerRoll.Player), info.arg1);
+											for player, roll, rollNumber in LootReserve.Server:GetOrderedPlayerRolls(frame.Roll.Players) do
+												if roll > 0 and (not self.Lines or self.Lines == 0 or self.Lines >= i) then
+													LootReserve:SendChatMessage(format("- %d by %s", roll, player), info.arg1);
 													i = i + 1;
 												end
 											end
