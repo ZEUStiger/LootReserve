@@ -630,7 +630,8 @@ function LootReserve.Server:PrepareSession()
         local prefixB = "!res";
         local prefixC = "!cancelreserve";
         local prefixD = "!cancelres";
-        -- local prefixE = "!cancelreserves";
+        local prefixE = "!unreserve";
+        -- local prefixZ = "!cancelreserves";
 
         local function ProcessChat(text, sender)
             sender = LootReserve:Player(sender);
@@ -654,6 +655,8 @@ function LootReserve.Server:PrepareSession()
                 text = "cancel" .. text:sub(1 + #prefixC);
             elseif stringStartsWith(text, prefixD) then
                 text = "cancel" .. text:sub(1 + #prefixD);
+            elseif stringStartsWith(text, prefixE) then
+                text = "cancel" .. text:sub(1 + #prefixE);
             elseif text == "pass" or text == "p" then
                 if self.RequestedRoll then
                     self:PassRoll(sender, self.RequestedRoll.Item, true);
