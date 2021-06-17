@@ -2199,8 +2199,10 @@ function LootReserve.Server:DeleteRoll(player, rollNumber, item)
 
     local oldRoll = self.RequestedRoll.Players[player][rollNumber];
     self.RequestedRoll.Players[player][rollNumber] = -2;
+    
+    local phase = self.RequestedRoll.Phases and self.RequestedRoll.Phases[1] or nil;
 
-    LootReserve.Comm:SendDeletedRoll(player, item, oldRoll);
+    LootReserve.Comm:SendDeletedRoll(player, item, oldRoll, phase);
     if not self.CurrentSession or self.CurrentSession.Settings.ChatFallback then
         local function WhisperPlayer()
             local name, link = GetItemInfo(item);
@@ -2209,7 +2211,7 @@ function LootReserve.Server:DeleteRoll(player, rollNumber, item)
                 return;
             end
 
-            LootReserve:SendChatMessage(format("Your roll of %d on %s was deleted.", oldRoll, link), "WHISPER", player);
+            LootReserve:SendChatMessage(format("Your %sroll of %d on %s was deleted.", phase and format("%s ", phase) or "", link, oldRoll), "WHISPER", player);
         end
         if not self:IsAddonUser(player) then
             WhisperPlayer();

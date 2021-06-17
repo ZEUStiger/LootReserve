@@ -572,11 +572,11 @@ LootReserve.Comm.Handlers[Opcodes.PassRoll] = function(sender, item)
 end
 
 -- DeletedRoll
-function LootReserve.Comm:SendDeletedRoll(player, item, roll)
+function LootReserve.Comm:SendDeletedRoll(player, item, roll, phase)
     LootReserve.Comm:Whisper(player, Opcodes.DeletedRoll,
-        item, roll);
+        item, roll, phase);
 end
-LootReserve.Comm.Handlers[Opcodes.DeletedRoll] = function(sender, item, roll)
+LootReserve.Comm.Handlers[Opcodes.DeletedRoll] = function(sender, item, roll, phase)
     item = tonumber(item);
     roll = tonumber(roll);
 
@@ -584,8 +584,8 @@ LootReserve.Comm.Handlers[Opcodes.DeletedRoll] = function(sender, item, roll)
         local function ShowDeleted()
             local name, link = GetItemInfo(item);
             if name and link then
-                LootReserve:ShowError("%s deleted your roll%s for %s", LootReserve:ColoredPlayer(sender), roll and format(" of %d", roll) or "", link);
-                LootReserve:PrintError("%s deleted your roll%s for %s", LootReserve:ColoredPlayer(sender), roll and format(" of %d", roll) or "", link);
+                LootReserve:ShowError ("Your %sroll%s on %s was deleted", phase and format("%s ", phase) or "", roll and format(" of %d", roll) or "", link);
+                LootReserve:PrintError("Your %sroll%s on %s was deleted", phase and format("%s ", phase) or "", roll and format(" of %d", roll) or "", link);
             else
                 C_Timer.After(0.25, ShowDeleted);
             end

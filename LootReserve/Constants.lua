@@ -57,6 +57,8 @@ LootReserve.Constants =
     {
         "Main-Spec",
         "Off-Spec",
+        "Learning",
+        "Quest",
         "Reputation",
         "Profession",
         "Looks",
