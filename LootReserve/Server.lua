@@ -1071,6 +1071,10 @@ function LootReserve.Server:Reserve(player, item, count, chat, skipChecks)
         return false;
     end
 
+    if not skipChecks and not LootReserve:IsPlayerOnline(player) then
+        return Failure(LootReserve.Constants.ReserveResult.NotInRaid, 0);
+    end
+
     if not self.CurrentSession or not self.CurrentSession.AcceptingReserves then
         return Failure(LootReserve.Constants.ReserveResult.NoSession, 0);
     end
@@ -1080,19 +1084,15 @@ function LootReserve.Server:Reserve(player, item, count, chat, skipChecks)
         return Failure(LootReserve.Constants.ReserveResult.NotMember, 0);
     end
 
+    if not skipChecks and self.CurrentSession.Settings.Lock and member.Locked then
+        return Failure(LootReserve.Constants.ReserveResult.Locked, "#");
+    end
+
     if not self.ReservableItems[item] then
         return Failure(LootReserve.Constants.ReserveResult.ItemNotReservable, member.ReservesLeft);
     end
 
     if not skipChecks then
-        if not LootReserve:IsPlayerOnline(player) then
-            return Failure(LootReserve.Constants.ReserveResult.NotInRaid, 0);
-        end
-
-        if self.CurrentSession.Settings.Lock and member.Locked then
-            return Failure(LootReserve.Constants.ReserveResult.Locked, "#");
-        end
-
         local canReserve, conditionResult = LootReserve.ItemConditions:TestPlayer(player, item, true);
         if not canReserve then
             return Failure(conditionResult or LootReserve.Constants.ReserveResult.FailedConditions, member.ReservesLeft);
@@ -1281,8 +1281,12 @@ function LootReserve.Server:CancelReserve(player, item, count, chat, forced)
         end
 
         -- Remove player from the active roll on that item
-        if self:IsRolling(item) and not self.RequestedRoll.Custom and not self.RequestedRoll.RaidRoll then
-            self.RequestedRoll.Players[player] = nil;
+        if self:IsRolling(item) and not self.RequestedRoll.Custom and not self.RequestedRoll.RaidRoll and self.RequestedRoll.Players[player] then
+            if #self.RequestedRoll.Players[player] == 1 then
+                self.RequestedRoll.Players[player] = nil;
+            else
+                table.remove(self.RequestedRoll.Players[player]);
+            end
         end
 
         member.ReservesLeft = math.min(member.ReservesLeft + 1, self.CurrentSession.Settings.MaxReservesPerPlayer);
@@ -1477,7 +1481,7 @@ function LootReserve.Server:TryFinishRoll()
                 return true;
             end
         end
-        
+
         -- Check if any player other than the current winning player has still not rolled
         if (not self.RequestedRoll.Custom or self.RequestedRoll.AllowedPlayers) and not self.RequestedRoll.RaidRoll and self.Settings.RollFinishOnAllReservingRolled then
             local highestPlayers = select(2, self:GetWinningRollAndPlayers()) or { };
@@ -1489,9 +1493,9 @@ function LootReserve.Server:TryFinishRoll()
                             missingRolls = true;
                             break;
                         end
-                        if missingRolls then
-                            break;
-                        end
+                    end
+                    if missingRolls then
+                        break;
                     end
                 end
             end
@@ -1501,14 +1505,14 @@ function LootReserve.Server:TryFinishRoll()
                 return true;
             end
         end
-        
+
         -- Check if this is a raid roll that should autocomplete
         if self.RequestedRoll.RaidRoll and self.Settings.RollFinishOnRaidRoll and next(self.RequestedRoll.Players) then
             self:FinishRollRequest(self.RequestedRoll.Item);
             self:RollEnded();
             return true;
         end
-        
+
         return false;
     end
 end
@@ -1808,7 +1812,7 @@ function LootReserve.Server:PrepareRequestRoll()
                     local rollSubmitted = false;
                     local extraRolls    = false;
                     if not self.RequestedRoll.Players[player] then
-                       self.RequestedRoll.Players[player] = { 0 };
+                       self.RequestedRoll.Players[player] = { 0 }; -- Should only even happen for custom rolls, non-custom ones should fail in LootReserve.Server:CanRoll
                     end
                     for i, oldRoll in ipairs(self.RequestedRoll.Players[player]) do
                         if oldRoll == 0 then
@@ -1847,7 +1851,7 @@ function LootReserve.Server:PrepareRequestRoll()
                                     end
                                     rollsCount = rollsCount + 1;
                                 end
-                                
+
                                 if extraRolls == 0 then
                                     return;
                                 end
@@ -1948,7 +1952,7 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
 
     for _, player in ipairs(players) do
         self.RequestedRoll.Players[player] = self.RequestedRoll.Players[player] or { };
-        tinsert(self.RequestedRoll.Players[player], 0);
+        table.insert(self.RequestedRoll.Players[player], 0);
     end
 
     if self:TryFinishRoll() then
@@ -2013,11 +2017,11 @@ function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPla
         AllowedPlayers = allowedPlayers,
     };
     self.SaveProfile.RequestedRoll = self.RequestedRoll;
-    
+
     if allowedPlayers then
         for _, player in ipairs(allowedPlayers) do
             self.RequestedRoll.Players[player] = self.RequestedRoll.Players[player] or { };
-            tinsert(self.RequestedRoll.Players[player], 0);
+            table.insert(self.RequestedRoll.Players[player], 0);
         end
     end
 
@@ -2178,6 +2182,24 @@ function LootReserve.Server:DeleteRoll(player, rollNumber, item)
     self:UpdateRollList();
 
     self:TryFinishRoll();
+end
+
+function LootReserve.Server:GetOrderedPlayerRolls(roll)
+    local playerRolls = { };
+    for player, rolls in pairs(roll.Players) do
+        for i, roll in ipairs(rolls) do
+            table.insert(playerRolls, { Player = player, RollNumber = i, Roll = roll });
+        end
+    end
+    return LootReserve:Ordered(playerRolls, function(aData, bData)
+        if aData.Roll ~= bData.Roll then
+            return aData.Roll > bData.Roll;
+        elseif aData.Player ~= bData.Player then
+            return aData.Player < bData.Player;
+        else
+            return aData.RollNumber < bData.RollNumber;
+        end
+    end);
 end
 
 function LootReserve.Server:MasterLootItem(item, player, multipleWinners)

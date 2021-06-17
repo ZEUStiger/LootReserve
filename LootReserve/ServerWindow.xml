@@ -282,7 +282,7 @@
 					self.ButtonDelete:Show();
 					self.ButtonReroll:Hide();
 				else
-					local roll = frame.Roll.Players[self.Player][self.RollNumber];
+					local roll = frame.Roll.Players[self.Player] and frame.Roll.Players[self.Player][self.RollNumber];
 					local isRaidRoll = frame.Roll.RaidRoll;
 					self.ButtonDelete:SetShown(roll and roll > 0 and not isRaidRoll);
 					self.ButtonReroll:SetShown(roll and roll > 0 and     isRaidRoll);
@@ -595,9 +595,11 @@
 											if not frame.Roll then return; end
 
 											local totalRolls = 0;
-											for player, roll in pairs(frame.Roll.Players) do
-												if roll > 0 then
-													totalRolls = totalRolls + 1;
+											for player, rolls in pairs(frame.Roll.Players) do
+												for _, roll in ipairs(rolls) do
+													if roll > 0 then
+														totalRolls = totalRolls + 1;
+													end
 												end
 											end
 											if self.Lines and self.Lines >= totalRolls then
@@ -610,26 +612,10 @@
 												frame.Roll.Phases and format(" for %s", frame.Roll.Phases[1] or "") or "",
 												frame.Historical and format(" on %s", (frame.ItemFrame.Misc:GetText() or ""):gsub("%s%s", " at ")) or ""
 											), info.arg1);
-											
-											local playerNames = { };
-					            local playerRolls = { };
-					            for player, rolls in pairs(frame.Roll.Players) do
-					                playerNames[player] = playerNames[player] and playerNames[player] + 1 or 1;
-					                for _, roll in ipairs(rolls) do
-					                   tinsert(playerRolls, {player = player, roll = roll, rollNumber = playerNames[player]});
-					                end
-					            end
-					            for i in LootReserve:Ordered(playerRolls, function(aData, bData)
-					                if aData.roll ~= bData.roll then
-					                    return aData.roll > bData.roll;
-					                elseif aData.player ~= bData.player then
-					                    return aData.player &lt; bData.player;
-					                else
-					                    return aData.rollNumber &lt; bData.rollNumber;
-					                end
-					            end) do
-												if roll > 0 and (not self.Lines or self.Lines == 0 or self.Lines >= i) then
-													LootReserve:SendChatMessage(format("- %d by %s", roll, player), info.arg1);
+											local i = 1;
+											for _, playerRoll in LootReserve.Server:GetOrderedPlayerRolls(frame.Roll) do
+												if playerRoll.Roll > 0 and (not self.Lines or self.Lines == 0 or self.Lines >= i) then
+													LootReserve:SendChatMessage(format("- %d by %s", playerRoll.Roll, playerRoll.Player), info.arg1);
 													i = i + 1;
 												end
 											end
@@ -656,9 +642,11 @@
 								if not roll then return; end
 
 								local totalRolls = 0;
-								for player, roll in pairs(roll.Players) do
-									if roll > 0 then
-										totalRolls = totalRolls + 1;
+								for player, rolls in pairs(roll.Players) do
+									for _, roll in ipairs(rolls) do
+										if roll > 0 then
+											totalRolls = totalRolls + 1;
+										end
 									end
 								end
 								local i = 0;
