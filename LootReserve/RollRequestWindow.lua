@@ -75,7 +75,7 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
 
     if not name or not link then
         C_Timer.After(0.25, function()
-            self:RollRequested(sender, item, players, custom, duration, maxDuration, phase);
+            self:RollRequested(sender, item, players, custom, duration, maxDuration, phase, example);
         end);
     end
 
