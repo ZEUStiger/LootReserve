@@ -135,9 +135,9 @@
 				<Scripts>
 					<OnClick>
 						local player = self:GetParent().Player;
-						local playerNumber = self:GetParent().PlayerNumber;
+						local rollNumber = self:GetParent().RollNumber;
 						local frame = self:GetParent():GetParent():GetParent();
-						local data = { Player = player, PlayerNumber = playerNumber, Item = frame.Item };
+						local data = { Player = player, RollNumber = rollNumber, Item = frame.Item };
 						local popup = "LOOTRESERVE_CONFIRM_FORCED_CANCEL_RESERVE";
 						if frame.Roll then
 							popup = "LOOTRESERVE_CONFIRM_FORCED_CANCEL_ROLL";
@@ -157,7 +157,7 @@
 				<Scripts>
 					<OnClick>
 						if LootReserve.Server.RequestedRoll and LootReserve.Server.RequestedRoll.RaidRoll then
-							LootReserve.Server:DeleteRoll(self:GetParent().PlayerNumber, self:GetParent():GetParent():GetParent().Item);
+							LootReserve.Server:DeleteRoll(self:GetParent().Player, self:GetParent().RollNumber, self:GetParent():GetParent():GetParent().Item);
 						end
 					</OnClick>
 				</Scripts>
@@ -282,7 +282,7 @@
 					self.ButtonDelete:Show();
 					self.ButtonReroll:Hide();
 				else
-					local roll = frame.Roll.Players[self.PlayerNumber];
+					local roll = frame.Roll.Players[self.Player] and frame.Roll.Players[self.Player][self.RollNumber];
 					local isRaidRoll = frame.Roll.RaidRoll;
 					self.ButtonDelete:SetShown(roll and roll > 0 and not isRaidRoll);
 					self.ButtonReroll:SetShown(roll and roll > 0 and     isRaidRoll);
@@ -595,9 +595,11 @@
 											if not frame.Roll then return; end
 
 											local totalRolls = 0;
-											for player, roll in pairs(frame.Roll.Players) do
-												if roll > 0 then
-													totalRolls = totalRolls + 1;
+											for player, rolls in pairs(frame.Roll.Players) do
+												for _, roll in ipairs(rolls) do
+													if roll > 0 then
+														totalRolls = totalRolls + 1;
+													end
 												end
 											end
 											if self.Lines and self.Lines >= totalRolls then
@@ -611,15 +613,9 @@
 												frame.Historical and format(" on %s", (frame.ItemFrame.Misc:GetText() or ""):gsub("%s%s", " at ")) or ""
 											), info.arg1);
 											local i = 1;
-											for player, roll in LootReserve:Ordered(frame.Roll.Players, function(aRoll, bRoll, aPlayer, bPlayer)
-												if aRoll ~= bRoll then
-													return aRoll > bRoll;
-												else
-													return aPlayer &lt; bPlayer;
-												end
-											end) do
-												if roll > 0 and (not self.Lines or self.Lines == 0 or self.Lines >= i) then
-													LootReserve:SendChatMessage(format("- %d by %s", roll, player:match("^(.*)#%d+$") or player), info.arg1);
+											for _, playerRoll in LootReserve.Server:GetOrderedPlayerRolls(frame.Roll) do
+												if playerRoll.Roll > 0 and (not self.Lines or self.Lines == 0 or self.Lines >= i) then
+													LootReserve:SendChatMessage(format("- %d by %s", playerRoll.Roll, playerRoll.Player), info.arg1);
 													i = i + 1;
 												end
 											end
@@ -646,9 +642,11 @@
 								if not roll then return; end
 
 								local totalRolls = 0;
-								for player, roll in pairs(roll.Players) do
-									if roll > 0 then
-										totalRolls = totalRolls + 1;
+								for player, rolls in pairs(roll.Players) do
+									for _, roll in ipairs(rolls) do
+										if roll > 0 then
+											totalRolls = totalRolls + 1;
+										end
 									end
 								end
 								local i = 0;
