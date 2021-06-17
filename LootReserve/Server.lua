@@ -187,7 +187,7 @@ local function stringStartsWith(str, start)
 end
 
 function LootReserve.Server:CanBeServer()
-    return IsInRaid() and (UnitIsGroupLeader("player") or IsMasterLooter()) or LootReserve.Comm.SoloDebug;
+    return not IsInGroup() or (UnitIsGroupLeader("player") or IsMasterLooter());
 end
 
 function LootReserve.Server:GetChatChannel(announcement)
@@ -195,10 +195,8 @@ function LootReserve.Server:GetChatChannel(announcement)
         return self.Settings.ChatAsRaidWarning[announcement] and (UnitIsGroupLeader("player") or UnitIsGroupAssistant("player")) and "RAID_WARNING" or "RAID";
     elseif IsInGroup() then
         return "PARTY";
-    elseif LootReserve.Comm.SoloDebug then
-        return "WHISPER", UnitName("player");
     else
-        return "PARTY";
+        return "WHISPER", LootReserve:Me();
     end
 end
 
@@ -423,11 +421,11 @@ function LootReserve.Server:PrepareLootTracking()
         local looter, item, count;
         item, count = text:match(lootSelfMultiple);
         if item and count then
-            looter = UnitName("player");
+            looter = LootReserve:Me();
         else
             item = text:match(lootSelf);
             if item then
-                looter = UnitName("player");
+                looter = LootReserve:Me();
                 count = 1;
             else
                 looter, item, count = text:match(lootMultiple);
@@ -486,7 +484,7 @@ function LootReserve.Server:PrepareLootTracking()
         for _, item in ipairs(self.CurrentLoot) do
             LootReserve:TableRemove(self.RecentLoot, item);
             table.insert(self.RecentLoot, item);
-            while #self.RecentLoot > MaxRecentLoot do
+            while #self.RecentLoot > self.Settings.MaxRecentLoot do
                 table.remove(self.RecentLoot, 1);
             end
         end
@@ -1724,30 +1722,30 @@ function LootReserve.Server:CancelRollRequest(item, winners, noHistory)
             self.RequestedRoll.Winners = { };
             for _, winner in ipairs(winners) do
                 table.insert(self.RequestedRoll.Winners, winner);
-                local stack = select(8, GetItemInfo(item));
-                
-                local count = 0;
-                for bag = 0, 4 do
-                    local slots = GetContainerNumSlots(bag);
-                    if slots > 0 then
-                        for slot = 1, slots do
-                            local _, quantity, _, _, _, _, _, _, _, bagItem = GetContainerItemInfo(bag, slot);
-                            if bagItem and bagItem == item and (not C_Item.IsBound(ItemLocation:CreateFromBagAndSlot(bag, slot)) or LootReserve:IsItemSoulboundTradeable(bag, slot)) then
-                                count = count + quantity;
-                            end
+            end
+        end
+        
+        if not noHistory then
+            table.insert(self.RollHistory, self.RequestedRoll);
+            
+            local stack = select(8, GetItemInfo(item));
+            local count = 0;
+            for bag = 0, 4 do
+                local slots = GetContainerNumSlots(bag);
+                if slots > 0 then
+                    for slot = 1, slots do
+                        local _, quantity, _, _, _, _, _, _, _, bagItem = GetContainerItemInfo(bag, slot);
+                        if bagItem and bagItem == item and (not C_Item.IsBound(ItemLocation:CreateFromBagAndSlot(bag, slot)) or LootReserve:IsItemSoulboundTradeable(bag, slot)) then
+                            count = count + quantity;
                         end
                     end
                 end
-                
-                if count <= stack then
-                    LootReserve:TableRemove(self.RecentLoot, item);
-                    LootReserve:TableRemove(self.CurrentLoot, item);
-                end
             end
-        end
-
-        if not noHistory then
-            table.insert(self.RollHistory, self.RequestedRoll);
+            
+            if count <= stack then
+                LootReserve:TableRemove(self.RecentLoot, item);
+                LootReserve:TableRemove(self.CurrentLoot, item);
+            end
         end
 
         LootReserve.Comm:BroadcastRequestRoll(0, { }, self.RequestedRoll.Custom or self.RequestedRoll.RaidRoll);

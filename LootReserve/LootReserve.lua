@@ -79,11 +79,11 @@ function LootReserve:OpenServerWindow(rolls)
         pendingOpenServerWindow = { rolls };
         if not pendingLockdownHooked then
             pendingLockdownHooked = true;
-            LootReserve:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+            self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
                 if pendingOpenServerWindow then
                     local params = pendingOpenServerWindow;
                     pendingOpenServerWindow = nil;
-                    LootReserve:OpenServerWindow(unpack(params));
+                    self:OpenServerWindow(unpack(params));
                 end
             end);
         end
@@ -92,10 +92,10 @@ function LootReserve:OpenServerWindow(rolls)
     end
 
     if rolls then
-        LootReserve.Server.Window:Show();
-        LootReserve.Server:OnWindowTabClick(LootReserve.Server.Window.TabRolls);
+        self.Server.Window:Show();
+        self.Server:OnWindowTabClick(self.Server.Window.TabRolls);
     else
-        LootReserve.Server.Window:SetShown(not LootReserve.Server.Window:IsShown());
+        self.Server.Window:SetShown(not self.Server.Window:IsShown());
     end
 end
 
@@ -107,10 +107,8 @@ function LootReserve:OnInitialize()
 
     local function Startup()
         LootReserve.Server:Startup();
-        if IsInRaid() or LootReserve.Comm.SoloDebug then
-            -- Query other group members about their addon versions and request server session info if any
-            LootReserve.Client:SearchForServer(true);
-        end
+        -- Query other group members about their addon versions and request server session info if any
+        LootReserve.Client:SearchForServer(true);
     end
 
     LootReserve:RegisterEvent("GROUP_JOINED", function()
@@ -310,7 +308,7 @@ function LootReserve:GetRaidUnitID(player)
         end
     end
 
-    if self.Comm.SoloDebug and LootReserve:IsMe(player) then
+    if self:IsMe(player) then
         return "player";
     end
 end
@@ -323,7 +321,7 @@ function LootReserve:GetPartyUnitID(player)
         end
     end
 
-    if LootReserve:IsMe(player) then
+    if self:IsMe(player) then
         return "player";
     end
 end
@@ -333,7 +331,7 @@ function LootReserve:ColoredPlayer(player)
 end
 
 function LootReserve:ForEachRaider(func)
-    if LootReserve.Comm.SoloDebug then
+    if not IsInGroup() then
         local className, classFilename = UnitClass("player");
         return func(self:Me(), 0, 1, UnitLevel("player"), className, classFilename, nil, true, UnitIsDead("player"));
     end
@@ -593,7 +591,7 @@ function LootReserve:FormatReservesText(players, excludePlayer)
 end
 
 function LootReserve:FormatReservesTextColored(players, excludePlayer)
-    return FormatReservesText(players, excludePlayer, function(...) return LootReserve:ColoredPlayer(...); end);
+    return FormatReservesText(players, excludePlayer, function(...) return self:ColoredPlayer(...); end);
 end
 
 local function GetReservesData(players, me, colorFunc)
@@ -615,7 +613,7 @@ function LootReserve:GetReservesData(players, me)
 end
 
 function LootReserve:GetReservesDataColored(players, me)
-    return GetReservesData(players, me, function(...) return LootReserve:ColoredPlayer(...); end);
+    return GetReservesData(players, me, function(...) return self:ColoredPlayer(...); end);
 end
 
 local function GetReservesString(server, isUpdate, link, reservesText, myReserves, uniqueReservers, reserves)

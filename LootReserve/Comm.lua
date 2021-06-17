@@ -7,7 +7,6 @@ LootReserve.Comm =
     Handlers  = { },
     Listening = false,
     Debug     = false,
-    SoloDebug = false,
 };
 
 local Opcodes =
@@ -107,29 +106,28 @@ function LootReserve.Comm:StartListening()
     end
 end
 
-function LootReserve.Comm:CanBroadcast(opcode)
-    return LootReserve.Enabled and (self.SoloDebug
-        or IsInRaid()
-        or IsInGroup() and opcode == Opcodes.RequestRoll
-    );
+function LootReserve.Comm:CanBroadcast()
+    return LootReserve.Enabled;
 end
-function LootReserve.Comm:CanWhisper(target, opcode)
-    return LootReserve.Enabled and LootReserve:IsPlayerOnline(target) and (self.SoloDebug
-        or IsInRaid() and UnitInRaid(target)
-        or IsInGroup() and UnitInParty(target) and (opcode == Opcodes.PassRoll and LootReserve.Client.RollRequest and target == LootReserve.Client.RollRequest.Sender
-                                                 or opcode == Opcodes.DeletedRoll)
-    );
+function LootReserve.Comm:CanWhisper(target)
+    return LootReserve.Enabled and LootReserve:IsPlayerOnline(target);
+end
+
+function LootReserve.Comm:GetAddonChannel()
+    if IsInRaid() then
+        return "RAID";
+    elseif IsInGroup() then
+        return "PARTY";
+    else
+        return "WHISPER", LootReserve:Me();
+    end
 end
 
 function LootReserve.Comm:Broadcast(opcode, ...)
-    if not self:CanBroadcast(opcode) then return; end
+    if not self:CanBroadcast() then return; end
 
-    local message;
-    if self.SoloDebug then
-        message = self:SendCommMessage("WHISPER", (UnitName("player")), opcode, ...);
-    else
-        message = self:SendCommMessage(IsInRaid() and "RAID" or "PARTY", nil, opcode, ...);
-    end
+    local channel, recipient = self:GetAddonChannel();
+    local message = self:SendCommMessage(channel, recipient, opcode, ...);
 
     if self.Debug then
         print("[DEBUG] Raid Broadcast: " .. message:gsub("|", "||"));
@@ -437,26 +435,11 @@ LootReserve.Comm.Handlers[Opcodes.ReserveInfo] = function(sender, item, players)
         else
             players = { };
         end
-
-        local isUpdate = false;
+        
         local previousReserves = LootReserve.Client.ItemReserves[item];
-        if previousReserves then
-            local reservesCount = { };
-            for _, player in ipairs(previousReserves) do
-                reservesCount[player] = reservesCount[player] or {0, 0};
-                reservesCount[player][1] = reservesCount[player][1] + 1;
-            end
-            for _, player in ipairs(players) do
-                reservesCount[player] = reservesCount[player] or {0, 0};
-                reservesCount[player][2] = reservesCount[player][2] + 1;
-            end
-            for player, reserves in pairs(reservesCount) do
-                if reserves[1] ~= reserves[2] and not LootReserve:IsMe(player) then
-                    isUpdate = true;
-                    break;
-                end
-            end
-        end
+        local _, myOldReserves, oldReservers, oldRolls = LootReserve:GetReservesData(previousReserves or { }, LootReserve:Me());
+        local _, myNewReserves, newReservers, newRolls = LootReserve:GetReservesData(players, LootReserve:Me());
+        local isUpdate = oldRolls ~= newRolls;
 
         LootReserve.Client.ItemReserves[item] = players;
 
@@ -473,7 +456,7 @@ LootReserve.Comm.Handlers[Opcodes.ReserveInfo] = function(sender, item, players)
             local isViewingMyReserves = LootReserve.Client.SelectedCategory and LootReserve.Client.SelectedCategory.Reserves == "my";
             LootReserve.Client:FlashCategory("Reserves", "my", wasReserver == isReserver and not isViewingMyReserves);
         end
-        if wasReserver and isReserver then
+        if wasReserver and isReserver and myOldReserves == myNewReserves then
             local function Print()
                 local name, link = GetItemInfo(item);
                 if name and link then
