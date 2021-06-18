@@ -193,7 +193,22 @@ function LootReserve:OpenMenu(menu, menuContainer, anchor)
     local function FixMenu(menu)
         for _, item in ipairs(menu) do
             if item.notCheckable == nil then
-                item.notCheckable = true;
+                item.notCheckable = item.checked == nil;
+            end
+            if item.keepShownOnClick == nil and item.checked ~= nil then
+                item.keepShownOnClick = true;
+            end
+            if item.tooltipText and item.tooltipTitle == nil then
+                item.tooltipTitle = item.text;
+            end
+            if item.tooltipText and item.tooltipOnButton == nil then
+                item.tooltipOnButton = true;
+            end
+            if item.hasArrow == nil and item.menuList then
+                item.hasArrow = true;
+            end
+            if item.keepShownOnClick == nil and item.menuList then
+                item.keepShownOnClick = true;
             end
             if item.menuList then
                 FixMenu(item.menuList);
@@ -204,16 +219,31 @@ function LootReserve:OpenMenu(menu, menuContainer, anchor)
     EasyMenu(menu, menuContainer, anchor, 0, 0, "MENU");
 end
 
-function LootReserve:OpenSubMenu(arg1)
-    for i = 1, UIDROPDOWNMENU_MAXBUTTONS do
-        local button = _G["DropDownList1Button"..i];
-        if button and button.arg1 == arg1 then
-            local arrow = _G[button:GetName().."ExpandArrow"];
-            if arrow then
-                arrow:Click();
+function LootReserve:OpenSubMenu(...)
+    for submenu = 1, select("#", ...) do
+        local arg1 = select(submenu, ...);
+        local opened = false;
+        for i = 1, UIDROPDOWNMENU_MAXBUTTONS do
+            local button = _G["DropDownList"..submenu.."Button"..i];
+            if button and button.arg1 == arg1 then
+                local arrow = _G[button:GetName().."ExpandArrow"];
+                if arrow then
+                    arrow:Click();
+                    opened = true;
+                end
             end
         end
+        if not opened then
+            return false;
+        end
     end
+    return true;
+end
+
+function LootReserve:ReopenMenu(button, ...)
+    CloseMenus();
+    button:Click();
+    self:OpenSubMenu(...);
 end
 
 -- Used to prevent LootReserve:SendChatMessage from breaking a hyperlink into multiple segments if the message is too long
