@@ -979,13 +979,34 @@
 										local menu =
 										{
 											{ text = "Recent Loot", isTitle = true },
+											{ text = "Settings", arg1 = "#recentSettings", menuList = {
+												{ text = format("Max Items: |cFF00FF00%d|r", LootReserve.Server.Settings.MaxRecentLoot), arg1 = "#max", menuList = {
+													{ text =  "5", checked = LootReserve.Server.Settings.MaxRecentLoot ==  5, func = function() LootReserve.Server.Settings.MaxRecentLoot =  5; LootReserve:ReopenMenu(self, "#recentSettings", "#max"); end },
+													{ text = "10", checked = LootReserve.Server.Settings.MaxRecentLoot == 10, func = function() LootReserve.Server.Settings.MaxRecentLoot = 10; LootReserve:ReopenMenu(self, "#recentSettings", "#max"); end },
+													{ text = "15", checked = LootReserve.Server.Settings.MaxRecentLoot == 15, func = function() LootReserve.Server.Settings.MaxRecentLoot = 15; LootReserve:ReopenMenu(self, "#recentSettings", "#max"); end },
+													{ text = "20", checked = LootReserve.Server.Settings.MaxRecentLoot == 20, func = function() LootReserve.Server.Settings.MaxRecentLoot = 20; LootReserve:ReopenMenu(self, "#recentSettings", "#max"); end },
+													{ text = "25", checked = LootReserve.Server.Settings.MaxRecentLoot == 25, func = function() LootReserve.Server.Settings.MaxRecentLoot = 25; LootReserve:ReopenMenu(self, "#recentSettings", "#max"); end },
+												} },
+												{
+													text = "Remove Items After Rolling",
+													tooltipText = "Remove the item from Recent Loot after it has been successfully rolled out.|n|nDoesn't apply when you have 2 or more of the item in your bags.",
+													checked = function() return LootReserve.Server.Settings.RemoveRecentLootAfterRolling end,
+													func = function(_, _, _, checked) LootReserve.Server.Settings.RemoveRecentLootAfterRolling = checked; end,
+												},
+												{
+													text = "Keep Unlooted Items",
+													tooltipText = "Add the items to Recent Loot even if you abandoned them in the corpse, in case you intend to return to the corpse later.",
+													checked = function() return LootReserve.Server.Settings.KeepUnlootedRecentLoot end,
+													func = function(_, _, _, checked) LootReserve.Server.Settings.KeepUnlootedRecentLoot = checked; end,
+												},
+											} },
 											LootReserve:MakeMenuSeparator(),
 											{ text = "Bags", isTitle = true },
 											LootReserve:MakeMenuSeparator(),
 											{ text = "Cancel" },
 										};
 										for bag, bagMenu in ipairs(bagMenus) do
-											table.insert(menu, 3 + bag,
+											table.insert(menu, 4 + bag,
 											{
 												text = bag == 1 and "Backpack" or format("Bag %d", bag - 1),
 												menuList = bagMenu,
@@ -994,7 +1015,7 @@
 										if LootReserve.Server.RecentLoot and #LootReserve.Server.RecentLoot > 0 then
 											for _, item in ipairs(LootReserve.Server.RecentLoot) do
 												local button = MakeItem(1, item);
-												local count = GetItemCount(item, false, false);
+												local count = LootReserve:GetTradeableItemCount(item);
 												if count > 0 then
 													button.text = button.text .. format("|cFFC0C0C0 (%d in bags)|r", count);
 												end

@@ -39,7 +39,9 @@ LootReserve.Server =
         ItemConditions                  = { },
         CollapsedExpansions             = { },
         HighlightSameItemWinners        = false,
-        MaxRecentLoot                   = 15;
+        MaxRecentLoot                   = 15,
+        RemoveRecentLootAfterRolling    = true,
+        KeepUnlootedRecentLoot          = false,
     },
     RequestedRoll       = nil,
     RollHistory         = { },
@@ -507,6 +509,10 @@ function LootReserve.Server:PrepareLootTracking()
         end
     end);
     LootReserve:RegisterEvent("LOOT_CLOSED", function(text)
+        if not self.Settings.KeepUnlootedRecentLoot then
+            return;
+        end
+
         for _, item in ipairs(self.CurrentLoot) do
             LootReserve:TableRemove(self.RecentLoot, item);
             table.insert(self.RecentLoot, item);
@@ -1599,7 +1605,6 @@ function LootReserve.Server:GetWinningRollAndPlayers()
     if self.RequestedRoll then
         local highestRoll = 0;
         local highestPlayers = { };
-        AnonTable(self.RequestedRoll.Players):print()
         for player, roll in self:GetOrderedPlayerRolls(self.RequestedRoll.Players) do
             if highestRoll <= roll and LootReserve:IsPlayerOnline(player) then
                 if highestRoll ~= roll then
@@ -1785,23 +1790,11 @@ function LootReserve.Server:CancelRollRequest(item, winners, noHistory)
         
         if not noHistory then
             table.insert(self.RollHistory, self.RequestedRoll);
-            
-            local stack = select(8, GetItemInfo(item));
-            local count = 0;
-            for bag = 0, 4 do
-                local slots = GetContainerNumSlots(bag);
-                if slots > 0 then
-                    for slot = 1, slots do
-                        local _, quantity, _, _, _, _, _, _, _, bagItem = GetContainerItemInfo(bag, slot);
-                        if bagItem and bagItem == item and (not C_Item.IsBound(ItemLocation:CreateFromBagAndSlot(bag, slot)) or LootReserve:IsItemSoulboundTradeable(bag, slot)) then
-                            count = count + quantity;
-                        end
-                    end
+
+            if LootReserve:GetTradeableItemCount(item) <= 1 then
+                if self.Settings.RemoveRecentLootAfterRolling then
+                    LootReserve:TableRemove(self.RecentLoot, item);
                 end
-            end
-            
-            if count <= stack then
-                LootReserve:TableRemove(self.RecentLoot, item);
                 LootReserve:TableRemove(self.CurrentLoot, item);
             end
         end

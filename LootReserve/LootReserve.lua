@@ -377,6 +377,22 @@ function LootReserve:ForEachRaider(func)
     end
 end
 
+function LootReserve:GetTradeableItemCount(item)
+    local count = 0;
+    for bag = 0, 4 do
+        local slots = GetContainerNumSlots(bag);
+        if slots > 0 then
+            for slot = 1, slots do
+                local _, quantity, _, _, _, _, _, _, _, bagItem = GetContainerItemInfo(bag, slot);
+                if bagItem and bagItem == item and (not C_Item.IsBound(ItemLocation:CreateFromBagAndSlot(bag, slot)) or LootReserve:IsItemSoulboundTradeable(bag, slot)) then
+                    count = count + quantity;
+                end
+            end
+        end
+    end
+    return count;
+end
+
 function LootReserve:IsItemSoulboundTradeable(bag, slot)
     if not self.TooltipScanner then
         self.TooltipScanner = CreateFrame("GameTooltip", "LootReserveTooltipScanner", UIParent, "GameTooltipTemplate");
