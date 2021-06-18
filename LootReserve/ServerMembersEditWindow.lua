@@ -18,7 +18,7 @@ function LootReserve.Server.MembersEdit:UpdateMembersList()
     self.Window.Header.LockedIcon:SetShown(LootReserve.Server.CurrentSession);
     self.Window.ImportExportButton:SetText(LootReserve.Server.CurrentSession and "Export" or "Import/Export");
     self.Window.ImportExportButton:SetWidth(LootReserve.Server.CurrentSession and 60 or 90);
-    
+
     local function createFrame(player, member)
         list.LastIndex = list.LastIndex + 1;
         local frame = list.Frames[list.LastIndex];

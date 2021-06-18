@@ -30,7 +30,7 @@ local function ParseCSVLine(line, sep)
             else
                 table.insert(res, string.sub(line, pos));
                 break;
-            end 
+            end
         end
     end
     return res;
@@ -118,7 +118,7 @@ function LootReserve.Server.Import:UpdateReservesList()
     if not data then
         return;
     end
-    
+
     local function createFrame(player, member)
         list.LastIndex = list.LastIndex + 1;
         local frame = list.Frames[list.LastIndex];

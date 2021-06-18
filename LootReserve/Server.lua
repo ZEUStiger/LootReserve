@@ -338,7 +338,7 @@ function LootReserve.Server:Load()
     if self.CurrentSession and self.CurrentSession.LogoutTime and time() > self.CurrentSession.LogoutTime + 3600 then
         self.CurrentSession = nil;
     end
-    
+
     -- Verify that all the required fields are present in the session
     if self.CurrentSession then
         local function verifySessionField(field)
@@ -841,7 +841,7 @@ end
 function LootReserve.Server:PrepareBasicChatListening()
     local function ProcessChat(text, sender)
         sender = LootReserve:Player(sender);
-        
+
         text = text:lower();
         text = LootReserve:StringTrim(text);
         if text == "pass" or text == "p" then
@@ -1787,7 +1787,7 @@ function LootReserve.Server:CancelRollRequest(item, winners, noHistory)
                 table.insert(self.RequestedRoll.Winners, winner);
             end
         end
-        
+
         if not noHistory then
             table.insert(self.RollHistory, self.RequestedRoll);
 
@@ -1826,7 +1826,7 @@ function LootReserve.Server:CanRoll(player)
         for _, roll in ipairs(self.RequestedRoll.Players[player]) do
             if roll == 0 then
                hasRolls = true;
-               break; 
+               break;
             end
         end
         if not hasRolls then
@@ -2095,7 +2095,7 @@ function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPla
     if not self.BasicChatListeningRegistered then
         self:PrepareBasicChatListening();
     end
-    
+
     self.RequestedRoll =
     {
         Item           = item,
@@ -2250,7 +2250,7 @@ function LootReserve.Server:DeleteRoll(player, rollNumber, item)
 
     local oldRoll = self.RequestedRoll.Players[player][rollNumber];
     self.RequestedRoll.Players[player][rollNumber] = LootReserve.Constants.RollType.Deleted;
-    
+
     local phase = self.RequestedRoll.Phases and self.RequestedRoll.Phases[1] or nil;
 
     LootReserve.Comm:SendDeletedRoll(player, item, oldRoll, phase);
@@ -2291,7 +2291,7 @@ function LootReserve.Server:GetOrderedPlayerRolls(roll)
             return aData.RollNumber < bData.RollNumber;
         end
     end);
-    
+
     local i = 0;
     return function()
         i = i + 1;

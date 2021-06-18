@@ -597,7 +597,7 @@ function LootReserve:FormatPlayersText(players, colorFunc)
     for _, player in ipairs(players) do
         if not playerNames[player] then
            table.insert(playersSorted, player);
-           playerNames[player] = true; 
+           playerNames[player] = true;
         end
     end
     table.sort(playersSorted);

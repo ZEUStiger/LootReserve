@@ -122,7 +122,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
     if not self.CurrentSession then
         return;
     end
-    
+
     local function createFrame(item, reserve)
         list.LastIndex = list.LastIndex + 1;
         local frame = list.Frames[list.LastIndex];
@@ -308,7 +308,7 @@ function LootReserve.Server:UpdateReserveList(lockdown)
 
         return a.Item < b.Item;
     end
-    
+
     for item, reserve in LootReserve:Ordered(self.CurrentSession.ItemReserves, sorter) do
         if not filter or matchesFilter(item, reserve, filter) then
             createFrame(item, reserve);
@@ -874,7 +874,7 @@ end
 
 function LootReserve.Server:LoadNewSessionSettings()
     if not self.Window:IsShown() then return; end
-    
+
     local function setDropDownValue(dropDown, value)
         if dropDown.init then dropDown:init(); end
         ToggleDropDownMenu(nil, nil, dropDown);

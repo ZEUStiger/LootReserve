@@ -134,7 +134,7 @@ function LootReserve.Client:StartSession(server, starting, startTime, acceptingR
 
     if not self.SessionEventsRegistered then
         self.SessionEventsRegistered = true;
-        
+
         LootReserve:RegisterEvent("GROUP_LEFT", function()
             if self.SessionServer then
                 self:StopSession();
@@ -144,7 +144,7 @@ function LootReserve.Client:StartSession(server, starting, startTime, acceptingR
                 self:UpdateReserveStatus();
             end
         end);
-        
+
         LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", function()
             if self.SessionServer and not UnitInRaid(self.SessionServer) then
                 self:StopSession();

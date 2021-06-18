@@ -212,7 +212,7 @@
 									GameTooltip:AddDoubleLine(format("|T%d:0|t %s|cFF808080 (%s)|r", texture, (link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""), timeText), phaseText, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, phaseColor.r, phaseColor.g, phaseColor.b);
 								end
 								GameTooltip:Show();
-								
+
 								if missing then
 									C_Timer.After(0.25, function()
 										if GameTooltip:IsOwned(self) then
@@ -448,7 +448,7 @@
 									func = function(_, _, _, checked) LootReserve.Server.Settings.RollFinishOnRaidRoll = checked; LootReserve.Server:TryFinishRoll(); end,
 								});
 							end
-							
+
 							LootReserve:OpenMenu(menu, self:GetParent().Menu, self);
 						else
 							LootReserve.Server:RequestRoll(self:GetParent().Item);

@@ -434,7 +434,7 @@ LootReserve.Comm.Handlers[Opcodes.ReserveInfo] = function(sender, item, players)
         else
             players = { };
         end
-        
+
         local previousReserves = LootReserve.Client.ItemReserves[item];
         local _, myOldReserves, oldReservers, oldRolls = LootReserve:GetReservesData(previousReserves or { }, LootReserve:Me());
         local _, myNewReserves, newReservers, newRolls = LootReserve:GetReservesData(players, LootReserve:Me());

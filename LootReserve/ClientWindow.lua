@@ -286,7 +286,7 @@ function LootReserve.Client:UpdateCategories()
     local list = self.Window.Categories.Scroll.Container;
     list.Frames = list.Frames or { };
     list.LastIndex = 0;
-    
+
     local function createButton(id, category, expansion)
         list.LastIndex = list.LastIndex + 1;
         local frame = list.Frames[list.LastIndex];

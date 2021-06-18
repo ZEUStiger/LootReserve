@@ -32,7 +32,7 @@ function LootReserve.Server.LootEdit:UpdateLootList()
         end
         frame.ConditionsFrame.Limit.EditBox:ClearFocus();
     end
-    
+
     local function createFrame(item, source)
         list.LastIndex = list.LastIndex + 1;
         local frame = list.Frames[list.LastIndex];
@@ -192,7 +192,7 @@ function LootReserve.Server.LootEdit:UpdateCategories()
     local list = self.Window.Categories.Scroll.Container;
     list.Frames = list.Frames or { };
     list.LastIndex = 0;
-    
+
     local function createButton(id, category)
         list.LastIndex = list.LastIndex + 1;
         local frame = list.Frames[list.LastIndex];
@@ -230,7 +230,7 @@ function LootReserve.Server.LootEdit:UpdateCategories()
             end
         end
     end
-    
+
     local function createCategoryButtonsRecursively(id, category)
         if category.Name or category.Separator then
             createButton(id, category);
@@ -243,7 +243,7 @@ function LootReserve.Server.LootEdit:UpdateCategories()
             end
         end
     end
-    
+
     for id, category in LootReserve:Ordered(LootReserve.Data.Categories, LootReserve.Data.CategorySorter) do
         if LootReserve.Data:IsCategoryVisible(category) then
             createCategoryButtonsRecursively(id, category);
