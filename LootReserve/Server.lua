@@ -688,11 +688,6 @@ function LootReserve.Server:PrepareSession()
                 text = "cancel" .. text:sub(1 + #prefixD);
             elseif stringStartsWith(text, prefixE) then
                 text = "cancel" .. text:sub(1 + #prefixE);
-            elseif text == "pass" or text == "p" then
-                if self.RequestedRoll then
-                    self:PassRoll(sender, self.RequestedRoll.Item, true);
-                end
-                return;
             else
                 return;
             end
@@ -836,37 +831,6 @@ function LootReserve.Server:PrepareSession()
             end
         end
     end
-end
-
-function LootReserve.Server:PrepareBasicChatListening()
-    local function ProcessChat(text, sender)
-        sender = LootReserve:Player(sender);
-
-        text = text:lower();
-        text = LootReserve:StringTrim(text);
-        if text == "pass" or text == "p" then
-            if self.RequestedRoll then
-                self:PassRoll(sender, self.RequestedRoll.Item, true);
-            end
-            return;
-        end
-    end
-
-    local chatTypes =
-    {
-        "CHAT_MSG_WHISPER",
-        "CHAT_MSG_SAY",
-        "CHAT_MSG_YELL",
-        "CHAT_MSG_PARTY",
-        "CHAT_MSG_PARTY_LEADER",
-        "CHAT_MSG_RAID",
-        "CHAT_MSG_RAID_LEADER",
-        "CHAT_MSG_RAID_WARNING",
-    };
-    for _, type in ipairs(chatTypes) do
-        LootReserve:RegisterEvent(type, ProcessChat);
-    end
-    self.BasicChatListeningRegistered = true;
 end
 
 function LootReserve.Server:UpdateItemNameCache()
@@ -1976,6 +1940,33 @@ function LootReserve.Server:PrepareRequestRoll()
             end
         end);
 
+        local function ProcessChat(text, sender)
+            sender = LootReserve:Player(sender);
+
+            text = text:lower();
+            text = LootReserve:StringTrim(text);
+            if text == "pass" or text == "p" then
+                if self.RequestedRoll then
+                    self:PassRoll(sender, self.RequestedRoll.Item, true);
+                end
+                return;
+            end
+        end
+        local chatTypes =
+        {
+            "CHAT_MSG_WHISPER",
+            "CHAT_MSG_SAY",
+            "CHAT_MSG_YELL",
+            "CHAT_MSG_PARTY",
+            "CHAT_MSG_PARTY_LEADER",
+            "CHAT_MSG_RAID",
+            "CHAT_MSG_RAID_LEADER",
+            "CHAT_MSG_RAID_WARNING",
+        };
+        for _, type in ipairs(chatTypes) do
+            LootReserve:RegisterEvent(type, ProcessChat);
+        end
+
         local chatTypes =
         {
             "CHAT_MSG_WHISPER",
@@ -2092,10 +2083,6 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
 end
 
 function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPlayers)
-    if not self.BasicChatListeningRegistered then
-        self:PrepareBasicChatListening();
-    end
-
     self.RequestedRoll =
     {
         Item           = item,
