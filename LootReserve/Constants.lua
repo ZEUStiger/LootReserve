@@ -71,8 +71,9 @@ LootReserve.Constants =
     },
     RollType =
     {
-        Passed  = -1,
-        Deleted = -2,
+        NotRolled = 0,
+        Passed    = -1,
+        Deleted   = -2,
     },
 };
 

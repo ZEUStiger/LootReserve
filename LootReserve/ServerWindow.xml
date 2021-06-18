@@ -284,8 +284,8 @@
 				else
 					local roll = frame.Roll.Players[self.Player] and frame.Roll.Players[self.Player][self.RollNumber];
 					local isRaidRoll = frame.Roll.RaidRoll;
-					self.ButtonDelete:SetShown(roll and roll > 0 and not isRaidRoll);
-					self.ButtonReroll:SetShown(roll and roll > 0 and     isRaidRoll);
+					self.ButtonDelete:SetShown(roll and roll > LootReserve.Constants.RollType.NotRolled and not isRaidRoll);
+					self.ButtonReroll:SetShown(roll and roll > LootReserve.Constants.RollType.NotRolled and     isRaidRoll);
 				end
 			</OnUpdate>
 		</Scripts>
@@ -573,7 +573,7 @@
 											local totalRolls = 0;
 											for player, rolls in pairs(frame.Roll.Players) do
 												for _, roll in ipairs(rolls) do
-													if roll > 0 then
+													if roll > LootReserve.Constants.RollType.NotRolled then
 														totalRolls = totalRolls + 1;
 													end
 												end
@@ -590,7 +590,7 @@
 											), info.arg1);
 											local i = 1;
 											for player, roll, rollNumber in LootReserve.Server:GetOrderedPlayerRolls(frame.Roll.Players) do
-												if roll > 0 and (not self.Lines or self.Lines == 0 or self.Lines >= i) then
+												if roll > LootReserve.Constants.RollType.NotRolled and (not self.Lines or self.Lines == 0 or self.Lines >= i) then
 													LootReserve:SendChatMessage(format("- %d by %s", roll, player), info.arg1);
 													i = i + 1;
 												end
@@ -621,7 +621,7 @@
 								local totalRolls = 0;
 								for player, rolls in pairs(roll.Players) do
 									for _, roll in ipairs(rolls) do
-										if roll > 0 then
+										if roll > LootReserve.Constants.RollType.NotRolled then
 											totalRolls = totalRolls + 1;
 										end
 									end

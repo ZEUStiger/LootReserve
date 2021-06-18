@@ -16,7 +16,7 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
             frame.ReservesFrame.ReportRolls:SetShown(frame.Roll);
             frame.RequestRollButton.CancelIcon:SetShown(frame.Roll and not frame.Historical and self:IsRolling(frame.Item));
 
-            local highest = 0;
+            local highest = LootReserve.Constants.RollType.NotRolled;
             if frame.Roll then
                 for player, rolls in pairs(frame.Roll.Players) do
                     for _, roll in ipairs(rolls) do
@@ -31,17 +31,19 @@ function LootReserve.Server:UpdateReserveListRolls(lockdown)
                 if button:IsShown() then
                     if frame.Roll and frame.Roll.Players[button.Player] and frame.Roll.Players[button.Player][button.RollNumber] then
                         local roll = frame.Roll.Players[button.Player][button.RollNumber];
+                        local rolled = roll > LootReserve.Constants.RollType.NotRolled;
+                        local passed = roll == LootReserve.Constants.RollType.Passed;
+                        local deleted = roll == LootReserve.Constants.RollType.Deleted;
                         local winner;
                         if frame.Roll.Winners then
                             winner = LootReserve:Contains(frame.Roll.Winners, button.Player);
                         else
-                            winner = roll > 0 and highest > 0 and roll == highest; -- Backwards compatibility
+                            winner = rolled and highest > LootReserve.Constants.RollType.NotRolled and roll == highest; -- Backwards compatibility
                         end
-                        local pass = roll == LootReserve.Constants.RollType.Passed;
-                        local deleted = roll == LootReserve.Constants.RollType.Deleted;
-                        local color = not LootReserve:IsPlayerOnline(button.Player) and GRAY_FONT_COLOR or winner and GREEN_FONT_COLOR or pass and GRAY_FONT_COLOR or deleted and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
+
+                        local color = not LootReserve:IsPlayerOnline(button.Player) and GRAY_FONT_COLOR or winner and GREEN_FONT_COLOR or passed and GRAY_FONT_COLOR or deleted and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
                         button.Roll:Show();
-                        button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or deleted and "DEL" or "...");
+                        button.Roll:SetText(rolled and tostring(roll) or passed and "PASS" or deleted and "DEL" or "...");
                         button.Roll:SetTextColor(color.r, color.g, color.b);
                         if LootReserve.Server.Settings.HighlightSameItemWinners and not frame.Historical then
                             button.AlreadyWonHighlight:SetShown(LootReserve.Server:HasAlreadyWon(button.Player, frame.Item));
@@ -347,7 +349,7 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
             frame.ReservesFrame.ReportRolls:SetShown(frame.Roll);
             frame.RequestRollButton.CancelIcon:SetShown(frame.Roll and not frame.Historical and self:IsRolling(frame.Item));
 
-            local highest = 0;
+            local highest = LootReserve.Constants.RollType.NotRolled;
             if frame.Roll then
                 for player, rolls in pairs(frame.Roll.Players) do
                     for _, roll in ipairs(rolls) do
@@ -362,17 +364,19 @@ function LootReserve.Server:UpdateRollListRolls(lockdown)
                 if button:IsShown() then
                     if frame.Roll and frame.Roll.Players[button.Player] and frame.Roll.Players[button.Player][button.RollNumber] then
                         local roll = frame.Roll.Players[button.Player][button.RollNumber];
+                        local rolled = roll > LootReserve.Constants.RollType.NotRolled;
+                        local passed = roll == LootReserve.Constants.RollType.Passed;
+                        local deleted = roll == LootReserve.Constants.RollType.Deleted;
                         local winner;
                         if frame.Roll.Winners then
                             winner = LootReserve:Contains(frame.Roll.Winners, button.Player);
                         else
-                            winner = roll > 0 and highest > 0 and roll == highest; -- Backwards compatibility
+                            winner = rolled and highest > LootReserve.Constants.RollType.NotRolled and roll == highest; -- Backwards compatibility
                         end
-                        local pass = roll == LootReserve.Constants.RollType.Passed;
-                        local deleted = roll == LootReserve.Constants.RollType.Deleted;
-                        local color = winner and GREEN_FONT_COLOR or pass and GRAY_FONT_COLOR or deleted and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
+
+                        local color = winner and GREEN_FONT_COLOR or passed and GRAY_FONT_COLOR or deleted and RED_FONT_COLOR or HIGHLIGHT_FONT_COLOR;
                         button.Roll:Show();
-                        button.Roll:SetText(roll > 0 and tostring(roll) or pass and "PASS" or deleted and "DEL" or "...");
+                        button.Roll:SetText(rolled and tostring(roll) or passed and "PASS" or deleted and "DEL" or "...");
                         button.Roll:SetTextColor(color.r, color.g, color.b);
                         if LootReserve.Server.Settings.HighlightSameItemWinners and not frame.Historical then
                             button.AlreadyWonHighlight:SetShown(LootReserve.Server:HasAlreadyWon(button.Player, frame.Item));

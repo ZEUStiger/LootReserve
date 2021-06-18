@@ -1577,7 +1577,7 @@ function LootReserve.Server:TryFinishRoll()
             local missingRolls = #highestPlayers ~= 1;
             if not missingRolls then
                 for player, roll in self:GetOrderedPlayerRolls(self.RequestedRoll.Players) do
-                    if roll == 0 and player ~= highestPlayers[1] then
+                    if roll == LootReserve.Constants.RollType.NotRolled and player ~= highestPlayers[1] then
                         missingRolls = true;
                         break;
                     end
@@ -1603,20 +1603,20 @@ end
 
 function LootReserve.Server:GetWinningRollAndPlayers()
     if self.RequestedRoll then
-        local highestRoll = 0;
+        local highestRoll = LootReserve.Constants.RollType.NotRolled;
         local highestPlayers = { };
         for player, roll in self:GetOrderedPlayerRolls(self.RequestedRoll.Players) do
             if highestRoll <= roll and LootReserve:IsPlayerOnline(player) then
                 if highestRoll ~= roll then
+                    highestRoll = roll;
                     table.wipe(highestPlayers);
                 end
                 if not LootReserve:Contains(highestPlayers, player) then
                     table.insert(highestPlayers, player);
                 end
-                highestRoll = roll;
             end
         end
-        if highestRoll > 0 then
+        if highestRoll > LootReserve.Constants.RollType.NotRolled then
             return highestRoll, highestPlayers;
         end
     end
@@ -1824,7 +1824,7 @@ function LootReserve.Server:CanRoll(player)
     if self.RequestedRoll.Players[player] then
         local hasRolls = false;
         for _, roll in ipairs(self.RequestedRoll.Players[player]) do
-            if roll == 0 then
+            if roll == LootReserve.Constants.RollType.NotRolled then
                hasRolls = true;
                break;
             end
@@ -1901,10 +1901,10 @@ function LootReserve.Server:PrepareRequestRoll()
                     local rollSubmitted = false;
                     local extraRolls    = false;
                     if not self.RequestedRoll.Players[player] then
-                       self.RequestedRoll.Players[player] = { 0 }; -- Should only even happen for custom rolls, non-custom ones should fail in LootReserve.Server:CanRoll
+                       self.RequestedRoll.Players[player] = { LootReserve.Constants.RollType.NotRolled }; -- Should only even happen for custom rolls, non-custom ones should fail in LootReserve.Server:CanRoll
                     end
                     for i, oldRoll in ipairs(self.RequestedRoll.Players[player]) do
-                        if oldRoll == 0 then
+                        if oldRoll == LootReserve.Constants.RollType.NotRolled then
                             if not rollSubmitted then
                                 self.RequestedRoll.Players[player][i] = tonumber(roll);
                                 rollSubmitted = true;
@@ -1935,7 +1935,7 @@ function LootReserve.Server:PrepareRequestRoll()
                                 local rollsCount = 0;
                                 local extraRolls = 0;
                                 for _, roll in ipairs(self.RequestedRoll.Players[player]) do
-                                    if roll == 0 then
+                                    if roll == LootReserve.Constants.RollType.NotRolled then
                                         extraRolls = extraRolls + 1;
                                     end
                                     rollsCount = rollsCount + 1;
@@ -1955,8 +1955,8 @@ function LootReserve.Server:PrepareRequestRoll()
                                 if self.RequestedRoll.Duration then
                                     local time = math.ceil(self.RequestedRoll.Duration);
                                     durationStr = time < 60      and format(" (%d %s)", time,      time ==  1 and "sec" or "secs")
-                                                or time % 60 == 0 and format(" (%d %s)", time / 60, time == 60 and "min" or "mins")
-                                                or                    format(" (%d:%02d mins)", math.floor(time / 60), time % 60);
+                                               or time % 60 == 0 and format(" (%d %s)", time / 60, time == 60 and "min" or "mins")
+                                               or                    format(" (%d:%02d mins)", math.floor(time / 60), time % 60);
                                 end
                                 LootReserve:SendChatMessage(format("Please /roll again on %s you reserved%s.%s",
                                     link,
@@ -2041,7 +2041,7 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
 
     for _, player in ipairs(players) do
         self.RequestedRoll.Players[player] = self.RequestedRoll.Players[player] or { };
-        table.insert(self.RequestedRoll.Players[player], 0);
+        table.insert(self.RequestedRoll.Players[player], LootReserve.Constants.RollType.NotRolled);
     end
 
     if self:TryFinishRoll() then
@@ -2074,7 +2074,7 @@ function LootReserve.Server:RequestRoll(item, duration, phases, allowedPlayers)
             local sentToPlayer = { };
             for player, roll in self:GetOrderedPlayerRolls(self.RequestedRoll.Players) do
                 local _, myReserves = LootReserve:GetReservesData(players, player);
-                if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) and not sentToPlayer[player] then
+                if roll == LootReserve.Constants.RollType.NotRolled and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) and not sentToPlayer[player] then
                     local rollProgressText = "";
                     if myReserves > 1 then
                         rollProgressText = format(" (%d/%d)", 1, myReserves);
@@ -2112,7 +2112,7 @@ function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPla
     if allowedPlayers then
         for _, player in ipairs(allowedPlayers) do
             self.RequestedRoll.Players[player] = self.RequestedRoll.Players[player] or { };
-            table.insert(self.RequestedRoll.Players[player], 0);
+            table.insert(self.RequestedRoll.Players[player], LootReserve.Constants.RollType.NotRolled);
         end
     end
 
@@ -2152,7 +2152,7 @@ function LootReserve.Server:RequestCustomRoll(item, duration, phases, allowedPla
                 local sentToPlayer = { };
                 for player, roll in self:GetOrderedPlayerRolls(self.RequestedRoll.Players) do
                     local _, myReserves = LootReserve:GetReservesData(allowedPlayers, player);
-                    if roll == 0 and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) and not sentToPlayer[player] then
+                    if roll == LootReserve.Constants.RollType.NotRolled and LootReserve:IsPlayerOnline(player) and not self:IsAddonUser(player) and not sentToPlayer[player] then
                         LootReserve:SendChatMessage(format("Please /roll on %s%s.%s", link, myReserves > 1 and format(" x%d", myReserves) or "", durationStr), "WHISPER", player);
                         sentToPlayer[player] = true;
                     end
@@ -2193,8 +2193,8 @@ function LootReserve.Server:PassRoll(player, item, chat)
         -- If the player passed through the addon button - they may have done it after /rolling manually, so ignore it if they have even a single roll already registered
         local i = 1;
         for _, roll in ipairs(self.RequestedRoll.Players[player]) do
-            if roll > 0 then
-               return; 
+            if roll > LootReserve.Constants.RollType.NotRolled then
+               return;
             end
         end
     else
@@ -2204,7 +2204,7 @@ function LootReserve.Server:PassRoll(player, item, chat)
     local success = false;
     local i = 1;
     for i, roll in ipairs(self.RequestedRoll.Players[player]) do
-        if roll >= 0 then
+        if roll >= LootReserve.Constants.RollType.NotRolled then
             self.RequestedRoll.Players[player][i] = LootReserve.Constants.RollType.Passed;
             success = true;
         end
