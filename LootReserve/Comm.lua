@@ -115,9 +115,9 @@ function LootReserve.Comm:CanBroadcast(opcode)
 end
 function LootReserve.Comm:CanWhisper(target, opcode)
     return LootReserve.Enabled and LootReserve:IsPlayerOnline(target) and (self.SoloDebug
-        or IsInRaid() and UnitInRaid(target)
-        or IsInGroup() and UnitInParty(target) and (opcode == Opcodes.PassRoll and LootReserve.Client.RollRequest and target == LootReserve.Client.RollRequest.Sender
-                                                 or opcode == Opcodes.DeletedRoll)
+        or IsInRaid() and LootReserve:UnitInRaid(target)
+        or IsInGroup() and LootReserve:UnitInParty(target) and (opcode == Opcodes.PassRoll and LootReserve.Client.RollRequest and target == LootReserve.Client.RollRequest.Sender
+                                                             or opcode == Opcodes.DeletedRoll)
     );
 end
 
@@ -237,7 +237,7 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
     local membersInfo = "";
     local refPlayers = { };
     for player, member in pairs(session.Members) do
-        if not target or player == target then
+        if not target or LootReserve:IsSamePlayer(player, target) then
             membersInfo = membersInfo .. (#membersInfo > 0 and ";" or "") .. format("%s=%s", player, strjoin(",", session.Settings.Lock and member.Locked and "#" or member.ReservesLeft));
             table.insert(refPlayers, player);
         end

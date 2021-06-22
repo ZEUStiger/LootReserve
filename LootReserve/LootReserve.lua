@@ -102,7 +102,9 @@ end
 function LootReserve:OnInitialize()
     LootReserve.Client:Load();
     LootReserve.Server:Load();
+end
 
+function LootReserve:OnEnable()
     LootReserve.Comm:StartListening();
 
     local function Startup()
@@ -127,9 +129,6 @@ function LootReserve:OnInitialize()
     if LootReserve.Comm.Debug then
         SlashCmdList.LOOTRESERVE("server");
     end
-end
-
-function LootReserve:OnEnable()
 end
 
 function LootReserve:OnDisable()
@@ -290,6 +289,21 @@ function LootReserve:GetCurrentExpansion()
     return tonumber(expansion) - 1;
 end
 
+function LootReserve:IsCrossRealm()
+    return self:GetCurrentExpansion() == 0;
+    -- This doesn't really work, because even in non-connected realms UnitFullName ends up returning your realm name,
+    -- and we can't use UnitName either, because that one NEVER returns a realm for "player". WTB good API, 5g.
+    --[[
+    if self.CachedIsCrossRealm == nil then
+        local name, realm = UnitFullName("player");
+        if name then
+            self.CachedIsCrossRealm = realm ~= nil;
+        end
+    end
+    return self.CachedIsCrossRealm;
+    ]]
+end
+
 function LootReserve:GetNumClasses()
     return 11;
 end
@@ -302,7 +316,15 @@ function LootReserve:GetClassInfo(classID)
 end
 
 function LootReserve:Player(player)
-    return Ambiguate(player, "short");
+    if not self:IsCrossRealm() then
+        return Ambiguate(player, "short");
+    end
+
+    local name, realm = strsplit("-", player);
+    if not realm then
+        realm = GetNormalizedRealmName();
+    end
+    return name .. "-" .. realm;
 end
 
 function LootReserve:Me()
@@ -310,32 +332,77 @@ function LootReserve:Me()
 end
 
 function LootReserve:IsMe(player)
-    return self:Me() == self:Player(player);
+    return self:IsSamePlayer(player, self:Me());
+end
+
+function LootReserve:IsSamePlayer(a, b)
+    return self:Player(a) == self:Player(b);
 end
 
 function LootReserve:IsPlayerOnline(player)
     return self:ForEachRaider(function(name, _, _, _, _, _, _, online)
-        if name == player then
+        if self:IsSamePlayer(name, player) then
             return online or false;
         end
     end);
 end
 
-function LootReserve:GetPlayerClassColor(player)
-    local className, classFilename, classId = UnitClass(player);
+function LootReserve:UnitInRaid(player)
+    if not self:IsCrossRealm() then
+        return UnitInRaid(player);
+    end
+
+    return IsInRaid() and self:ForEachRaider(function(name, _, _, _, className, classFilename, _, online)
+        if self:IsSamePlayer(name, player) then
+            return true;
+        end
+    end);
+end
+
+function LootReserve:UnitInParty(player)
+    if not self:IsCrossRealm() then
+        return UnitInParty(player);
+    end
+
+    return IsInGroup() and not IsInRaid() and self:ForEachRaider(function(name, _, _, _, className, classFilename, _, online)
+        if self:IsSamePlayer(name, player) then
+            return true;
+        end
+    end);
+end
+
+function LootReserve:UnitClass(player)
+    if not self:IsCrossRealm() then
+        return UnitClass(player);
+    end
+
+    return self:ForEachRaider(function(name, _, _, _, className, classFilename, _, online)
+        if self:IsSamePlayer(name, player) then
+            return className, classFilename, LootReserve.Constants.ClassFilenameToClassID[classFilename];
+        end
+    end);
+end
+
+function LootReserve:GetPlayerClassColor(player, dim)
+    local className, classFilename, classId = self:UnitClass(player);
     if classFilename then
         local colors = RAID_CLASS_COLORS[classFilename];
         if colors then
-            return colors.colorStr;
+            if dim then
+                local r, g, b, a = colors:GetRGBA();
+                return format("FF%02X%02X%02X", r * 128, g * 128, b * 128);
+            else
+                return colors.colorStr;
+            end
         end
     end
-    return "FF808080";
+    return dim and "FF404040" or "FF808080";
 end
 
 function LootReserve:GetRaidUnitID(player)
     for i = 1, MAX_RAID_MEMBERS do
         local unit = UnitName("raid" .. i);
-        if unit and LootReserve:Player(unit) == player then
+        if unit and LootReserve:IsSamePlayer(LootReserve:Player(unit), player) then
             return "raid" .. i;
         end
     end
@@ -348,7 +415,7 @@ end
 function LootReserve:GetPartyUnitID(player)
     for i = 1, MAX_PARTY_MEMBERS do
         local unit = UnitName("party" .. i);
-        if unit and LootReserve:Player(unit) == player then
+        if unit and LootReserve:IsSamePlayer(LootReserve:Player(unit), player) then
             return "party" .. i;
         end
     end
@@ -359,7 +426,9 @@ function LootReserve:GetPartyUnitID(player)
 end
 
 function LootReserve:ColoredPlayer(player)
-    return format("|c%s%s|r", self:GetPlayerClassColor(player), player);
+    local name, realm = strsplit("-", player);
+    return realm and format("|c%s%s|r|c%s-%s|r", self:GetPlayerClassColor(player), name, self:GetPlayerClassColor(player, true), realm)
+                  or format("|c%s%s|r",          self:GetPlayerClassColor(player), player);
 end
 
 function LootReserve:ForEachRaider(func)
@@ -371,9 +440,9 @@ function LootReserve:ForEachRaider(func)
     for i = 1, MAX_RAID_MEMBERS do
         local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
         if name then
-            local result = func(LootReserve:Player(name), rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole);
+            local result, a, b = func(self:Player(name), rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole);
             if result ~= nil then
-                return result;
+                return result, a, b;
             end
         end
     end

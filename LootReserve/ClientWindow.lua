@@ -25,7 +25,7 @@ function LootReserve.Client:UpdateReserveStatus()
     for i, frame in ipairs(list.Frames) do
         local item = frame.Item;
         if item ~= 0 then
-            local _, myReserves, uniquePlayers, totalReserves = LootReserve:GetReservesDataColored(self:GetItemReservers(item), LootReserve:Me());
+            local _, myReserves, uniquePlayers, totalReserves = LootReserve:GetReservesData(self:GetItemReservers(item), LootReserve:Me());
             local canReserve = self.SessionServer and self:HasRemainingReserves() and LootReserve.ItemConditions:IsItemReservableOnClient(item) and (not self.Multireserve or myReserves < self.Multireserve);
             frame.ReserveFrame.ReserveButton:SetShown(canReserve and myReserves == 0);
             frame.ReserveFrame.MultiReserveButton:SetShown(canReserve and myReserves > 0 and self.Multireserve);

@@ -86,10 +86,20 @@ for replacement, pattern in pairs(charSimplifications) do
 end
 
 local function NormalizeName(name)
+    for i = 1, name:utf8len() do
+        if name:utf8sub(i, i) == "-" then
+            return name:utf8sub(1, 1):utf8upper() .. name:utf8sub(2, i - 1):utf8lower() .. name:utf8sub(i);
+        end
+    end
     return name:utf8sub(1, 1):utf8upper() .. name:utf8sub(2):utf8lower();
 end
 
 local function SimplifyName(name)
+    for i = 1, name:utf8len() do
+        if name:utf8sub(i, i) == "-" then
+            return NormalizeName(name:utf8sub(1, i - 1):utf8replace(simplificationMapping));
+        end
+    end
     return NormalizeName(name:utf8replace(simplificationMapping));
 end
 
@@ -104,6 +114,9 @@ end
 
 function LootReserve.Server.Import:UpdateReservesList()
     if not self.Window:IsShown() then return; end
+
+    self.Window.Header.Name:SetWidth(LootReserve:IsCrossRealm() and 300 or 200);
+    self.Window:SetMinResize(LootReserve:IsCrossRealm() and 490 or 390, 440);
 
     local list = self.Window.Scroll.Container;
     list.Frames = list.Frames or { };
@@ -378,7 +391,7 @@ function LootReserve.Server.Import:SessionSettingsUpdated()
 
                     local nameMatchResult = nil;
                     if player and #player > 0 then
-                        player = NormalizeName(player);
+                        player = LootReserve:Player(NormalizeName(player));
                         if self.MatchNames and LootReserve:IsPlayerOnline(player) == nil then
                             local simplified = simplifiedRaidNames[SimplifyName(player)];
                             if not simplified then

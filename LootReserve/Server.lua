@@ -548,7 +548,7 @@ function LootReserve.Server:UpdateGroupMembers()
         -- Remove member info for players who left with no reserves
         local leavers = { };
         for player, member in pairs(self.CurrentSession.Members) do
-            if not UnitInRaid(player) and #member.ReservedItems == 0 then
+            if not LootReserve:UnitInRaid(player) and #member.ReservedItems == 0 then
                 table.insert(leavers, player);
 
                 -- for i = #member.ReservedItems, 1, -1 do
@@ -1834,6 +1834,18 @@ function LootReserve.Server:PrepareRequestRoll()
         LootReserve:RegisterEvent("CHAT_MSG_SYSTEM", function(text)
             if self.RequestedRoll then
                 local player, roll, min, max = text:match(rollMatcher);
+                if player and LootReserve:IsCrossRealm()then
+                    -- Roll chat messages don't have the player's realm in them, ever.
+                    -- In case we have two players with the same name in the raid, the best we can do right now
+                    -- is to just find the first-best online player with matching name who's eligible to roll
+                    -- and attribute the roll to them. It's exploitable, but that's the best we can do in these circumstances...
+                    player = LootReserve:ForEachRaider(function(name, _, _, _, _, _, _, online)
+                        if online and strsplit("-", name) == player and self:CanRoll(name) then
+                            return name;
+                        end
+                    end);
+                end
+                player = player and LootReserve:Player(player);
                 if player and roll and min == "1" and (max == "100" or self.RequestedRoll.RaidRoll and tonumber(max) == GetNumGroupMembers()) and tonumber(roll) and self:CanRoll(player) then
                     -- Re-roll the raid-roll
                     if self.RequestedRoll.RaidRoll then
@@ -2331,7 +2343,7 @@ function LootReserve.Server:MasterLootItem(item, player, multipleWinners)
             self.PendingMasterLoot = nil;
             if pending and pending.ItemIndex == LootReserve:IsLootingItem(pending.Item) and pending.Timeout >= time() then
                 for playerIndex = 1, MAX_RAID_MEMBERS do
-                    if GetMasterLootCandidate(pending.ItemIndex, playerIndex) == pending.Player then
+                    if LootReserve:IsSamePlayer(GetMasterLootCandidate(pending.ItemIndex, playerIndex), pending.Player) then
                         GiveMasterLoot(pending.ItemIndex, playerIndex);
                         MasterLooterFrame:Hide();
                         return;

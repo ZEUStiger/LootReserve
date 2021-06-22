@@ -75,6 +75,7 @@ LootReserve.Constants =
         Passed    = -1,
         Deleted   = -2,
     },
+    ClassFilenameToClassID = { },
 };
 
 local result = LootReserve.Constants.ReserveResult;
@@ -121,3 +122,10 @@ LootReserve.Constants.ReservesSortingText =
     [enum.BySource] = "By Boss",
     [enum.ByLooter] = "By Looter",
 };
+
+for i = 1, LootReserve:GetNumClasses() do
+    local name, file, id = LootReserve:GetClassInfo(i);
+    if file and id then
+        LootReserve.Constants.ClassFilenameToClassID[file] = id;
+    end
+end
