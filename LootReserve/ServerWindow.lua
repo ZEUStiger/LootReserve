@@ -79,9 +79,8 @@ function LootReserve.Server:UpdateReserveListButtons(lockdown)
 
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    button.WonRolls:SetShown(self.CurrentSession and self.CurrentSession.Members[button.Player] and self.CurrentSession.Members[button.Player].WonRolls);
-                    button.WonRolls:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth() + 2 - (button.WonRolls:IsShown() and 0 or 12), 0);
-                    button.RecentChat:SetShown(frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player));
+                    button.Name.WonRolls:SetShown(self.CurrentSession and self.CurrentSession.Members[button.Player] and self.CurrentSession.Members[button.Player].WonRolls);
+                    button.Name.RecentChat:SetShown(frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player));
                 end
             end
         end
@@ -410,9 +409,8 @@ function LootReserve.Server:UpdateRollListButtons(lockdown)
         if frame:IsShown() and frame.ReservesFrame then
             for _, button in ipairs(frame.ReservesFrame.Players) do
                 if button:IsShown() then
-                    button.WonRolls:SetShown(self.CurrentSession and self.CurrentSession.Members[button.Player] and self.CurrentSession.Members[button.Player].WonRolls);
-                    button.WonRolls:SetPoint("LEFT", button.Name, "LEFT", button.Name:GetStringWidth() + 2 - (button.WonRolls:IsShown() and 0 or 12), 0);
-                    button.RecentChat:SetShown(frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player));
+                    button.Name.WonRolls:SetShown(self.CurrentSession and self.CurrentSession.Members[button.Player] and self.CurrentSession.Members[button.Player].WonRolls);
+                    button.Name.RecentChat:SetShown(frame.Roll and self:HasRelevantRecentChat(frame.Roll.Chat, button.Player));
                 end
             end
         end

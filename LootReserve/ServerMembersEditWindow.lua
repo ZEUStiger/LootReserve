@@ -3,6 +3,9 @@ function LootReserve.Server.MembersEdit:UpdateMembersList()
 
     if not self.Window:IsShown() then return; end
 
+    self.Window.Header.Name:SetWidth(LootReserve:IsCrossRealm() and 300 or 200);
+    self.Window:SetMinResize(LootReserve:IsCrossRealm() and 582 or 482, 150);
+
     local list = self.Window.Scroll.Container;
     list.Frames = list.Frames or { };
     list.LastIndex = 0;
@@ -41,8 +44,7 @@ function LootReserve.Server.MembersEdit:UpdateMembersList()
         frame:Show();
 
         frame.Alt:SetShown(list.LastIndex % 2 == 0);
-        frame.Name:SetText(format("%s%s%s", LootReserve:ColoredPlayer(player), not LootReserve.Server.CurrentSession and "|cFF808080 (imported)|r" or "", LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or LootReserve:IsPlayerOnline(player) == false and "|cFF808080 (offline)|r" or ""));
-        frame.ButtonWhisper:SetPoint("LEFT", frame.Name, "LEFT", math.min(frame.Name:GetWidth(), frame.Name:GetStringWidth()), 0);
+        frame.NameFrame:SetText(format("%s%s%s", LootReserve:ColoredPlayer(player), not LootReserve.Server.CurrentSession and "|cFF808080 (imported)|r" or "", LootReserve:IsPlayerOnline(player) == nil and "|cFF808080 (not in raid)|r" or LootReserve:IsPlayerOnline(player) == false and "|cFF808080 (offline)|r" or ""));
 
         local won = LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.Members[player] and LootReserve.Server.CurrentSession.Members[player].WonRolls;
         local wonMaxQuality = 0;

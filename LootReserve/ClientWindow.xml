@@ -4,7 +4,7 @@
 		<Size y="18" />
 		<Layers>
 			<Layer level="ARTWORK">
-				<FontString parentKey="Text" inherits="GameFontWhite" justifyH="LEFT">
+				<FontString parentKey="Text" inherits="GameFontWhite" justifyH="LEFT" wordwrap="false">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="5" />
 						<Anchor point="BOTTOMRIGHT" x="-5" />
@@ -22,7 +22,7 @@
 		<Size y="28" />
 		<Layers>
 			<Layer>
-				<FontString parentKey="Text" inherits="GameFontHighlightMedium">
+				<FontString parentKey="Text" inherits="GameFontHighlightMedium" wordwrap="false">
 					<Anchors>
 						<Anchor point="TOPLEFT" y="-5" />
 						<Anchor point="BOTTOMRIGHT" />
@@ -55,7 +55,7 @@
 		<Size y="28" />
 		<Layers>
 			<Layer>
-				<FontString parentKey="Text" inherits="GameFontNormal">
+				<FontString parentKey="Text" inherits="GameFontNormal" wordwrap="false">
 					<Size y="18" />
 					<Anchors>
 						<Anchor point="BOTTOMLEFT" x="5" />
@@ -71,7 +71,7 @@
 		<Size y="18" />
 		<Layers>
 			<Layer level="ARTWORK">
-				<FontString parentKey="Text" inherits="GameFontWhite" justifyH="LEFT" alpha="0.5">
+				<FontString parentKey="Text" inherits="GameFontWhite" justifyH="LEFT" wordwrap="false" alpha="0.5">
 					<Anchors>
 						<Anchor point="TOPLEFT" x="5" />
 						<Anchor point="BOTTOMRIGHT" x="-5" />

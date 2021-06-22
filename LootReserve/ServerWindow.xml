@@ -112,15 +112,9 @@
 				</Texture>
 			</Layer>
 			<Layer level="OVERLAY">
-				<FontString parentKey="Name" inherits="GameFontWhiteSmall" justifyH="LEFT">
+				<FontString parentKey="Roll" inherits="GameFontWhiteSmall" justifyH="CENTER" wordwrap="false">
 					<Anchors>
-						<Anchor point="TOPLEFT" x="16" />
-						<Anchor point="BOTTOMRIGHT" x="-32" />
-					</Anchors>
-				</FontString>
-				<FontString parentKey="Roll" inherits="GameFontWhiteSmall" justifyH="CENTER">
-					<Anchors>
-						<Anchor point="TOPLEFT" relativeKey="$parent.Name" relativePoint="TOPRIGHT" />
+						<Anchor point="TOPLEFT" relativePoint="TOPRIGHT" x="-32" />
 						<Anchor point="BOTTOMRIGHT" />
 					</Anchors>
 				</FontString>
@@ -165,111 +159,120 @@
 				<HighlightTexture file="Interface\Buttons\UI-RefreshButton" alpha="0.5" alphaMode="ADD" />
 				<PushedTexture file="Interface\Buttons\UI-RefreshButton" alpha="0.5" />
 			</Button>
-			<Button parentKey="WonRolls" hidden="true">
-				<Size x="12" y="12" />
-				<Scripts>
-					<OnLoad>
-						self.UpdateTooltip = function(self)
-							local player = self:GetParent().Player;
-							local won = LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.Members[player] and LootReserve.Server.CurrentSession.Members[player].WonRolls;
-							if won then
-								local missing = false;
-								GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-								GameTooltip:SetText("Won in the Current Session");
-								local width = 0;
-								for i, roll in ipairs(won) do
-									local name, link, _, _, _, _, _, _, _, texture = GetItemInfo(roll.Item);
-									if not link then
-										missing = true;
-									end
-
-									local phaseText;
-									local phaseColor;
-									if roll.Phase == LootReserve.Constants.WonRollPhase.Reserve then
-										phaseText = "Reserved";
-										phaseColor = NORMAL_FONT_COLOR;
-									elseif roll.Phase == LootReserve.Constants.WonRollPhase.RaidRoll then
-										phaseText = "Raid-Roll";
-										phaseColor = GRAY_FONT_COLOR;
-									elseif type(roll.Phase) == "string" then
-										phaseText = roll.Phase;
-										phaseColor = GREEN_FONT_COLOR;
-									else
-										phaseText = "Custom Roll";
-										phaseColor = HIGHLIGHT_FONT_COLOR;
-									end
-
-									local timeText;
-									local age = time() - roll.Time;
-									if age >= 3600 then
-										timeText = format("%d |4hour:hours; %d |4min:mins; ago", math.floor(age / 3600), math.floor((age % 3600) / 60));
-									elseif age >= 60 then
-										timeText = format("%d |4min:mins; ago", math.floor(age / 60));
-									else
-										timeText = "&lt;1 min ago";
-									end
-
-									GameTooltip:AddDoubleLine(format("|T%d:0|t %s|cFF808080 (%s)|r", texture, (link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""), timeText), phaseText, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, phaseColor.r, phaseColor.g, phaseColor.b);
-								end
-								GameTooltip:Show();
-
-								if missing then
-									C_Timer.After(0.25, function()
-										if GameTooltip:IsOwned(self) then
-											self:UpdateTooltip();
-										end
-									end);
-								end
-							end
-						end
-					</OnLoad>
-					<OnEnter>
-						self:UpdateTooltip();
-					</OnEnter>
-					<OnLeave function="GameTooltip_Hide" />
-				</Scripts>
-				<NormalTexture file="Interface\GossipFrame\VendorGossipIcon" alpha="0.5" />
-				<HighlightTexture file="Interface\GossipFrame\VendorGossipIcon" alpha="0.75" alphaMode="ADD" />
-			</Button>
-			<Button parentKey="RecentChat" hidden="true">
-				<Size x="12" y="12" />
+			<Frame parentKey="Name" inherits="LootReserveTextWithButtonsTemplate">
+				<KeyValues>
+					<KeyValue key="font" value="GameFontWhiteSmall" type="global" />
+					<KeyValue key="textMargin" value="2" type="number" />
+				</KeyValues>
 				<Anchors>
-					<Anchor point="LEFT" relativeKey="$parent.WonRolls" relativePoint="RIGHT" />
+					<Anchor point="TOPLEFT" x="16" />
+					<Anchor point="BOTTOMRIGHT" relativeKey="$parent.Roll" relativePoint="BOTTOMLEFT" />
 				</Anchors>
-				<Scripts>
-					<OnEnter>
-						local player = self:GetParent().Player;
-						local frame = self:GetParent():GetParent():GetParent();
-						if frame.Roll and frame.Roll.Chat and frame.Roll.Chat[player] then
-							GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
-							GameTooltip:SetText("Recent Chat");
-							local width = 0;
-							for i, data in ipairs(frame.Roll.Chat[player]) do
-								local time, type, text = strsplit("|", data, 3);
-								time = format("|cFF808080[%s]|r", date("%X", tonumber(time)));
-								local info = ChatTypeInfo[type or ""] or ChatTypeInfo["SYSTEM"];
-								if type == "SYSTEM" then
-									text = format("%s %s", time, text);
-								elseif type == "EMOTE" then
-									text = format("%s %s %s", time, player, text);
-								else
-									text = format("%s [%s]: %s", time, LootReserve:ColoredPlayer(player), text);
+				<Frames>
+					<Button parentKey="WonRolls" parentArray="Buttons" hidden="true">
+						<Size x="12" y="12" />
+						<Scripts>
+							<OnLoad>
+								self.UpdateTooltip = function(self)
+									local player = self:GetParent():GetParent().Player;
+									local won = LootReserve.Server.CurrentSession and LootReserve.Server.CurrentSession.Members[player] and LootReserve.Server.CurrentSession.Members[player].WonRolls;
+									if won then
+										local missing = false;
+										GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+										GameTooltip:SetText("Won in the Current Session");
+										local width = 0;
+										for i, roll in ipairs(won) do
+											local name, link, _, _, _, _, _, _, _, texture = GetItemInfo(roll.Item);
+											if not link then
+												missing = true;
+											end
+
+											local phaseText;
+											local phaseColor;
+											if roll.Phase == LootReserve.Constants.WonRollPhase.Reserve then
+												phaseText = "Reserved";
+												phaseColor = NORMAL_FONT_COLOR;
+											elseif roll.Phase == LootReserve.Constants.WonRollPhase.RaidRoll then
+												phaseText = "Raid-Roll";
+												phaseColor = GRAY_FONT_COLOR;
+											elseif type(roll.Phase) == "string" then
+												phaseText = roll.Phase;
+												phaseColor = GREEN_FONT_COLOR;
+											else
+												phaseText = "Custom Roll";
+												phaseColor = HIGHLIGHT_FONT_COLOR;
+											end
+
+											local timeText;
+											local age = time() - roll.Time;
+											if age >= 3600 then
+												timeText = format("%d |4hour:hours; %d |4min:mins; ago", math.floor(age / 3600), math.floor((age % 3600) / 60));
+											elseif age >= 60 then
+												timeText = format("%d |4min:mins; ago", math.floor(age / 60));
+											else
+												timeText = "&lt;1 min ago";
+											end
+
+											GameTooltip:AddDoubleLine(format("|T%d:0|t %s|cFF808080 (%s)|r", texture, (link or name or "|cFFFF4000Loading...|r"):gsub("[%[%]]", ""), timeText), phaseText, HIGHLIGHT_FONT_COLOR.r, HIGHLIGHT_FONT_COLOR.g, HIGHLIGHT_FONT_COLOR.b, phaseColor.r, phaseColor.g, phaseColor.b);
+										end
+										GameTooltip:Show();
+
+										if missing then
+											C_Timer.After(0.25, function()
+												if GameTooltip:IsOwned(self) then
+													self:UpdateTooltip();
+												end
+											end);
+										end
+									end
 								end
-								GameTooltip:AddLine(text, info.r, info.g, info.b, 1, 1);
-								local line = _G[GameTooltip:GetName() .. "TextLeft" .. (i + 1)];
-								if line and line:GetText() == text then
-									width = math.max(width, line:GetUnboundedStringWidth());
+							</OnLoad>
+							<OnEnter>
+								self:UpdateTooltip();
+							</OnEnter>
+							<OnLeave function="GameTooltip_Hide" />
+						</Scripts>
+						<NormalTexture file="Interface\GossipFrame\VendorGossipIcon" alpha="0.5" />
+						<HighlightTexture file="Interface\GossipFrame\VendorGossipIcon" alpha="0.75" alphaMode="ADD" />
+					</Button>
+					<Button parentKey="RecentChat" parentArray="Buttons" hidden="true">
+						<Size x="12" y="12" />
+						<Scripts>
+							<OnEnter>
+								local player = self:GetParent():GetParent().Player;
+								local frame = self:GetParent():GetParent():GetParent():GetParent();
+								if frame.Roll and frame.Roll.Chat and frame.Roll.Chat[player] then
+									GameTooltip:SetOwner(self, "ANCHOR_RIGHT");
+									GameTooltip:SetText("Recent Chat");
+									local width = 0;
+									for i, data in ipairs(frame.Roll.Chat[player]) do
+										local time, type, text = strsplit("|", data, 3);
+										time = format("|cFF808080[%s]|r", date("%X", tonumber(time)));
+										local info = ChatTypeInfo[type or ""] or ChatTypeInfo["SYSTEM"];
+										if type == "SYSTEM" then
+											text = format("%s %s", time, text);
+										elseif type == "EMOTE" then
+											text = format("%s %s %s", time, player, text);
+										else
+											text = format("%s [%s]: %s", time, LootReserve:ColoredPlayer(player), text);
+										end
+										GameTooltip:AddLine(text, info.r, info.g, info.b, 1, 1);
+										local line = _G[GameTooltip:GetName() .. "TextLeft" .. (i + 1)];
+										if line and line:GetText() == text then
+											width = math.max(width, line:GetUnboundedStringWidth());
+										end
+									end
+									GameTooltip:SetMinimumWidth(math.min(width, 400));
+									GameTooltip:Show();
 								end
-							end
-							GameTooltip:SetMinimumWidth(math.min(width, 400));
-							GameTooltip:Show();
-						end
-					</OnEnter>
-					<OnLeave function="GameTooltip_Hide" />
-				</Scripts>
-				<NormalTexture file="Interface\ChatFrame\UI-ChatWhisperIcon" alpha="0.25" />
-				<HighlightTexture file="Interface\ChatFrame\UI-ChatWhisperIcon" alpha="0.5" alphaMode="ADD" />
-			</Button>
+							</OnEnter>
+							<OnLeave function="GameTooltip_Hide" />
+						</Scripts>
+						<NormalTexture file="Interface\ChatFrame\UI-ChatWhisperIcon" alpha="0.25" />
+						<HighlightTexture file="Interface\ChatFrame\UI-ChatWhisperIcon" alpha="0.5" alphaMode="ADD" />
+					</Button>
+				</Frames>
+			</Frame>
 		</Frames>
 		<Scripts>
 			<OnUpdate>
@@ -504,20 +507,20 @@
 				</Anchors>
 				<Layers>
 					<Layer level="OVERLAY">
-						<FontString parentKey="HeaderRoll" inherits="GameFontNormalSmall" text="Roll" justifyH="CENTER">
+						<FontString parentKey="HeaderRoll" inherits="GameFontNormalSmall" text="Roll" justifyH="CENTER" wordwrap="false">
 							<Size x="32" y="12" />
 							<Anchors>
 								<Anchor point="TOPRIGHT" />
 							</Anchors>
 						</FontString>
-						<FontString parentKey="HeaderPlayer" inherits="GameFontNormalSmall" text="Reserved by" justifyH="LEFT">
+						<FontString parentKey="HeaderPlayer" inherits="GameFontNormalSmall" text="Reserved by" justifyH="LEFT" wordwrap="false">
 							<Size y="12" />
 							<Anchors>
 								<Anchor point="TOPLEFT" x="16" />
 								<Anchor point="TOPRIGHT" relativeKey="$parent.HeaderRoll" relativePoint="TOPLEFT" />
 							</Anchors>
 						</FontString>
-						<FontString parentKey="NoRollsPlaceholder" inherits="GameFontNormalSmall" text="- No Rolls -" justifyH="CENTER" hidden="true">
+						<FontString parentKey="NoRollsPlaceholder" inherits="GameFontNormalSmall" text="- No Rolls -" justifyH="CENTER" wordwrap="false" hidden="true">
 							<Size y="16" />
 							<Anchors>
 								<Anchor point="TOPLEFT" relativeKey="$parent.HeaderPlayer" relativePoint="BOTTOMLEFT" y="-2" />
@@ -1088,14 +1091,14 @@
 				</Frames>
 				<Layers>
 					<Layer>
-						<FontString parentKey="Name" inherits="GameFontNormalLarge" justifyH="LEFT">
+						<FontString parentKey="Name" inherits="GameFontNormalLarge" justifyH="LEFT" wordwrap="false">
 							<Size y="20" />
 							<Anchors>
 								<Anchor point="TOPLEFT" relativeKey="$parent.Icon" relativePoint="TOPRIGHT" x="5" />
 								<Anchor point="TOPRIGHT" />
 							</Anchors>
 						</FontString>
-						<FontString parentKey="Misc" inherits="GameFontNormalGraySmall" justifyH="LEFT">
+						<FontString parentKey="Misc" inherits="GameFontNormalGraySmall" justifyH="LEFT" wordwrap="false">
 							<Size y="12" />
 							<Anchors>
 								<Anchor point="TOPLEFT" relativeKey="$parent.Name" relativePoint="BOTTOMLEFT" />

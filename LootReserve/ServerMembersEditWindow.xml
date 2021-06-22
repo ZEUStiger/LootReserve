@@ -84,24 +84,33 @@
 			</Layer>
 		</Layers>
 		<Frames>
-			<Button parentKey="ButtonWhisper" hidden="true">
+			<Frame parentKey="NameFrame" inherits="LootReserveTextWithButtonsTemplate">
 				<Anchors>
 					<Anchor point="TOP" />
 					<Anchor point="BOTTOM" />
-					<Anchor point="LEFT" relativeKey="$parent.Name" relativePoint="LEFT" x="0" />
+					<Anchor point="LEFT" relativeKey="$parent.Name" />
+					<Anchor point="RIGHT" relativeKey="$parent.Name" />
 				</Anchors>
-				<ButtonText parentKey="Text" inherits="GameFontNormal" text=" /w " setAllPoints="true" />
-				<Scripts>
-					<OnLoad>
-						local info = ChatTypeInfo["WHISPER"];
-						self.Text:SetTextColor(info.r, info.g, info.b);
-						self:SetWidth(self.Text:GetStringWidth());
-					</OnLoad>
-					<OnClick>
-						ChatFrame_SendTell(self:GetParent().Player);
-					</OnClick>
-				</Scripts>
-			</Button>
+				<Frames>
+					<Button parentKey="ButtonWhisper" parentArray="Buttons" hidden="true">
+						<Anchors>
+							<Anchor point="TOP" />
+							<Anchor point="BOTTOM" />
+						</Anchors>
+						<ButtonText parentKey="Text" inherits="GameFontNormal" text=" /w " setAllPoints="true" />
+						<Scripts>
+							<OnLoad>
+								local info = ChatTypeInfo["WHISPER"];
+								self.Text:SetTextColor(info.r, info.g, info.b);
+								self:SetWidth(self.Text:GetStringWidth());
+							</OnLoad>
+							<OnClick>
+								ChatFrame_SendTell(self:GetParent().Player);
+							</OnClick>
+						</Scripts>
+					</Button>
+				</Frames>
+			</Frame>
 			<Button parentKey="ButtonWonRolls">
 				<Size x="16" y="16" />
 				<Anchors>
@@ -202,7 +211,7 @@
 				if self.hovered ~= hovered then
 					self.hovered = hovered;
 					self.Highlight:SetShown(hovered);
-					self.ButtonWhisper:SetShown(hovered);
+					self.NameFrame.ButtonWhisper:SetShown(hovered);
 				end
 			</OnUpdate>
 		</Scripts>
