@@ -66,7 +66,7 @@
 										table.insert(menu, index,
 										{
 											text = format("|c%s%s|r", RAID_CLASS_COLORS[file].colorStr, name),
-											checked = conditions and LootReserve.ItemConditions:TestClassMask(conditions.ClassMask, id),
+											checked = conditions and LootReserve.ItemConditions:TestClassMask(conditions.ClassMask, id) or false,
 											arg1 = id,
 											func = function(_, id, _, checked)
 												local conditions = LootReserve.ItemConditions:Make(item, true);
