@@ -107,8 +107,10 @@ function LootReserve:OnInitialize()
 
     local function Startup()
         LootReserve.Server:Startup();
-        -- Query other group members about their addon versions and request server session info if any
-        LootReserve.Client:SearchForServer(true);
+        if IsInRaid() or LootReserve.Comm.SoloDebug then
+            -- Query other group members about their addon versions and request server session info if any
+            LootReserve.Client:SearchForServer(true);
+        end
     end
 
     LootReserve:RegisterEvent("GROUP_JOINED", function()

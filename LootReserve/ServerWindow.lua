@@ -593,10 +593,15 @@ function LootReserve.Server:UpdateRollList(lockdown)
     end
 
     createFrame();
-    if self.RequestedRoll then
-        --if not filter or matchesFilter(self.RequestedRoll.Item, self.RequestedRoll, filter) then
-            createFrame(self.RequestedRoll.Item, self.RequestedRoll, false);
-        --end
+    if IsInRaid() or IsInGroup() or LootReserve.Comm.SoloDebug then
+        if self.RequestedRoll then
+            --if not filter or matchesFilter(self.RequestedRoll.Item, self.RequestedRoll, filter) then
+                createFrame(self.RequestedRoll.Item, self.RequestedRoll, false);
+            --end
+        end
+    else
+        list.Frames[1]:Hide();
+        list.ContentHeight = 0;
     end
     for i = #self.RollHistory, 1, -1 do
         local roll = self.RollHistory[i];
