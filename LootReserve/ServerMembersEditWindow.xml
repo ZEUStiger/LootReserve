@@ -105,7 +105,7 @@
 								self:SetWidth(self.Text:GetStringWidth());
 							</OnLoad>
 							<OnClick>
-								ChatFrame_SendTell(self:GetParent().Player);
+								ChatFrame_SendTell(self:GetParent():GetParent().Player);
 							</OnClick>
 						</Scripts>
 					</Button>

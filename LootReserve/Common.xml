@@ -81,6 +81,7 @@
 				self.Text:SetFontObject(self.font);
 				function self:SetText(text)
 					self.Text:SetText(text);
+					self:Update();
 				end
 				function self:GetText()
 					return self.Text:GetText();
