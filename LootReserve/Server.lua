@@ -464,7 +464,7 @@ function LootReserve.Server:PrepareLootTracking()
                 else
                     looter, item = text:match(loot);
                     if looter and item then
-                        -- ok
+                        count = 1;
                     else
                         return;
                     end
