@@ -291,7 +291,7 @@
 			</Button>
 		</Frames>
 		<Scripts>
-			<OnLoad>
+			<OnLoad inherit="prepend">
 				self.ConditionBackgrounds = { };
 				local parts = { "TopLeft", "TopRight", "BottomLeft", "BottomRight", "TopMiddle", "MiddleLeft", "MiddleRight", "BottomMiddle", "MiddleMiddle" };
 				for _, frame in ipairs({ self.ConditionsFrame:GetChildren() }) do
