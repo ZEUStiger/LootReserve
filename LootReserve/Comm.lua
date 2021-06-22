@@ -76,8 +76,8 @@ function LootReserve.Comm:StartListening()
 
                 local handler = self.Handlers[opcode];
                 if handler then
+                    local length;
                     if opcode > LAST_UNCOMPRESSED_OPCODE then
-                        local length;
                         length, message = strsplit("|", message, 2);
                         length = tonumber(length);
                         if not length or not message then
@@ -95,7 +95,7 @@ function LootReserve.Comm:StartListening()
                     end
 
                     if self.Debug then
-                        print("[DEBUG] Received from " .. sender .. ": " .. opcode .. "||" .. length .. "||" .. message:gsub("|", "||"));
+                        print("[DEBUG] Received from " .. sender .. ": " .. opcode .. (length and ("||" .. length) or "") .. "||" .. message:gsub("|", "||"));
                     end
 
                     sender = LootReserve:Player(sender);
