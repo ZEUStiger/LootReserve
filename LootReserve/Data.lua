@@ -3,18 +3,19 @@ local classicHorde = LootReserve:GetCurrentExpansion() == 0 and "Horde" or nil
 
 --[[
 ClassMask id
-
 1  - 1    - Warrior
 2  - 2    - Paladin
 3  - 4    - Hunter
 4  - 8    - Rogue
 5  - 16   - Priest
+6  - 32   - Death Knight
 7  - 64   - Shaman
 8  - 128  - Mage
 9  - 256  - Warlock
+10 - 512  - Monk
 11 - 1024 - Druid
+12 - 2048 - Demon Hunter
 --]]
-
 
 LootReserve.Data =
 {
@@ -316,6 +317,39 @@ LootReserve.Data =
                         19721, 19724, 19723, 19722, 19717, 19716, 19718, 19719, 19720,
                     },
                 },
+                { Name = "Edge of Madness", Header = true },
+                {
+                    Name = " - Gri'lek",
+                    Loot =
+                    {
+                        19961, 19962, 0,
+                        19939,
+                    },
+                },
+                {
+                    Name = " - Hazza'rah",
+                    Loot =
+                    {
+                        19967, 19968, 0,
+                        19942,
+                    },
+                },
+                {
+                    Name = " - Renataki",
+                    Loot =
+                    {
+                        19964, 19963, 0,
+                        19940,
+                    },
+                },
+                {
+                    Name = " - Wushoolay",
+                    Loot =
+                    {
+                        19993, 19965, 0,
+                        19941,
+                    },
+                },
                 {
                     Name = "High Priest Thekal",
                     Loot =
@@ -362,39 +396,6 @@ LootReserve.Data =
                     {
                         22721, 22722, 0,
                         22720, 22718, 22711, 22712, 22715, 22714, 22716, 22713,
-                    },
-                },
-                { Separator = true },
-                {
-                    Name = "Gri'lek",
-                    Loot =
-                    {
-                        19961, 19962, 0,
-                        19939,
-                    },
-                },
-                {
-                    Name = "Hazza'rah",
-                    Loot =
-                    {
-                        19967, 19968, 0,
-                        19942,
-                    },
-                },
-                {
-                    Name = "Renataki",
-                    Loot =
-                    {
-                        19964, 19963, 0,
-                        19940,
-                    },
-                },
-                {
-                    Name = "Wushoolay",
-                    Loot =
-                    {
-                        19993, 19965, 0,
-                        19941,
                     },
                 },
                 { Separator = true },
@@ -530,9 +531,27 @@ LootReserve.Data =
                     Loot =
                     {
                         21693, 21694, 21697, 21696, 21692, 21695, 0,
-                        21237, 21232, 0,
-                        21680, 21681, 21685, 21603, 0,
-                        21690, 21689, 21691, 21688, 0,
+                        21237, 21232,
+                    },
+                },
+                {
+                    Name = " - Kri Killed Last",
+                    Loot =
+                    {
+                        21680, 21681, 21685, 21603,
+                    },
+                },
+                {
+                    Name = " - Vem Killed Last",
+                    Loot =
+                    {
+                        21690, 21689, 21691, 21688,
+                    },
+                },
+                {
+                    Name = " - Yauj Killed Last",
+                    Loot =
+                    {
                         21686, 21684, 21683, 21682, 21687,
                     },
                 },
@@ -576,10 +595,10 @@ LootReserve.Data =
                     Name = "Twin Emperors",
                     Loot =
                     {
-                        20930, 20926, 0,
                         21602, 21599, 21598, 21600, 21601, 21597, 21608, 21604, 21605, 21609, 21607, 21606, 21679, 0,
                         20735, 20726, 0,
-                        21232, 21237,
+                        21232, 21237, 0,
+                        20930, 20926,
                     },
                 },
                 {
@@ -597,7 +616,7 @@ LootReserve.Data =
                     {
                         22732, 21583, 22731, 22730, 21582, 21586, 21585, 21581, 21596, 21579, 21839, 21126, 21134, 0,
                         20929, 20933, 0,
-                        21221, 22734,
+                        21221,
                     },
                 },
                 { Separator = true },
@@ -768,8 +787,7 @@ LootReserve.Data =
                     {
                         23057, 23053, 22812, 22821, 22819, 22802, 23056, 23054, 23577, 22798, 22799, 0,
                         22520, 0,
-                        23061, 23062, 23063, 23060, 23064, 23067, 23065, 23066, 23059, 0,
-                        22733,
+                        23061, 23062, 23063, 23060, 23064, 23067, 23065, 23066, 23059,
                     },
                 },
                 { Separator = true },
@@ -840,29 +858,32 @@ LootReserve.Data =
                         28516, 28523, 28522,
                     },
                 },
-                { Name = "Opera Event", Header = true },
+                {
+                    Name = "Opera Event",
+                    Loot =
+                    {
+                        28594, 28591, 28589, 28593, 28590, 28592,
+                    },
+                },
                 {
                     Name = " - The Wizard of Oz",
                     Loot =
                     {
-                        28586, 28585, 28587, 28588, 0,
-                        28594, 28591, 28589, 28593, 28590, 28592,
+                        28586, 28585, 28587, 28588,
                     },
                 },
                 {
                     Name = " - The Big Bad Wolf",
                     Loot =
                     {
-                        28582, 28583, 28584, 28581, 0,
-                        28594, 28591, 28589, 28593, 28590, 28592,
+                        28582, 28583, 28584, 28581,
                     },
                 },
                 {
                     Name = " - Romulo and Julianne",
                     Loot =
                     {
-                        28578, 28579, 28572, 28573, 0,
-                        28594, 28591, 28589, 28593, 28590, 28592,
+                        28578, 28579, 28572, 28573,
                     },
                 },
                 { Separator = true },
@@ -871,8 +892,7 @@ LootReserve.Data =
                     Loot =
                     {
                         28602, 28600, 28601, 28599, 28610, 28597, 28608, 0,
-                        28609, 28603, 28604, 28611, 28606, 0,
-                        31751, 24139,
+                        28609, 28603, 28604, 28611, 28606,
                     },
                 },
                 {
@@ -898,8 +918,7 @@ LootReserve.Data =
                     {
                         28672, 28726, 28670, 28663, 28669, 28671, 28666, 0,
                         28674, 28675, 28727, 28728, 28673, 0,
-                        22560, 0,
-                        23933,
+                        22560,
                     },
                 },
                 {
@@ -960,8 +979,7 @@ LootReserve.Data =
                     {
                         28804, 28803, 28828, 28827, 28810, 28824, 28822, 28823, 28830, 0,
                         29766, 29767, 29765, 0,
-                        28802, 28794, 28825, 28826, 0,
-                        31750,
+                        28802, 28794, 28825, 28826,
                     },
                 },
             },
@@ -1035,8 +1053,7 @@ LootReserve.Data =
                     Loot =
                     {
                         30107, 30111, 30106, 30104, 30102, 30112, 30109, 30110, 30621, 30103, 30108, 30105, 0,
-                        30242, 30243, 30244, 0,
-                        29906,
+                        30242, 30243, 30244,
                     },
                 },
                 { Separator = true },
@@ -1088,8 +1105,7 @@ LootReserve.Data =
                         29992, 29989, 29994, 29990, 29987, 29995, 29991, 29998, 29997, 29993, 29996, 29988, 0,
                         30236, 30237, 30238, 0,
                         32405, 0,
-                        32458, 0,
-                        29905,
+                        32458,
                     },
                 },
                 { Separator = true },
@@ -1115,8 +1131,7 @@ LootReserve.Data =
                     Loot =
                     {
                         30871, 30870, 30863, 30868, 30864, 30869, 30873, 30866, 30862, 30861, 0,
-                        30865, 30872, 0,
-                        32459,
+                        30865, 30872,
                     },
                 },
                 {
@@ -1324,13 +1339,32 @@ LootReserve.Data =
                     },
                 },
                 { Separator = true },
+                { Name = "Timed Chests", Header = true },
                 {
-                    Name = "Timed Chest",
+                    Name = " - First Prisoner Saved",
                     Loot =
                     {
-                        33590, 33591, 33489, 33480, 33483, 33971, 33805, 33481, 0,
-                        33497, 33500, 33496, 33499, 33498, 0,
-                        33495, 33493, 33492, 33490, 33494, 33491, 0,
+                        33590, 33591, 33489, 33480, 33483, 33971, 33805, 33481,
+                    },
+                },
+                {
+                    Name = " - Second Prisoner Saved",
+                    Loot =
+                    {
+                        33495, 33493, 33492, 33490, 33494, 33491,
+                    },
+                },
+                {
+                    Name = " - Third Prisoner Saved",
+                    Loot =
+                    {
+                        33497, 33500, 33496, 33499, 33498,
+                    },
+                },
+                {
+                    Name = " - Fourth Prisoner Saved",
+                    Loot =
+                    {
                         33809,
                     },
                 },
@@ -1427,34 +1461,34 @@ LootReserve.Data =
         [17010] = { Hidden = true },
         [17011] = { Hidden = true },
         [17012] = { Hidden = true },
-        
+
         -- Thunderfury items
         [18563] = { ClassMask = 15, Hidden = true },
         [18564] = { ClassMask = 15, Hidden = true },
         [17203] = { Hidden = true },
         [18562] = { Hidden = true },
-        
+
         -- Hand of Rag items
         [17204] = { ClassMask = 1091, Hidden = true },
         [19017] = { ClassMask = 1091, Hidden = true },
-        
+
         -- Scale of Onyxia
         [15410] = { Hidden = true },
-        
+
         -- Head of Onyxia
         [18422] = { Faction = "Horde" },
         [18423] = { Faction = "Alliance" },
-        
+
         -- Head of Nefarian
         [19002] = { Faction = "Horde" },
         [19003] = { Faction = "Alliance" },
-        
+
         -- Red Scepter Shard
         [21138] = { Hidden = true },
-        
+
         -- Sack of Gems
         [11938] = { Hidden = true },
-        
+
         -- ZG Coins
         [19698] = { Hidden = true },
         [19699] = { Hidden = true },
@@ -1465,7 +1499,7 @@ LootReserve.Data =
         [19704] = { Hidden = true },
         [19705] = { Hidden = true },
         [19706] = { Hidden = true },
-        
+
         -- ZG Bijous
         [19707] = { Hidden = true },
         [19708] = { Hidden = true },
@@ -1476,7 +1510,7 @@ LootReserve.Data =
         [19713] = { Hidden = true },
         [19714] = { Hidden = true },
         [19715] = { Hidden = true },
-        
+
         --AQ20 idols
         [20866] = { ClassMask = 140, Hidden = true },
         [20867] = { ClassMask = 265, Hidden = true },
@@ -1486,7 +1520,7 @@ LootReserve.Data =
         [20871] = { ClassMask = 210, Hidden = true },
         [20872] = { ClassMask = 1098, Hidden = true },
         [20873] = { ClassMask = 1153, Hidden = true },
-        
+
         -- AQ40 idols
         [20874] = { ClassMask = 141, Hidden = true },
         [20875] = { ClassMask = 393, Hidden = true },
@@ -1496,7 +1530,7 @@ LootReserve.Data =
         [20879] = { ClassMask = 1110, Hidden = true },
         [20881] = { ClassMask = 1102, Hidden = true },
         [20882] = { ClassMask = 1037, Hidden = true },
-        
+
         -- AQ scarabs
         [20858] = { Hidden = true },
         [20859] = { Hidden = true },
@@ -1506,49 +1540,49 @@ LootReserve.Data =
         [20863] = { Hidden = true },
         [20864] = { Hidden = true },
         [20865] = { Hidden = true },
-        
+
         -- AQ scarab coffer items
         [21156] = { Hidden = true },
         [21761] = { Hidden = true },
         [21762] = { Hidden = true },
-        
+
         -- AQ trash
         [22202] = { Hidden = true },
         [22203] = { Hidden = true },
-        
+
+        -- Naxxramas scraps
+        [22376] = { Hidden = true },
+        [22373] = { Hidden = true },
+        [22374] = { Hidden = true },
+        [22375] = { Hidden = true },
+
+        -- Naxxramas runes
+        [23055] = { Hidden = true },
+        [22682] = { Hidden = true },
+
         -- Atiesh legendary items
         [22726] = { ClassMask = 1424, Hidden = true },
         [22727] = { ClassMask = 1424, Hidden = true },
-        
-        
-        
+
         -- Karazhan trash
         [23857] = { Hidden = true },
         [23864] = { Hidden = true },
         [23862] = { Hidden = true },
         [23865] = { Hidden = true },
         [21882] = { Hidden = true },
-        
+
         -- Magtheridon's gem bag
         [34846] = { Hidden = true },
-        
-        -- Attunement quest items
-        [29906] = { Hidden = true },
-        [29905] = { Hidden = true },
-        [32459] = { Hidden = true },
-        
+
         -- Trade items
         [32897] = { Hidden = true },
         [32428] = { Hidden = true },
         [34664] = { Hidden = true },
-        
-        -- Ashes of Al'ar
-        [32458] = { Hidden = true },
-        
+
         -- Warglaives of Azzinoth
         [32837] = { ClassMask = 9, Hidden = true },
         [32838] = { ClassMask = 9, Hidden = true },
-        
+
         -- Trash gems
         [32228] = { Hidden = true },
         [32231] = { Hidden = true },
@@ -1556,20 +1590,17 @@ LootReserve.Data =
         [32249] = { Hidden = true },
         [32230] = { Hidden = true },
         [32227] = { Hidden = true },
-        
+
         -- Zul'Aman trash
         [33865] = { Hidden = true },
         [33930] = { Hidden = true },
         [33932] = { Hidden = true },
         [33931] = { Hidden = true },
         [33933] = { Hidden = true },
-        
+
         -- Thoridal
         [34334] = { ClassMask = 13, Hidden = true },
-        
-        
-        
-        
+
         -- Class restrictions on items
         [16665] = { ClassMask = 4 },
         [16795] = { ClassMask = 128 },
