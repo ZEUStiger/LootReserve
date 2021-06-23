@@ -1,8 +1,9 @@
 ## Interface: 11307
 ## Title: LootReserve
-## Version: 2021-05-18
-## X-Min-Allowed-Version: 2020-12-22
-## Author: Tagar-NethergardeKeep
+## Notes: Soft reserves management addon
+## Version: 2021-06-23
+## X-Min-Allowed-Version: 2021-06-23
+## Author: Tagar-NethergardeKeep|nContributions by Damage-Incendius
 ## SavedVariables: LootReserveGlobalSave
 ## SavedVariablesPerCharacter: LootReserveCharacterSave
 
