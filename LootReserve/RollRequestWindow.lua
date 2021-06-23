@@ -75,7 +75,7 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
 
     if not name or not link then
         C_Timer.After(0.25, function()
-            self:RollRequested(sender, item, players, custom, duration, maxDuration, phase);
+            self:RollRequested(sender, item, players, custom, duration, maxDuration, phase, example);
         end);
     end
 
@@ -86,7 +86,7 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
             if self.RollRequest and frame:IsShown() then
                 local player, roll, min, max = text:match(rollMatcher);
                 player = player and LootReserve:Player(player);
-                if LootReserve:IsMe(player) and roll and min == "1" and max == "100" and tonumber(roll) then
+                if player and LootReserve:IsMe(player) and roll and min == "1" and max == "100" and tonumber(roll) then
                     if self.RollRequest.Count > 1 then
                         self.RollRequest.Count = self.RollRequest.Count - 1;
                         local myCount = self.RollRequest.Count;
