@@ -1834,7 +1834,7 @@ function LootReserve.Server:PrepareRequestRoll()
         LootReserve:RegisterEvent("CHAT_MSG_SYSTEM", function(text)
             if self.RequestedRoll then
                 local player, roll, min, max = text:match(rollMatcher);
-                if player and LootReserve:IsCrossRealm()then
+                if player and LootReserve:IsCrossRealm() then
                     -- Roll chat messages don't have the player's realm in them, ever.
                     -- In case we have two players with the same name in the raid, the best we can do right now
                     -- is to just find the first-best online player with matching name who's eligible to roll
