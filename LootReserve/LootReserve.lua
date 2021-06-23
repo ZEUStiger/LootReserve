@@ -20,41 +20,41 @@ LootReserveCharacterSave =
     Server =
     {
         CurrentSession = nil,
-        RequestedRoll = nil,
-        RollHistory = nil,
-        RecentLoot = nil,
+        RequestedRoll  = nil,
+        RollHistory    = nil,
+        RecentLoot     = nil,
     },
 };
 LootReserveGlobalSave =
 {
     Client =
     {
-        Settings = nil,
+        Settings        = nil,
         GlobalFavorites = nil,
     },
     Server =
     {
         NewSessionSettings = nil,
-        Settings = nil,
-        GlobalProfile = nil,
+        Settings           = nil,
+        GlobalProfile      = nil,
     },
 };
 
 StaticPopupDialogs["LOOTRESERVE_GENERIC_ERROR"] =
 {
-    text = "%s",
-    button1 = CLOSE,
-    timeout = 0,
-    whileDead = 1,
+    text         = "%s",
+    button1      = CLOSE,
+    timeout      = 0,
+    whileDead    = 1,
     hideOnEscape = 1,
 };
 
 LOOTRESERVE_BACKDROP_BLACK_4 =
 {
-    bgFile = "Interface\\DialogFrame\\UI-DialogBox-Background",
+    bgFile   = "Interface\\DialogFrame\\UI-DialogBox-Background",
     edgeFile = "Interface\\Tooltips\\UI-Tooltip-Border",
     edgeSize = 16,
-    insets = { left = 4, right = 4, top = 4, bottom = 4 },
+    insets   = { left = 4, right = 4, top = 4, bottom = 4 },
 };
 
 SLASH_LOOTRESERVE1 = "/lootreserve";
@@ -79,11 +79,11 @@ function LootReserve:OpenServerWindow(rolls)
         pendingOpenServerWindow = { rolls };
         if not pendingLockdownHooked then
             pendingLockdownHooked = true;
-            LootReserve:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+            self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
                 if pendingOpenServerWindow then
                     local params = pendingOpenServerWindow;
                     pendingOpenServerWindow = nil;
-                    LootReserve:OpenServerWindow(unpack(params));
+                    self:OpenServerWindow(unpack(params));
                 end
             end);
         end
@@ -92,17 +92,19 @@ function LootReserve:OpenServerWindow(rolls)
     end
 
     if rolls then
-        LootReserve.Server.Window:Show();
-        LootReserve.Server:OnWindowTabClick(LootReserve.Server.Window.TabRolls);
+        self.Server.Window:Show();
+        self.Server:OnWindowTabClick(self.Server.Window.TabRolls);
     else
-        LootReserve.Server.Window:SetShown(not LootReserve.Server.Window:IsShown());
+        self.Server.Window:SetShown(not self.Server.Window:IsShown());
     end
 end
 
 function LootReserve:OnInitialize()
     LootReserve.Client:Load();
     LootReserve.Server:Load();
+end
 
+function LootReserve:OnEnable()
     LootReserve.Comm:StartListening();
 
     local function Startup()
@@ -127,9 +129,6 @@ function LootReserve:OnInitialize()
     if LootReserve.Comm.Debug then
         SlashCmdList.LOOTRESERVE("server");
     end
-end
-
-function LootReserve:OnEnable()
 end
 
 function LootReserve:OnDisable()
@@ -195,7 +194,22 @@ function LootReserve:OpenMenu(menu, menuContainer, anchor)
     local function FixMenu(menu)
         for _, item in ipairs(menu) do
             if item.notCheckable == nil then
-                item.notCheckable = true;
+                item.notCheckable = item.checked == nil;
+            end
+            if item.keepShownOnClick == nil and item.checked ~= nil then
+                item.keepShownOnClick = true;
+            end
+            if item.tooltipText and item.tooltipTitle == nil then
+                item.tooltipTitle = item.text;
+            end
+            if item.tooltipText and item.tooltipOnButton == nil then
+                item.tooltipOnButton = true;
+            end
+            if item.hasArrow == nil and item.menuList then
+                item.hasArrow = true;
+            end
+            if item.keepShownOnClick == nil and item.menuList then
+                item.keepShownOnClick = true;
             end
             if item.menuList then
                 FixMenu(item.menuList);
@@ -206,16 +220,31 @@ function LootReserve:OpenMenu(menu, menuContainer, anchor)
     EasyMenu(menu, menuContainer, anchor, 0, 0, "MENU");
 end
 
-function LootReserve:OpenSubMenu(arg1)
-    for i = 1, UIDROPDOWNMENU_MAXBUTTONS do
-        local button = _G["DropDownList1Button"..i];
-        if button and button.arg1 == arg1 then
-            local arrow = _G[button:GetName().."ExpandArrow"];
-            if arrow then
-                arrow:Click();
+function LootReserve:OpenSubMenu(...)
+    for submenu = 1, select("#", ...) do
+        local arg1 = select(submenu, ...);
+        local opened = false;
+        for i = 1, UIDROPDOWNMENU_MAXBUTTONS do
+            local button = _G["DropDownList"..submenu.."Button"..i];
+            if button and button.arg1 == arg1 then
+                local arrow = _G[button:GetName().."ExpandArrow"];
+                if arrow then
+                    arrow:Click();
+                    opened = true;
+                end
             end
         end
+        if not opened then
+            return false;
+        end
     end
+    return true;
+end
+
+function LootReserve:ReopenMenu(button, ...)
+    CloseMenus();
+    button:Click();
+    self:OpenSubMenu(...);
 end
 
 -- Used to prevent LootReserve:SendChatMessage from breaking a hyperlink into multiple segments if the message is too long
@@ -260,6 +289,21 @@ function LootReserve:GetCurrentExpansion()
     return tonumber(expansion) - 1;
 end
 
+function LootReserve:IsCrossRealm()
+    return self:GetCurrentExpansion() == 0;
+    -- This doesn't really work, because even in non-connected realms UnitFullName ends up returning your realm name,
+    -- and we can't use UnitName either, because that one NEVER returns a realm for "player". WTB good API, 5g.
+    --[[
+    if self.CachedIsCrossRealm == nil then
+        local name, realm = UnitFullName("player");
+        if name then
+            self.CachedIsCrossRealm = realm ~= nil;
+        end
+    end
+    return self.CachedIsCrossRealm;
+    ]]
+end
+
 function LootReserve:GetNumClasses()
     return 11;
 end
@@ -272,7 +316,15 @@ function LootReserve:GetClassInfo(classID)
 end
 
 function LootReserve:Player(player)
-    return Ambiguate(player, "short");
+    if not self:IsCrossRealm() then
+        return Ambiguate(player, "short");
+    end
+
+    local name, realm = strsplit("-", player);
+    if not realm then
+        realm = GetNormalizedRealmName();
+    end
+    return name .. "-" .. realm;
 end
 
 function LootReserve:Me()
@@ -280,37 +332,82 @@ function LootReserve:Me()
 end
 
 function LootReserve:IsMe(player)
-    return self:Me() == self:Player(player);
+    return self:IsSamePlayer(player, self:Me());
+end
+
+function LootReserve:IsSamePlayer(a, b)
+    return self:Player(a) == self:Player(b);
 end
 
 function LootReserve:IsPlayerOnline(player)
     return self:ForEachRaider(function(name, _, _, _, _, _, _, online)
-        if name == player then
+        if self:IsSamePlayer(name, player) then
             return online or false;
         end
     end);
 end
 
-function LootReserve:GetPlayerClassColor(player)
-    local className, classFilename, classId = UnitClass(player);
+function LootReserve:UnitInRaid(player)
+    if not self:IsCrossRealm() then
+        return UnitInRaid(player);
+    end
+
+    return IsInRaid() and self:ForEachRaider(function(name, _, _, _, className, classFilename, _, online)
+        if self:IsSamePlayer(name, player) then
+            return true;
+        end
+    end);
+end
+
+function LootReserve:UnitInParty(player)
+    if not self:IsCrossRealm() then
+        return UnitInParty(player);
+    end
+
+    return IsInGroup() and not IsInRaid() and self:ForEachRaider(function(name, _, _, _, className, classFilename, _, online)
+        if self:IsSamePlayer(name, player) then
+            return true;
+        end
+    end);
+end
+
+function LootReserve:UnitClass(player)
+    if not self:IsCrossRealm() then
+        return UnitClass(player);
+    end
+
+    return self:ForEachRaider(function(name, _, _, _, className, classFilename, _, online)
+        if self:IsSamePlayer(name, player) then
+            return className, classFilename, LootReserve.Constants.ClassFilenameToClassID[classFilename];
+        end
+    end);
+end
+
+function LootReserve:GetPlayerClassColor(player, dim)
+    local className, classFilename, classId = self:UnitClass(player);
     if classFilename then
         local colors = RAID_CLASS_COLORS[classFilename];
         if colors then
-            return colors.colorStr;
+            if dim then
+                local r, g, b, a = colors:GetRGBA();
+                return format("FF%02X%02X%02X", r * 128, g * 128, b * 128);
+            else
+                return colors.colorStr;
+            end
         end
     end
-    return "FF808080";
+    return dim and "FF404040" or "FF808080";
 end
 
 function LootReserve:GetRaidUnitID(player)
     for i = 1, MAX_RAID_MEMBERS do
         local unit = UnitName("raid" .. i);
-        if unit and LootReserve:Player(unit) == player then
+        if unit and LootReserve:IsSamePlayer(LootReserve:Player(unit), player) then
             return "raid" .. i;
         end
     end
 
-    if self.Comm.SoloDebug and LootReserve:IsMe(player) then
+    if self:IsMe(player) then
         return "player";
     end
 end
@@ -318,22 +415,24 @@ end
 function LootReserve:GetPartyUnitID(player)
     for i = 1, MAX_PARTY_MEMBERS do
         local unit = UnitName("party" .. i);
-        if unit and LootReserve:Player(unit) == player then
+        if unit and LootReserve:IsSamePlayer(LootReserve:Player(unit), player) then
             return "party" .. i;
         end
     end
 
-    if LootReserve:IsMe(player) then
+    if self:IsMe(player) then
         return "player";
     end
 end
 
 function LootReserve:ColoredPlayer(player)
-    return format("|c%s%s|r", self:GetPlayerClassColor(player), player);
+    local name, realm = strsplit("-", player);
+    return realm and format("|c%s%s|r|c%s-%s|r", self:GetPlayerClassColor(player), name, self:GetPlayerClassColor(player, true), realm)
+                  or format("|c%s%s|r",          self:GetPlayerClassColor(player), player);
 end
 
 function LootReserve:ForEachRaider(func)
-    if LootReserve.Comm.SoloDebug then
+    if not IsInGroup() then
         local className, classFilename = UnitClass("player");
         return func(self:Me(), 0, 1, UnitLevel("player"), className, classFilename, nil, true, UnitIsDead("player"));
     end
@@ -341,12 +440,28 @@ function LootReserve:ForEachRaider(func)
     for i = 1, MAX_RAID_MEMBERS do
         local name, rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole = GetRaidRosterInfo(i);
         if name then
-            local result = func(LootReserve:Player(name), rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole);
+            local result, a, b = func(self:Player(name), rank, subgroup, level, class, fileName, zone, online, isDead, role, isML, combatRole);
             if result ~= nil then
-                return result;
+                return result, a, b;
             end
         end
     end
+end
+
+function LootReserve:GetTradeableItemCount(item)
+    local count = 0;
+    for bag = 0, 4 do
+        local slots = GetContainerNumSlots(bag);
+        if slots > 0 then
+            for slot = 1, slots do
+                local _, quantity, _, _, _, _, _, _, _, bagItem = GetContainerItemInfo(bag, slot);
+                if bagItem and bagItem == item and (not C_Item.IsBound(ItemLocation:CreateFromBagAndSlot(bag, slot)) or LootReserve:IsItemSoulboundTradeable(bag, slot)) then
+                    count = count + quantity;
+                end
+            end
+        end
+    end
+    return count;
 end
 
 function LootReserve:IsItemSoulboundTradeable(bag, slot)
@@ -509,29 +624,29 @@ end
 function LootReserve:MakeMenuSeparator()
     return
     {
-        text = "",
-        hasArrow = false,
-        dist = 0,
-        isTitle = true,
-        isUninteractable = true,
-        notCheckable = true,
-        iconOnly = true,
-        icon = "Interface\\Common\\UI-TooltipDivider-Transparent",
-        tCoordLeft = 0,
-        tCoordRight = 1,
-        tCoordTop = 0,
-        tCoordBottom = 1,
-        tSizeX = 0,
-        tSizeY = 8,
+        text              = "",
+        hasArrow          = false,
+        dist              = 0,
+        isTitle           = true,
+        isUninteractable  = true,
+        notCheckable      = true,
+        iconOnly          = true,
+        icon              = "Interface\\Common\\UI-TooltipDivider-Transparent",
+        tCoordLeft        = 0,
+        tCoordRight       = 1,
+        tCoordTop         = 0,
+        tCoordBottom      = 1,
+        tSizeX            = 0,
+        tSizeY            = 8,
         tFitDropDownSizeX = true,
         iconInfo =
         {
-            tCoordLeft = 0,
-            tCoordRight = 1,
-            tCoordTop = 0,
-            tCoordBottom = 1,
-            tSizeX = 0,
-            tSizeY = 8,
+            tCoordLeft        = 0,
+            tCoordRight       = 1,
+            tCoordTop         = 0,
+            tCoordBottom      = 1,
+            tSizeX            = 0,
+            tSizeY            = 8,
             tFitDropDownSizeX = true
         },
     };
@@ -553,7 +668,7 @@ function LootReserve:FormatPlayersText(players, colorFunc)
     for _, player in ipairs(players) do
         if not playerNames[player] then
            table.insert(playersSorted, player);
-           playerNames[player] = true; 
+           playerNames[player] = true;
         end
     end
     table.sort(playersSorted);
@@ -593,7 +708,7 @@ function LootReserve:FormatReservesText(players, excludePlayer)
 end
 
 function LootReserve:FormatReservesTextColored(players, excludePlayer)
-    return FormatReservesText(players, excludePlayer, function(...) return LootReserve:ColoredPlayer(...); end);
+    return FormatReservesText(players, excludePlayer, function(...) return self:ColoredPlayer(...); end);
 end
 
 local function GetReservesData(players, me, colorFunc)
@@ -615,7 +730,7 @@ function LootReserve:GetReservesData(players, me)
 end
 
 function LootReserve:GetReservesDataColored(players, me)
-    return GetReservesData(players, me, function(...) return LootReserve:ColoredPlayer(...); end);
+    return GetReservesData(players, me, function(...) return self:ColoredPlayer(...); end);
 end
 
 local function GetReservesString(server, isUpdate, link, reservesText, myReserves, uniqueReservers, reserves)

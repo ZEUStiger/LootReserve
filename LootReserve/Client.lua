@@ -5,37 +5,37 @@ LootReserve.Client =
     SessionServer = nil,
 
     -- Server Session Info
-    StartTime = 0,
+    StartTime         = 0,
     AcceptingReserves = false,
     RemainingReserves = 0,
-    Locked = false,
-    LootCategory = nil,
-    Duration = nil,
-    MaxDuration = nil,
-    ItemReserves = { }, -- { [ItemID] = { "Playername", "Playername", ... }, ... }
-    ItemConditions = { },
-    RollRequest = nil,
-    Blind = false,
-    Multireserve = nil,
+    Locked            = false,
+    LootCategory      = nil,
+    Duration          = nil,
+    MaxDuration       = nil,
+    ItemReserves      = { }, -- { [ItemID] = { "Playername", "Playername", ... }, ... }
+    ItemConditions    = { },
+    RollRequest       = nil,
+    Blind             = false,
+    Multireserve      = nil,
 
     Settings =
     {
-        RollRequestShow = true,
-        RollRequestShowUnusable = false,
+        RollRequestShow             = true,
+        RollRequestShowUnusable     = false,
         RollRequestGlowOnlyReserved = false,
-        CollapsedExpansions = { },
-        CollapsedCategories = { },
-        SwapLDBButtons = false,
-        LibDBIcon = { },
+        CollapsedExpansions         = { },
+        CollapsedCategories         = { },
+        SwapLDBButtons              = false,
+        LibDBIcon                   = { },
     },
     CharacterFavorites = { },
-    GlobalFavorites = { },
+    GlobalFavorites    = { },
 
-    PendingItems = { },
-    ServerSearchTimeoutTime = nil,
+    PendingItems             = { },
+    ServerSearchTimeoutTime  = nil,
     DurationUpdateRegistered = false,
-    SessionEventsRegistered = false,
-    CategoryFlashing = false,
+    SessionEventsRegistered  = false,
+    CategoryFlashing         = false,
 
     SelectedCategory = nil,
 };
@@ -134,7 +134,7 @@ function LootReserve.Client:StartSession(server, starting, startTime, acceptingR
 
     if not self.SessionEventsRegistered then
         self.SessionEventsRegistered = true;
-        
+
         LootReserve:RegisterEvent("GROUP_LEFT", function()
             if self.SessionServer then
                 self:StopSession();
@@ -144,9 +144,9 @@ function LootReserve.Client:StartSession(server, starting, startTime, acceptingR
                 self:UpdateReserveStatus();
             end
         end);
-        
+
         LootReserve:RegisterEvent("GROUP_ROSTER_UPDATE", function()
-            if self.SessionServer and not UnitInRaid(self.SessionServer) then
+            if self.SessionServer and not LootReserve:UnitInRaid(self.SessionServer) then
                 self:StopSession();
                 self:ResetSession();
                 self:UpdateCategories();

@@ -1,14 +1,14 @@
 LootReserve = LootReserve or { };
 LootReserve.ItemSearch =
 {
-    LoadingState = nil,
+    LoadingState  = nil,
     LoadingThread = nil,
     LoadingTicker = nil,
-    Names = { },
-    PendingNames = { };
-    MaxID = 24283,
-    LoadedNames = 0,
-    TotalNames = 0,
+    Names         = { },
+    PendingNames  = { };
+    MaxID         = 24283,
+    LoadedNames   = 0,
+    TotalNames    = 0,
 };
 
 function LootReserve.ItemSearch:Load()

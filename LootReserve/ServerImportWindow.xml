@@ -292,7 +292,7 @@
 								<KeyValues>
 									<KeyValue key="text" value="Best Name Match" type="string" />
 									<KeyValue key="tooltipText" value="Best Name Match" type="string" />
-									<KeyValue key="tooltipSubtext" value="Attempt to ignore special characters in player names (e.g. treat Ø as O) and try to match imported names to current raid members." type="string" />
+									<KeyValue key="tooltipSubtext" value="Attempt to ignore realm names and special characters in player names (e.g. treat Ø as O) and try to match imported names to current raid members." type="string" />
 								</KeyValues>
 								<Anchors>
 									<Anchor point="TOPLEFT" relativeKey="$parent.UseHeaders" relativePoint="BOTTOMLEFT" />

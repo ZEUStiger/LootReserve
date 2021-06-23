@@ -20,14 +20,14 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
 
     self.RollRequest =
     {
-        Sender = sender,
-        Item = item,
-        Custom = custom or nil,
-        Duration = duration and duration > 0 and duration or nil,
+        Sender      = sender,
+        Item        = item,
+        Custom      = custom or nil,
+        Duration    = duration and duration > 0 and duration or nil,
         MaxDuration = maxDuration and maxDuration > 0 and maxDuration or nil,
-        Phase = phase,
-        Example = example,
-        Count = myCount,
+        Phase       = phase,
+        Example     = example,
+        Count       = myCount,
     };
     local roll = self.RollRequest;
 
@@ -85,6 +85,7 @@ function LootReserve.Client:RollRequested(sender, item, players, custom, duratio
         LootReserve:RegisterEvent("CHAT_MSG_SYSTEM", function(text)
             if self.RollRequest and frame:IsShown() then
                 local player, roll, min, max = text:match(rollMatcher);
+                player = player and LootReserve:Player(player);
                 if player and LootReserve:IsMe(player) and roll and min == "1" and max == "100" and tonumber(roll) then
                     if self.RollRequest.Count > 1 then
                         self.RollRequest.Count = self.RollRequest.Count - 1;

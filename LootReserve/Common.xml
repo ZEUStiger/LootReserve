@@ -60,6 +60,65 @@
 		<HighlightTexture file="Interface\ChatFrame\UI-ChatIM-SizeGrabber-Highlight"/>
 		<PushedTexture file="Interface\ChatFrame\UI-ChatIM-SizeGrabber-Down"/>
 	</Button>
+	<Frame name="LootReserveTextWithButtonsTemplate" virtual="true">
+		<KeyValues>
+			<KeyValue key="font" value="GameFontNormal" type="global" />
+			<KeyValue key="textMargin" value="0" type="number" />
+			<KeyValue key="buttonMargin" value="0" type="number" />
+		</KeyValues>
+		<Layers>
+			<Layer>
+				<FontString parentKey="Text" justifyH="LEFT" wordwrap="false">
+					<Anchors>
+						<Anchor point="TOPLEFT" />
+						<Anchor point="BOTTOMRIGHT" />
+					</Anchors>
+				</FontString>
+			</Layer>
+		</Layers>
+		<Scripts>
+			<OnLoad>
+				self.Text:SetFontObject(self.font);
+				function self:SetText(text)
+					self.Text:SetText(text);
+					self:Update();
+				end
+				function self:GetText()
+					return self.Text:GetText();
+				end
+
+				self.Buttons = self.Buttons or { };
+				self.ButtonsHooked = self.ButtonsHooked or { };
+				function self:Update()
+					local buttonsWidth = 0;
+					for i, button in ipairs(self.Buttons) do
+						if not self.ButtonsHooked[button] then
+							self.ButtonsHooked[button] = true;
+							button:HookScript("OnShow", function() self:Update(); end);
+							button:HookScript("OnHide", function() self:Update(); end);
+						end
+						if button:IsShown() then
+							buttonsWidth = buttonsWidth + (i == 0 and self.textMargin or self.buttonMargin) + button:GetWidth();
+						end
+					end
+
+					self.Text:SetPoint("BOTTOMRIGHT", self, "BOTTOMRIGHT", -buttonsWidth, 0);
+
+					local x = math.min(self.Text:GetStringWidth(), self.Text:GetWidth()) + self.textMargin;
+					for i, button in ipairs(self.Buttons) do
+						if button:IsShown() then
+							button:SetPoint("LEFT", self.Text, "LEFT", x, 0);
+							x = x + self.buttonMargin + button:GetWidth();
+						end
+					end
+				end
+				self:Update();
+			</OnLoad>
+			<OnSizeChanged>
+				self:Update();
+			</OnSizeChanged>
+		</Scripts>
+	</Frame>
 	<Button name="LootReserveItemButtomTemplate" virtual="true">
 		<KeyValues>
 			<!--
@@ -107,14 +166,14 @@
 		</Frames>
 		<Layers>
 			<Layer>
-				<FontString parentKey="Name" inherits="GameFontNormalLarge" justifyH="LEFT">
+				<FontString parentKey="Name" inherits="GameFontNormalLarge" justifyH="LEFT" wordwrap="false">
 					<Size y="20" />
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Icon" relativePoint="TOPRIGHT" x="5" />
 						<Anchor point="TOPRIGHT" />
 					</Anchors>
 				</FontString>
-				<FontString parentKey="Misc" inherits="GameFontNormalGraySmall" justifyH="LEFT">
+				<FontString parentKey="Misc" inherits="GameFontNormalGraySmall" justifyH="LEFT" wordwrap="false">
 					<Size y="12" />
 					<Anchors>
 						<Anchor point="TOPLEFT" relativeKey="$parent.Name" relativePoint="BOTTOMLEFT" />

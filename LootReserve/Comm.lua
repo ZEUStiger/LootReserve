@@ -3,29 +3,29 @@ local LibDeflate = LibStub:GetLibrary("LibDeflate");
 LootReserve = LootReserve or { };
 LootReserve.Comm =
 {
-    Prefix = "LootReserve",
-    Handlers = { },
+    Prefix    = "LootReserve",
+    Handlers  = { },
     Listening = false,
-    Debug = false,
+    Debug     = false,
     SoloDebug = false,
 };
 
 local Opcodes =
 {
-    Version = 1,
+    Version                   = 1,
     ReportIncompatibleVersion = 2,
-    Hello = 3,
-    SessionInfo = 4,
-    SessionStop = 5,
-    SessionReset = 6,
-    ReserveItem = 7,
-    ReserveResult = 8,
-    ReserveInfo = 9,
-    CancelReserve = 10,
-    CancelReserveResult = 11,
-    RequestRoll = 12,
-    PassRoll = 13,
-    DeletedRoll = 14,
+    Hello                     = 3,
+    SessionInfo               = 4,
+    SessionStop               = 5,
+    SessionReset              = 6,
+    ReserveItem               = 7,
+    ReserveResult             = 8,
+    ReserveInfo               = 9,
+    CancelReserve             = 10,
+    CancelReserveResult       = 11,
+    RequestRoll               = 12,
+    PassRoll                  = 13,
+    DeletedRoll               = 14,
 };
 
 local LAST_UNCOMPRESSED_OPCODE = Opcodes.Hello;
@@ -76,8 +76,8 @@ function LootReserve.Comm:StartListening()
 
                 local handler = self.Handlers[opcode];
                 if handler then
+                    local length;
                     if opcode > LAST_UNCOMPRESSED_OPCODE then
-                        local length;
                         length, message = strsplit("|", message, 2);
                         length = tonumber(length);
                         if not length or not message then
@@ -95,7 +95,7 @@ function LootReserve.Comm:StartListening()
                     end
 
                     if self.Debug then
-                        print("[DEBUG] Received from " .. sender .. ": " .. opcode .. "||" .. length .. "||" .. message:gsub("|", "||"));
+                        print("[DEBUG] Received from " .. sender .. ": " .. opcode .. (length and ("||" .. length) or "") .. "||" .. message:gsub("|", "||"));
                     end
 
                     sender = LootReserve:Player(sender);
@@ -115,9 +115,9 @@ function LootReserve.Comm:CanBroadcast(opcode)
 end
 function LootReserve.Comm:CanWhisper(target, opcode)
     return LootReserve.Enabled and LootReserve:IsPlayerOnline(target) and (self.SoloDebug
-        or IsInRaid() and UnitInRaid(target)
-        or IsInGroup() and UnitInParty(target) and (opcode == Opcodes.PassRoll and LootReserve.Client.RollRequest and target == LootReserve.Client.RollRequest.Sender
-                                                 or opcode == Opcodes.DeletedRoll)
+        or IsInRaid() and LootReserve:UnitInRaid(target)
+        or IsInGroup() and LootReserve:UnitInParty(target) and (opcode == Opcodes.PassRoll and LootReserve.Client.RollRequest and target == LootReserve.Client.RollRequest.Sender
+                                                             or opcode == Opcodes.DeletedRoll)
     );
 end
 
@@ -126,7 +126,7 @@ function LootReserve.Comm:Broadcast(opcode, ...)
 
     local message;
     if self.SoloDebug then
-        message = self:SendCommMessage("WHISPER", (UnitName("player")), opcode, ...);
+        message = self:SendCommMessage("WHISPER", LootReserve:Me(), opcode, ...);
     else
         message = self:SendCommMessage(IsInRaid() and "RAID" or "PARTY", nil, opcode, ...);
     end
@@ -237,7 +237,7 @@ function LootReserve.Comm:SendSessionInfo(target, starting)
     local membersInfo = "";
     local refPlayers = { };
     for player, member in pairs(session.Members) do
-        if not target or player == target then
+        if not target or LootReserve:IsSamePlayer(player, target) then
             membersInfo = membersInfo .. (#membersInfo > 0 and ";" or "") .. format("%s=%s", player, strjoin(",", session.Settings.Lock and member.Locked and "#" or member.ReservesLeft));
             table.insert(refPlayers, player);
         end
@@ -437,25 +437,10 @@ LootReserve.Comm.Handlers[Opcodes.ReserveInfo] = function(sender, item, players)
             players = { };
         end
 
-        local isUpdate = false;
         local previousReserves = LootReserve.Client.ItemReserves[item];
-        if previousReserves then
-            local reservesCount = { };
-            for _, player in ipairs(previousReserves) do
-                reservesCount[player] = reservesCount[player] or {0, 0};
-                reservesCount[player][1] = reservesCount[player][1] + 1;
-            end
-            for _, player in ipairs(players) do
-                reservesCount[player] = reservesCount[player] or {0, 0};
-                reservesCount[player][2] = reservesCount[player][2] + 1;
-            end
-            for player, reserves in pairs(reservesCount) do
-                if reserves[1] ~= reserves[2] and not LootReserve:IsMe(player) then
-                    isUpdate = true;
-                    break;
-                end
-            end
-        end
+        local _, myOldReserves, oldReservers, oldRolls = LootReserve:GetReservesData(previousReserves or { }, LootReserve:Me());
+        local _, myNewReserves, newReservers, newRolls = LootReserve:GetReservesData(players, LootReserve:Me());
+        local isUpdate = oldRolls ~= newRolls;
 
         LootReserve.Client.ItemReserves[item] = players;
 
@@ -472,7 +457,7 @@ LootReserve.Comm.Handlers[Opcodes.ReserveInfo] = function(sender, item, players)
             local isViewingMyReserves = LootReserve.Client.SelectedCategory and LootReserve.Client.SelectedCategory.Reserves == "my";
             LootReserve.Client:FlashCategory("Reserves", "my", wasReserver == isReserver and not isViewingMyReserves);
         end
-        if wasReserver and isReserver then
+        if wasReserver and isReserver and myOldReserves == myNewReserves then
             local function Print()
                 local name, link = GetItemInfo(item);
                 if name and link then
@@ -588,11 +573,11 @@ LootReserve.Comm.Handlers[Opcodes.PassRoll] = function(sender, item)
 end
 
 -- DeletedRoll
-function LootReserve.Comm:SendDeletedRoll(player, item, roll)
+function LootReserve.Comm:SendDeletedRoll(player, item, roll, phase)
     LootReserve.Comm:Whisper(player, Opcodes.DeletedRoll,
-        item, roll);
+        item, roll, phase);
 end
-LootReserve.Comm.Handlers[Opcodes.DeletedRoll] = function(sender, item, roll)
+LootReserve.Comm.Handlers[Opcodes.DeletedRoll] = function(sender, item, roll, phase)
     item = tonumber(item);
     roll = tonumber(roll);
 
@@ -600,8 +585,8 @@ LootReserve.Comm.Handlers[Opcodes.DeletedRoll] = function(sender, item, roll)
         local function ShowDeleted()
             local name, link = GetItemInfo(item);
             if name and link then
-                LootReserve:ShowError("%s deleted your roll%s for %s", LootReserve:ColoredPlayer(sender), roll and format(" of %d", roll) or "", link);
-                LootReserve:PrintError("%s deleted your roll%s for %s", LootReserve:ColoredPlayer(sender), roll and format(" of %d", roll) or "", link);
+                LootReserve:ShowError ("Your %sroll%s on %s was deleted", phase and format("%s ", phase) or "", roll and format(" of %d", roll) or "", link);
+                LootReserve:PrintError("Your %sroll%s on %s was deleted", phase and format("%s ", phase) or "", roll and format(" of %d", roll) or "", link);
             else
                 C_Timer.After(0.25, ShowDeleted);
             end

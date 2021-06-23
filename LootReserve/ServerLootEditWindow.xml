@@ -66,9 +66,7 @@
 										table.insert(menu, index,
 										{
 											text = format("|c%s%s|r", RAID_CLASS_COLORS[file].colorStr, name),
-											keepShownOnClick = true,
-											notCheckable = false,
-											checked = conditions and LootReserve.ItemConditions:TestClassMask(conditions.ClassMask, id),
+											checked = conditions and LootReserve.ItemConditions:TestClassMask(conditions.ClassMask, id) or false,
 											arg1 = id,
 											func = function(_, id, _, checked)
 												local conditions = LootReserve.ItemConditions:Make(item, true);
@@ -293,7 +291,7 @@
 			</Button>
 		</Frames>
 		<Scripts>
-			<OnLoad>
+			<OnLoad inherit="prepend">
 				self.ConditionBackgrounds = { };
 				local parts = { "TopLeft", "TopRight", "BottomLeft", "BottomRight", "TopMiddle", "MiddleLeft", "MiddleRight", "BottomMiddle", "MiddleMiddle" };
 				for _, frame in ipairs({ self.ConditionsFrame:GetChildren() }) do
@@ -509,7 +507,6 @@
 								text = format("|T%d:0|t %s", texture, (link or "|cFFFF0000Loading...|r"):gsub("[%[%]]", "")),
 								arg1 = item,
 								func = SelectItem,
-								notCheckable = true,
 							});
 						elseif not item and #LootReserve:TransformSearchText(text) >= 3 then
 							local results, progress = LootReserve.ItemSearch:Search(text);
@@ -532,7 +529,6 @@
 											text = format("|T%d:0|t %s", texture, (link or "|cFFFF0000Loading...|r"):gsub("[%[%]]", "")),
 											arg1 = item,
 											func = SelectItem,
-											notCheckable = true,
 										});
 									end
 								end
