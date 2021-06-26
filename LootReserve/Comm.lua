@@ -86,10 +86,10 @@ function LootReserve.Comm:StartListening()
 
                         if length > 0 then
                             message = LibDeflate:DecodeForWoWAddonChannel(message);
-                            message = LibDeflate:DecompressDeflate(message);
+                            message = message and LibDeflate:DecompressDeflate(message);
                         end
 
-                        if #message ~= math.abs(length) then
+                        if not message or #message ~= math.abs(length) then
                             return ThrottlingError();
                         end
                     end
