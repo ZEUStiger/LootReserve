@@ -1337,6 +1337,18 @@
 							LootReserve.Server:UpdateReserveList();
 							LootReserve.Server:UpdateRollsList();
 						end
+						local function ToggleUseUnitFrames(enabled)
+							if enabled then
+								if not InCombatLockdown() then
+									LootReserve.Server.OnExitCombat();
+								end
+							else
+								if not InCombatLockdown() then
+									LootReserve.Server.OnEnterCombat();
+								end
+								StaticPopup_Show("LOOTRESERVE_RELOAD_UI", "A UI reload is required for this to take full effect.");
+							end
+						end
 						local function ToggleGlobalProfile(enabled)
 							if enabled then
 								LootReserve.Server.Settings.UseGlobalProfile = false;
@@ -1400,6 +1412,7 @@
 								MakeMenuRadio(LootReserve.Constants.ReservesSortingText[LootReserve.Constants.ReservesSorting.ByLooter], "ReservesSorting", LootReserve.Constants.ReservesSorting.ByLooter, "Sort reserves by the name of one of the players that looted this item in the current session.|n|nShow items from the currently looted corpse/container on top.|n|nFade out items not looted by anyone.|cFF808080 (applies only after some items have been looted in the raid)|r", RefreshReservesSorting),
 							} },
 							MakeMenuToggle("Highlight Previous Winners", "HighlightSameItemWinners", "Show an orange highlight for players who are currently rolling on an item, but have already won that item earlier during the session.|n|nThis disables the green highlight for highest rolling players, but the highest roll number will still be colored green.", function() LootReserve.Server:UpdateReserveList(); LootReserve.Server:UpdateRollList(); end),
+							MakeMenuToggle("Use Unit Frames", "UseUnitFrames", "Make player rows in Reserves and Rolls tabs behave like unit frames, allowing them to be right-clicked for context menu, have items be dropped on them to open trade etc.|n|nOnly works outside of combat.|n|nWhen enabled, this may prevent the server window from being closed and reopened while in combat via minimap button or |cFFFFFFFF/reserve server|r command.", ToggleUseUnitFrames),
 							LootReserve:MakeMenuSeparator(),
 							{ text = "Storage", isTitle = true },
 							MakeMenuToggle("Use Global Profile", "UseGlobalProfile", "By default all the data about the active reserves session is stored per-character. Enable this to share the same session between all characters on your account.|n|nThe session from your current character will be the one propagated to others.", ToggleGlobalProfile),

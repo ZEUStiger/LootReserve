@@ -42,6 +42,7 @@ LootReserve.Server =
         MaxRecentLoot                   = 15,
         RemoveRecentLootAfterRolling    = true,
         KeepUnlootedRecentLoot          = false,
+        UseUnitFrames                   = true,
     },
     RequestedRoll       = nil,
     RollHistory         = { },
@@ -182,6 +183,19 @@ StaticPopupDialogs["LOOTRESERVE_CONFIRM_ANNOUNCE_BLIND_RESERVES"] =
     hideOnEscape = 1,
     OnAccept = function(self)
         LootReserve.Server:SendReservesList(nil, false, true);
+    end,
+};
+
+StaticPopupDialogs["LOOTRESERVE_RELOAD_UI"] =
+{
+    text         = "%s",
+    button1      = "Reload",
+    button2      = CANCEL,
+    timeout      = 0,
+    whileDead    = 1,
+    hideOnEscape = 1,
+    OnAccept = function(self)
+        ReloadUI();
     end,
 };
 

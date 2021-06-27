@@ -3,7 +3,7 @@ local LibCustomGlow = LibStub("LibCustomGlow-1.0");
 function LootReserve.Server:UpdateReserveListRolls(lockdown)
     if not self.Window:IsShown() then return; end
 
-    lockdown = lockdown or InCombatLockdown();
+    lockdown = lockdown or InCombatLockdown() or not self.Settings.UseUnitFrames;
 
     local list = (lockdown and self.Window.PanelReservesLockdown or self.Window.PanelReserves).Scroll.Container;
     list.Frames = list.Frames or { };
@@ -68,7 +68,7 @@ end
 function LootReserve.Server:UpdateReserveListButtons(lockdown)
     if not self.Window:IsShown() then return; end
 
-    lockdown = lockdown or InCombatLockdown();
+    lockdown = lockdown or InCombatLockdown() or not self.Settings.UseUnitFrames;
 
     local list = (lockdown and self.Window.PanelReservesLockdown or self.Window.PanelReserves).Scroll.Container;
     list.Frames = list.Frames or { };
@@ -90,7 +90,7 @@ end
 function LootReserve.Server:UpdateReserveList(lockdown)
     if not self.Window:IsShown() then return; end
 
-    lockdown = lockdown or InCombatLockdown();
+    lockdown = lockdown or InCombatLockdown() or not self.Settings.UseUnitFrames;
 
     local filter = LootReserve:TransformSearchText(self.Window.Search:GetText());
     if #filter == 0 then
@@ -337,7 +337,7 @@ end
 function LootReserve.Server:UpdateRollListRolls(lockdown)
     if not self.Window:IsShown() then return; end
 
-    lockdown = lockdown or InCombatLockdown();
+    lockdown = lockdown or InCombatLockdown() or not self.Settings.UseUnitFrames;
 
     local list = (lockdown and self.Window.PanelRollsLockdown or self.Window.PanelRolls).Scroll.Container;
     list.Frames = list.Frames or { };
@@ -400,7 +400,7 @@ end
 function LootReserve.Server:UpdateRollListButtons(lockdown)
     if not self.Window:IsShown() then return; end
 
-    lockdown = lockdown or InCombatLockdown();
+    lockdown = lockdown or InCombatLockdown() or not self.Settings.UseUnitFrames;
 
     local list = (lockdown and self.Window.PanelRollsLockdown or self.Window.PanelRolls).Scroll.Container;
     list.Frames = list.Frames or { };
@@ -420,7 +420,7 @@ end
 function LootReserve.Server:UpdateRollList(lockdown)
     if not self.Window:IsShown() then return; end
 
-    lockdown = lockdown or InCombatLockdown();
+    lockdown = lockdown or InCombatLockdown() or not self.Settings.UseUnitFrames;
 
     local filter = LootReserve:TransformSearchText(self.Window.Search:GetText());
     if #filter == 0 then
@@ -631,7 +631,7 @@ function LootReserve.Server:OnWindowTabClick(tab)
 end
 
 function LootReserve.Server:SetWindowTab(tab, lockdown)
-    lockdown = lockdown or InCombatLockdown();
+    lockdown = lockdown or InCombatLockdown() or not self.Settings.UseUnitFrames;
 
     if tab == 1 then
         self.Window.InsetBg:SetPoint("TOPLEFT", self.Window, "TOPLEFT", 4, -24);
@@ -682,7 +682,7 @@ end
 function LootReserve.Server:RefreshWindowTab(lockdown)
     for i, panel in ipairs(self.Window.Panels) do
         if panel:IsShown() or panel.Lockdown and panel.Lockdown:IsShown() then
-            self:SetWindowTab(i, lockdown or InCombatLockdown());
+            self:SetWindowTab(i, lockdown or InCombatLockdown() or not self.Settings.UseUnitFrames);
             return;
         end
     end
@@ -722,7 +722,7 @@ function LootReserve.Server:OnWindowLoad(window)
             end
         end
     end);
-    LootReserve:RegisterEvent("PLAYER_REGEN_DISABLED", function()
+    function self.OnEnterCombat()
         -- Swap out the real (tainted) reserves and rolls panels for slightly less functional ones, but ones that don't have taint
         self:RefreshWindowTab(true);
         -- Sync changes between real and lockdown panels
@@ -737,8 +737,8 @@ function LootReserve.Server:OnWindowLoad(window)
         if list and list.Frames and list.Frames[1] and listLockdown and listLockdown.Frames and listLockdown.Frames[1] then
             listLockdown.Frames[1]:SetItem(list.Frames[1].Item);
         end
-    end);
-    LootReserve:RegisterEvent("PLAYER_REGEN_ENABLED", function()
+    end
+    function self.OnExitCombat()
         -- Restore original panels
         self:RefreshWindowTab();
         -- Sync changes between real and lockdown panels
@@ -753,7 +753,9 @@ function LootReserve.Server:OnWindowLoad(window)
         if list and list.Frames and list.Frames[1] and listLockdown and listLockdown.Frames and listLockdown.Frames[1] then
             list.Frames[1]:SetItem(listLockdown.Frames[1].Item);
         end
-    end);
+    end
+    LootReserve:RegisterEvent("PLAYER_REGEN_DISABLED", self.OnEnterCombat);
+    LootReserve:RegisterEvent("PLAYER_REGEN_ENABLED", self.OnExitCombat);
     LootReserve:RegisterEvent("LOOT_READY", "LOOT_CLOSED", "LOOT_SLOT_CHANGED", "LOOT_SLOT_CLEARED", function()
         self:UpdateReserveList();
     end);
