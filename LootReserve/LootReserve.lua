@@ -66,28 +66,28 @@ function SlashCmdList.LOOTRESERVE(command)
     if command == "" then
         LootReserve.Client.Window:SetShown(not LootReserve.Client.Window:IsShown());
     elseif command == "server" then
-        LootReserve:OpenServerWindow();
+        LootReserve:ToggleServerWindow(not LootReserve.Server.Window:IsShown());
     elseif command == "roll" or command == "rolls" then
-        LootReserve:OpenServerWindow(true);
+        LootReserve:ToggleServerWindow(not LootReserve.Server.Window:IsShown(), true);
     end
 end
 
-local pendingOpenServerWindow = nil;
+local pendingToggleServerWindow = nil;
 local pendingLockdownHooked = nil;
-function LootReserve:OpenServerWindow(rolls)
+function LootReserve:ToggleServerWindow(state, rolls)
     if InCombatLockdown() and LootReserve.Server.Window:IsProtected() then
-        pendingOpenServerWindow = { rolls };
+        pendingToggleServerWindow = { state, rolls };
         if not pendingLockdownHooked then
             pendingLockdownHooked = true;
             self:RegisterEvent("PLAYER_REGEN_ENABLED", function()
-                if pendingOpenServerWindow then
-                    local params = pendingOpenServerWindow;
-                    pendingOpenServerWindow = nil;
-                    self:OpenServerWindow(unpack(params));
+                if pendingToggleServerWindow then
+                    local params = pendingToggleServerWindow;
+                    pendingToggleServerWindow = nil;
+                    self:ToggleServerWindow(unpack(params));
                 end
             end);
         end
-        self:PrintMessage("Server window will open once you're out of combat");
+        self:PrintMessage("Server window will %s once you're out of combat", state and "open" or "close");
         return;
     end
 
@@ -95,7 +95,7 @@ function LootReserve:OpenServerWindow(rolls)
         self.Server.Window:Show();
         self.Server:OnWindowTabClick(self.Server.Window.TabRolls);
     else
-        self.Server.Window:SetShown(not self.Server.Window:IsShown());
+        self.Server.Window:SetShown(state);
     end
 end
 

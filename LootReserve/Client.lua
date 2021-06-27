@@ -74,7 +74,11 @@ function LootReserve.Client:Load()
         OnClick = function(ldb, button)
             if button == "LeftButton" or button == "RightButton" then
                 local window = ((button == "LeftButton") == self.Settings.SwapLDBButtons) and LootReserve.Server.Window or LootReserve.Client.Window;
-                window:SetShown(not window:IsShown());
+                if InCombatLockdown() and window:IsProtected() and window == LootReserve.Server.Window then
+                    LootReserve:ToggleServerWindow(not window:IsShown());
+                else
+                    window:SetShown(not window:IsShown());
+                end
             end
         end,
         OnTooltipShow = function(tooltip)
